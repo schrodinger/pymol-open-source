@@ -58,7 +58,7 @@ milestones in the detailed plans, not new topics.
 | Order | Work | Exit condition | Relative size |
 | --- | --- | --- | --- |
 | 5 | **1b — measured optimization** and **3 — workspace increments** | Performance changes have before/after evidence; docks and table ship in reviewable test builds. | 3 slices 1-3 done 2026-11-08 (4.5.0: objects dock, layout persistence, Panels menu); slice 4 done (4.5.11 Qt Objects panel replaces the viewport's object list; 4.5.14 workspace layout: action toolbar on top, command area at the bottom, toggle bar); slice 5 partly done (4.5.2 dark theme, 4.5.7 UI Scale for high-resolution screens and dark-theme color audit); 1b started (4.5.10 session load 6.6x faster, 4.5.12 surface build 1.24x, 4.7.7 to 4.7.9 surface build another 1.5x; GUI frame time measured 2026-11-14, software rendering under WSL is the main cost); renderer default on WSL, sticks and surface draw cost, and slice 6 open |
-| 12 | **12a to 12e — native commands** | Kept plugin commands work without the plugin, from the command line and from File, Build and the group menu. | Large; five PRs. |
+| 12 | **12b to 12e — native commands** | Kept plugin commands work without the plugin, from the command line and from File, Build and the group menu. | Large; five PRs. 12a done (4.11.0: seven group commands, group menu rows, Ctrl-N and Ctrl-P). |
 | 13 | **13a to 13d — cleanup** | Water and ions go in one click; `clean` works on ligands; a protein is repaired and relaxed into a new object. | Medium to large. 13a needs nothing; 13b needs 12d. |
 | 14 | **14b, 14c — menu consolidation** | Approved keep, merge, drop list applied; fewer rows and fewer lines in `menu.py`. | Medium. Last, so the rows from 12 and 13 are audited once. |
 

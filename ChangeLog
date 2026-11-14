@@ -4,6 +4,31 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.11.0
+
+	* Group commands, ported from the pymolish plugin
+	  - New commands (cmd.* API): group_next, group_previous,
+	    group_enable, group_disable, copy_group, sort_group,
+	    extract_chain. "help <name>" describes each; docs/commands.md
+	    lists them.
+	  - Keys: CTRL-N is group_next, CTRL-P is group_previous. Both were
+	    free.
+	  - The A menu of a group has "duplicate group", "sort members",
+	    "enable members" and "disable members".
+	  - Different from the plugin: group_next with several members shown
+	    goes on from the first of them (the plugin refused);
+	    extract_chain takes chains as A+B and replaces
+	    extract_chain_from_group and extract_chains_from_group; an
+	    existing object is never overwritten. The plugin in
+	    ~/.pymol/startup still wins over these commands: remove it.
+	  - Not ported: group_info, group_status, group_toggle, list_*,
+	    sort_all_groups, create_sorted_group, copy_group_objects,
+	    merge_to_*.
+	  - No change to existing cmd.* commands.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.10.1
 
 	* Menus

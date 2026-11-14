@@ -488,6 +488,16 @@ from .properties import \
 from . import palettes
 from .palettes import palette
 
+from . import grouping
+from .grouping import \
+     copy_group, \
+     extract_chain, \
+     group_disable, \
+     group_enable, \
+     group_next, \
+     group_previous, \
+     sort_group
+
 from . import util
 from . import movie
 from . import gui

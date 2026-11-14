@@ -1218,6 +1218,7 @@ def sele_action2(self_cmd, sele):
 
 
 def group_action(self_cmd, sele):
+    from pymol import grouping
     return [[ 2, 'Action:'     , ''                       ],
             [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
             [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
@@ -1235,6 +1236,10 @@ def group_action(self_cmd, sele):
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
             [ 0, ''             , ''                       ],
             [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
+            [ 1, 'duplicate group', 'cmd.copy_group("'+sele+'")' ],
+            [ 1, 'sort members', 'cmd.sort_group("%s",%d)' % (sele, grouping.is_sorted(sele, self_cmd)) ],
+            [ 1, 'enable members', 'cmd.group_enable("'+sele+'")' ],
+            [ 1, 'disable members', 'cmd.group_disable("'+sele+'")' ],
             [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 1, del_col + 'delete group', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],

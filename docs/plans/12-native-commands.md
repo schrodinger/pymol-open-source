@@ -82,7 +82,7 @@ Every dialog runs the command through `cmd.do`, so it lands in the log.
 
 ## Slices, one PR each
 
-1. **12a groups:** `grouping.py`, group menu rows, keys.
+1. **12a groups:** `grouping.py`, group menu rows, keys. Done in 4.11.0.
 2. **12b batch I/O:** `batch.py`, the two File dialogs. Time 500 small files;
    over one second, move the load loop off the GUI thread.
 3. **12c fetch:** `fetching.py`, `color_plddt`, two File entries. Network tests

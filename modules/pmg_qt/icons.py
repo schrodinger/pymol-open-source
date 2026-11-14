@@ -58,7 +58,7 @@ LABELS = {
     "select": "mouse-pointer-click",
     "create object": "copy-plus",
     "copy to object": "copy",
-    "duplicate selection": "copy",
+    "duplicate": "copy",
     "extract object": "scissors",
     "rename": "pencil",
     "rename selection": "pencil",
