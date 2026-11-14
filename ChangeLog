@@ -4,6 +4,19 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.5
+
+	* Menus
+	  - Removed: the zoom, orient, center and origin rows of the A
+	    menu (objects, groups, selections, maps, meshes, surfaces,
+	    slices, "all") and of the right-click menus of the viewport
+	    and of the sequence viewer, also "zoom (vis)", "orient (vis)"
+	    and "center (vis)". Use the toolbar (Zoom, Orient), a double
+	    click on a row of the object panel, or the commands zoom,
+	    orient, center and origin, which are unchanged.
+
+2026-11-14 pymolish-studio
+
 	* 4.12.4
 
 	* Builder

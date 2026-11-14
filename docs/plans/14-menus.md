@@ -35,7 +35,7 @@ their rows, so the menus are audited once.**
   | `duplicate`, marked `# broken...` | `menu.py:1185` |
   | `clean`, raises until [step 13](13-structure-cleanup.md) | `mol_action`, `sele_action` |
   | `test1`, `test2` builders, no caller found in Python or C++ | `menu.py:1487`, `:1494` |
-  | zoom, orient, center, origin at the top of every A menu and in the toolbar | by design: toolbar is global, menu is per object |
+  | zoom, orient, center, origin at the top of every A menu and in the toolbar | removed from the A and right-click menus in 4.12.5 (decision 2026-11-14); the toolbar and a double click on a row stay |
 
 ## Decisions
 
@@ -92,11 +92,11 @@ No action menu has two rows with the same command, with one exception
 | 2 | Drop | find > pi interactions > all (in six menus, one source row) | `cmd.pi_interactions` raises `IncentiveOnlyException`. "pi-pi" and "pi-cation" next to it work and stay. |
 | 3 | Fix | modify > exclude > polymer and > inorganic | Copy-paste error: both run "not organic", like the organic row. |
 | 4 | Drop | label > stereochemistry | The `stereo` property is only filled by `assign_stereo`, which raises `IncentiveOnlyException`; the row labels nothing. |
-| 5 | Merge | `sele_action2` into `sele_action` with a flag | Their 16 and 19 top rows share 11. The right-click variant leaves out zoom, orient, center, origin, drag and clean, which its parent menu already has, and shows the five "modify" rows flat. |
+| 5 | Merge | `sele_action2` into `sele_action` with a flag | Their 16 and 19 top rows share 11. The right-click variant leaves out drag and clean, which its parent menu already has, and shows the five "modify" rows flat. |
 | 6 | Merge | `group_action` and `mol_action` into one builder | 17 of the top rows are the same; the differences are labels (rename object / rename group), drag matrix against drag, and the four group rows. |
-| 7 | Regroup | A menu of an object: zoom, orient, center · rename, duplicate, delete · clean ▸ · preset ▸ · find ▸ · align ▸ · hydrogens ▸ · group ▸ · more ▸ | 23 top rows become 13. "more" holds origin, drag, reset matrix, generate, assign sec. struc., state, masking, sequence, movement, compute. "copy to object" moves under "duplicate". |
-| 8 | Add | Right click on a row: zoom, show as ▸, color ▸, rename, duplicate, delete on top, then the five submenus | The essentials one click away, as planned. |
-| 9 | Keep | Everything else, also the zoom, orient and center rows that the toolbar has too | The toolbar is global, the menu is per object. |
+| 7 | Regroup | A menu of an object: rename, duplicate, delete · clean ▸ · preset ▸ · find ▸ · align ▸ · hydrogens ▸ · group ▸ · more ▸ | 19 top rows become 10. "more" holds drag, reset matrix, generate, assign sec. struc., state, masking, sequence, movement, compute. "copy to object" moves under "duplicate". |
+| 8 | Add | Right click on a row: show as ▸, color ▸, rename, duplicate, delete on top, then the five submenus | The essentials one click away, as planned. |
+| 9 | Keep | Everything else. Done in 4.12.5, against the first draft of this row: zoom, orient, center and origin left every A and right-click menu | The toolbar zooms, orients and centers; a double click on a row zooms on it. |
 
 Rows 1 to 4 remove dead things and fix a bug: they change nothing a user
 relies on. Rows 5 to 8 move rows that people know by position: say which of
@@ -105,11 +105,11 @@ them to apply. 14c waits for that answer.
 **14c, apply.**
 - One builder for selection actions (`sele_action2` becomes a flag); one for
   object and group actions.
-- Target A menu, about 14 top rows:
-  zoom, orient, center · rename, duplicate, delete · clean ▸ · preset ▸ ·
-  find ▸ · align ▸ · hydrogens ▸ · group ▸ · more ▸ (origin, drag, reset
+- Target A menu, about 10 top rows:
+  rename, duplicate, delete · clean ▸ · preset ▸ ·
+  find ▸ · align ▸ · hydrogens ▸ · group ▸ · more ▸ (drag, reset
   matrix, generate, state, masking, sequence, movement, compute).
-- Right click on a row: essentials flat on top (zoom, show as ▸, color ▸,
+- Right click on a row: essentials flat on top (show as ▸, color ▸,
   rename, duplicate, delete), then the five submenus as today.
 - Essentials added: a working `duplicate`, the group rows from
   [step 12](12-native-commands.md), the clean submenu from step 13. Anything

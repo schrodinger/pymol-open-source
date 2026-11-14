@@ -232,8 +232,25 @@ class TestMenu(testing.PyMOLTestCase):
         self._make_seles()
         sele = 's1'
         m = menu.sele_action(cmd, sele)
-        d = self._to_dict(m)
-        self._eval_first(d['zoom'])
+        self._eval_first(m)
+
+    def testNoViewRows(self):
+        # zoom, orient, center, origin: toolbar and double click, not menus
+        self._make_seles(1)
+        cmd.group('g1', 'm1')
+        for m in [
+            menu.all_action(cmd, 'all'),
+            menu.mol_action(cmd, 'm1'),
+            menu.group_action(cmd, 'g1'),
+            menu.sele_action(cmd, 's1'),
+            menu.main_menu(cmd, (0., 0., 0.), (0, 0)),
+            menu.all_option(cmd, 'all'),
+            menu.pick_sele(cmd, 's1', ''),
+            menu.pick_option(cmd, 'm1', ''),
+            menu.seq_option(cmd, 'm1', '/m1/'),
+        ]:
+            labels = {row[1].split(' ')[0] for row in m}
+            self.assertFalse(labels & {'zoom', 'orient', 'center', 'origin'})
 
     def testSeqOption(self):
         self._make_objects(1)
