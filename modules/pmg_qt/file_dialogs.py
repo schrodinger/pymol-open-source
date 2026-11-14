@@ -1009,3 +1009,54 @@ def build_from_smiles(parent):
         'load_smiles "%s"',
         clip if len(clip.split()) == 1 else "",
     )
+
+
+def fix_structure_dialog(parent, selection=""):
+    """A > clean > fix structure: the options of "fix_structure" """
+    cmd = parent.cmd
+    form = parent.load_form("fix_structure")
+    form.input_object.addItems(cmd.get_object_list())
+    if selection:
+        form.input_object.setEditText(selection)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+    options = (  # argument, checkbox; all are on by default
+        ("missing_atoms", form.input_atoms),
+        ("nonstandard", form.input_nonstandard),
+        ("hydrogens", form.input_hydrogens),
+        ("keep_water", form.input_water),
+        ("keep_heterogens", form.input_heterogens),
+    )
+
+    def get_command():
+        command = "fix_structure " + form.input_object.currentText()
+        for argument, box in options:
+            if not box.isChecked():
+                command += ", %s=0" % argument
+        if form.input_hydrogens.isChecked() and form.input_ph.value() != 7:
+            command += ", ph=%.1f" % form.input_ph.value()
+        return command + ", async_=1"
+
+    def update(*_):
+        form.input_ph.setEnabled(form.input_hydrogens.isChecked())
+        try:
+            count = len(cmd.get_object_list(form.input_object.currentText()))
+        except pymol.CmdException:
+            count = 0
+        ok.setEnabled(count == 1)
+        form.output_command.setText(get_command())
+
+    def run():
+        cmd.do(get_command())
+        form._dialog.close()
+
+    form.input_object.editTextChanged.connect(update)
+    form.input_ph.valueChanged.connect(update)
+    for _, box in options:
+        box.toggled.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form

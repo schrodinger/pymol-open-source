@@ -101,3 +101,124 @@ SEE ALSO
     AllChem.MMFFOptimizeMolecule(mol, maxIters=1000)
     _self.load_coords(
         mol.GetConformer().GetPositions()[:count], selection, state)
+
+
+def _openmm():
+    '''(PDBFixer class, openmm.app module), or a CmdException that names
+    the extra.'''
+    try:
+        import openmm.app
+        from pdbfixer import PDBFixer
+    except ImportError:
+        raise pymol.CmdException(
+            "this command needs pdbfixer and openmm: "
+            "pip install 'pymolish[fix]'") from None
+    return PDBFixer, openmm.app
+
+
+def _new_object(pdbstr, name, _self):
+    '''Load PDB text into a new object; a name in use gets a number.'''
+    known = set(_self.get_names('objects'))
+    _self.read_pdbstr(pdbstr, _self.get_unused_name(name, 0), zoom=0)
+    # ask for the name: a reserved word like "all" is loaded as "all_"
+    return [n for n in _self.get_names('objects') if n not in known][0]
+
+
+def fix_structure(selection, missing_atoms=1, hydrogens=1, ph=7.0,
+                  nonstandard=1, keep_water=1, keep_heterogens=1, name='',
+                  async_=0, quiet=1, *, _self=cmd_module):
+    '''
+DESCRIPTION
+
+    "fix_structure" repairs a protein or nucleic acid with PDBFixer and
+    loads the result as a new object. The original is not changed.
+
+USAGE
+
+    fix_structure selection [, missing_atoms [, hydrogens [, ph
+        [, nonstandard [, keep_water [, keep_heterogens [, name ]]]]]]]
+
+ARGUMENTS
+
+    selection = string: atoms of one object
+
+    missing_atoms = 0/1: build heavy atoms that are missing in residues
+    that are present, also the terminal oxygen {default: 1}
+
+    hydrogens = 0/1: add hydrogens {default: 1}
+
+    ph = float: pH for the protonation of standard residues {default: 7.0}
+
+    nonstandard = 0/1: replace nonstandard residues with the standard one
+    they come from, for example MSE with MET {default: 1}
+
+    keep_water = 0/1 {default: 1}
+
+    keep_heterogens = 0/1: keep ligands and ions {default: 1}
+
+    name = string: name of the new object {default: <object>_fixed}
+
+    async_ = 0/1: work in the background {default: 0}
+
+EXAMPLE
+
+    fix_structure 1abc
+    fix_structure 1abc and chain A, ph=5.5, keep_water=0
+
+NOTES
+
+    Needs pdbfixer and openmm: pip install 'pymolish[fix]'; the
+    downloadable builds include them.
+
+    Residues that are missing as a whole (gaps in the chain) are not
+    built: PDBFixer finds them from SEQRES records, which a loaded object
+    does not keep.
+
+    For the hydrogens of a ligand PDBFixer downloads its definition from
+    files.rcsb.org; without a connection the ligand gets none. The result
+    comes back as PDB text: bond orders of ligands are single, colors and
+    representations are the defaults.
+
+SEE ALSO
+
+    minimize, clean, h_add
+    '''
+    import io
+
+    if int(async_):
+        return _self.async_(
+            fix_structure, selection, missing_atoms, hydrogens, ph,
+            nonstandard, keep_water, keep_heterogens, name, 0, quiet,
+            _self=_self)
+    PDBFixer, app = _openmm()
+    objects = _self.get_object_list(selection)
+    if len(objects) != 1:
+        raise pymol.CmdException('fix_structure: give atoms of one object')
+    if not int(keep_water):
+        selection = '(%s) and not solvent' % selection
+    before = _self.count_atoms(selection)
+    try:
+        fixer = PDBFixer(pdbfile=io.StringIO(_self.get_pdbstr(selection)))
+        fixer.findMissingResidues()  # none without SEQRES; the later steps ask
+        if int(nonstandard):
+            fixer.findNonstandardResidues()
+            fixer.replaceNonstandardResidues()
+        if not int(keep_heterogens):
+            fixer.removeHeterogens(keepWater=True)
+        if int(missing_atoms):
+            fixer.findMissingAtoms()
+            fixer.addMissingAtoms(seed=0)
+        if int(hydrogens):
+            fixer.addMissingHydrogens(float(ph))
+        out = io.StringIO()
+        app.PDBFile.writeFile(
+            fixer.topology, fixer.positions, out, keepIds=True)
+    except pymol.CmdException:
+        raise
+    except Exception as error:  # PDBFixer and OpenMM raise many types
+        raise pymol.CmdException('fix_structure: %s' % error) from None
+    name = _new_object(out.getvalue(), name or objects[0] + '_fixed', _self)
+    if not int(quiet):
+        print(' fix_structure: "%s" has %d atoms, the selection had %d'
+              % (name, _self.count_atoms('%' + name), before))
+    return name

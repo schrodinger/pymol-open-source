@@ -41,6 +41,7 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
             file_fetch_uniprot,
             file_fetch_fold,
             build_from_smiles,
+            fix_structure_dialog,
             file_open_folder,
             file_export_objects,
             file_save_png,

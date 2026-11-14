@@ -76,7 +76,10 @@ selection to MOL (`cmd.get_str`), `MMFFOptimizeMolecule`, coordinates back with
 - Test: stretched C-C bond in ethane returns to 1.53 Å ± 0.02; skipped without rdkit.
 - Public behavior change (`clean` works): `ChangeLog`.
 
-**13c, `fix_structure`.**
+**13c, `fix_structure`. Done in 4.12.2, without `missing_residues`:** PDBFixer
+finds missing residues from SEQRES records, and a PyMOL object does not keep
+them, so the option could never do anything on this path. The bundle ships
+only the Reference and CPU platforms of OpenMM.
 `fix_structure object [, missing_atoms=1, hydrogens=1, ph=7.0, nonstandard=1, missing_residues=0, keep_water=1, keep_heterogens=1, name=]`
 - Path: `cmd.get_pdbstr` → `PDBFixer(pdbfile=StringIO)` → `PDBFile.writeFile(keepIds=True)` → `cmd.read_pdbstr`.
 - Dialog `fix_structure.ui`: those checkboxes and the pH. Missing residues is

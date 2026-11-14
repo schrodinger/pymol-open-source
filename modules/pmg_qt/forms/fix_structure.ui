@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="windowTitle"><string notr="true">Fix Structure</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_object">
+       <property name="text"><string notr="true">&amp;Object</string></property>
+       <property name="buddy"><cstring>input_object</cstring></property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="input_object">
+       <property name="editable"><bool>true</bool></property>
+       <property name="minimumSize"><size><width>280</width><height>0</height></size></property>
+      </widget>
+     </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QCheckBox" name="input_atoms">
+      <property name="text"><string notr="true">Build missing &amp;atoms of residues that are present</string></property>
+      <property name="checked"><bool>true</bool></property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QCheckBox" name="input_nonstandard">
+      <property name="text"><string notr="true">Replace &amp;nonstandard residues (MSE becomes MET)</string></property>
+      <property name="checked"><bool>true</bool></property>
+     </widget>
+    </item>
+     <item row="3" column="0">
+      <widget class="QCheckBox" name="input_hydrogens">
+       <property name="text"><string notr="true">Add &amp;hydrogens for pH</string></property>
+       <property name="checked"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDoubleSpinBox" name="input_ph">
+       <property name="decimals"><number>1</number></property>
+       <property name="maximum"><double>14.0</double></property>
+       <property name="singleStep"><double>0.5</double></property>
+       <property name="value"><double>7.0</double></property>
+      </widget>
+     </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QCheckBox" name="input_water">
+      <property name="text"><string notr="true">Keep &amp;water</string></property>
+      <property name="checked"><bool>true</bool></property>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="2">
+     <widget class="QCheckBox" name="input_heterogens">
+      <property name="text"><string notr="true">Keep &amp;ligands and ions</string></property>
+      <property name="checked"><bool>true</bool></property>
+     </widget>
+    </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_note">
+     <property name="text"><string notr="true">The result is a new object. Gaps in the chain are not built.</string></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="output_command">
+     <property name="text"><string notr="true">fix_structure ...</string></property>
+     <property name="textInteractionFlags"><set>Qt::TextSelectableByMouse</set></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttons">
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>input_object</tabstop>
+  <tabstop>input_atoms</tabstop>
+  <tabstop>input_nonstandard</tabstop>
+  <tabstop>input_hydrogens</tabstop>
+  <tabstop>input_ph</tabstop>
+  <tabstop>input_water</tabstop>
+  <tabstop>input_heterogens</tabstop>
+  <tabstop>buttons</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

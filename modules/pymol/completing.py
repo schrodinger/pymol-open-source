@@ -125,6 +125,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'extra_fit'      : aa_sel_e,
         'extract'        : aa_obj_e,
         'extract_chain'  : aa_sel_e,
+        'fix_structure'  : aa_sel_c,
         'color_plddt'    : aa_sel_e,
         'color_group_with_gradient' : aa_sel_c,
         'cluster_ligands' : aa_sel_c,

@@ -64,6 +64,17 @@ rdkit: the downloadable builds have it, a pip install needs
 | --- | --- | --- |
 | `search_sequence pattern [, name [, selection]]` | Selects the residues of every protein chain that match a sequence or a regular expression. | `search_sequence N[^P][ST], sequon` |
 
+## Repair
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `fix_structure selection [, missing_atoms [, hydrogens [, ph [, nonstandard [, keep_water [, keep_heterogens [, name]]]]]]]` | Repairs a protein with PDBFixer and loads the result as `<object>_fixed`: missing atoms, hydrogens for a pH, nonstandard residues. The original stays. | `fix_structure 1abc, ph=5.5` |
+
+`clean` is a PyMOL command that works here: it minimizes one small molecule
+with rdkit. In the window: A > clean on an object, a group or a selection.
+`fix_structure` needs pdbfixer and openmm: the downloadable builds have
+them, a pip install needs `pip install 'pymolish[fix]'`.
+
 ## Other
 
 | Command | What it does | Example |

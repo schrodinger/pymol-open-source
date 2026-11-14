@@ -1,7 +1,7 @@
 """
 Structure cleanup: the "clean" submenu of the action menus
 (pymol.menu.clean) removes water, ions and ligands; "clean" minimizes a
-small molecule with rdkit.
+small molecule with rdkit; "fix_structure" repairs a protein with PDBFixer.
 """
 
 import sys
@@ -15,6 +15,13 @@ except ImportError:
     rdkit = None
 
 needs_rdkit = testing.unittest.skipUnless(rdkit, "rdkit not installed")
+
+try:
+    import pdbfixer  # noqa: F401
+except ImportError:
+    pdbfixer = None
+
+needs_pdbfixer = testing.unittest.skipUnless(pdbfixer, "pdbfixer not installed")
 
 # a dipeptide, two waters, a sodium ion and an ethanol ligand
 PDB = """\
@@ -74,7 +81,7 @@ class TestCleanup(testing.PyMOLTestCase):
             # "remove waters" lives in the submenu only
             self.assertFalse([text for text in labels if "waters" in text])
             submenu = entries[labels.index("clean")][2]
-            self.assertEqual(len(submenu), 7)
+            self.assertEqual(len(submenu), 8)
 
 
 class TestClean(testing.PyMOLTestCase):
@@ -143,3 +150,106 @@ class TestClean(testing.PyMOLTestCase):
                 cmd.clean("other")
         self.assertTrue((cmd.get_coords("all") == before).all())
         cmd.clean("m and organic")  # the ligand alone is a whole molecule
+
+
+class TestFixStructure(testing.PyMOLTestCase):
+    def test_without_pdbfixer(self):
+        cmd.fragment("ala", "m")
+        with mock.patch.dict(sys.modules, {"pdbfixer": None}):
+            with self.assertRaisesRegex(CmdException, r"pymolish\[fix\]"):
+                cmd.fix_structure("m")
+        self.assertIn("fix_structure", cmd.keyword)
+
+    @needs_pdbfixer
+    def test_missing_atoms(self):
+        cmd.fab("AKA", "p")
+        cmd.remove("hydro")
+        heavy = cmd.count_atoms("p")
+        cmd.remove("p and resi 2 and name NZ+CE")
+        self.assertEqual(cmd.fix_structure("p"), "p_fixed")
+        # the two side-chain atoms are back, and the terminal oxygen is new
+        self.assertEqual(cmd.count_atoms("p_fixed and not hydro"), heavy + 1)
+        self.assertEqual(cmd.count_atoms("p_fixed and resi 2 and name NZ+CE"), 2)
+        self.assertGreater(cmd.count_atoms("p_fixed and hydro"), 20)
+        self.assertEqual(cmd.count_atoms("p"), heavy - 2)  # the original stays
+        # nothing is overwritten; options off leave the atoms as they are
+        name = cmd.fix_structure("p", missing_atoms=0, hydrogens=0)
+        self.assertEqual(name, "p_fixed01")
+        self.assertEqual(cmd.count_atoms(name), heavy - 2)
+        self.assertEqual(cmd.fix_structure("p", name="mine", hydrogens=0), "mine")
+        self.assertRaises(CmdException, cmd.fix_structure, "p or mine")
+        self.assertRaises(CmdException, cmd.fix_structure, "none")
+
+    @needs_pdbfixer
+    def test_hydrogens_by_ph(self):
+        cmd.fab("AHA", "p")
+        cmd.remove("hydro")
+        low = cmd.fix_structure("p", ph=4.0, name="low")
+        high = cmd.fix_structure("p", ph=9.0, name="high")
+        self.assertEqual(
+            cmd.count_atoms(low + " and resn HIS and hydro"),
+            cmd.count_atoms(high + " and resn HIS and hydro") + 1,
+        )
+
+    @needs_pdbfixer
+    def test_nonstandard_and_heterogens(self):
+        cmd.read_pdbstr(PDB, "m")
+        cmd.alter("m and resi 1", "resn='DAL'")  # D-alanine becomes ALA
+        cmd.fix_structure("m", hydrogens=0, name="full")
+        self.assertEqual(cmd.count_atoms("full and resn DAL"), 0)
+        self.assertEqual(cmd.count_atoms("full and resn ALA and name CA"), 1)
+        self.assertEqual(cmd.count_atoms("full and solvent"), 2)
+        self.assertEqual(cmd.count_atoms("full and resn EOH+NA"), 4)
+        cmd.fix_structure("m", hydrogens=0, nonstandard=0, keep_water=0, name="dry")
+        self.assertEqual(cmd.count_atoms("dry and resn DAL and name CA"), 1)
+        self.assertEqual(cmd.count_atoms("dry and solvent"), 0)
+        self.assertEqual(cmd.count_atoms("dry and resn EOH+NA"), 4)
+        cmd.fix_structure("m", hydrogens=0, keep_heterogens=0, name="bare")
+        self.assertEqual(cmd.count_atoms("bare and resn EOH+NA"), 0)
+        self.assertEqual(cmd.count_atoms("bare and solvent"), 2)
+
+    @needs_pdbfixer
+    def test_dialog(self):
+        import os
+
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from pymol.Qt import QtWidgets
+
+        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+        from pmg_qt import file_dialogs
+        from pmg_qt.pymol_qt_gui import PyMOLQtGUI
+
+        class Window(QtWidgets.QWidget):
+            load_form = PyMOLQtGUI.load_form
+
+        window = Window()
+        window.cmd = cmd
+        cmd.fab("AKA", "p")
+        cmd.remove("hydro or (resi 2 and name NZ)")
+        row = [r for r in menu.clean(cmd, "p") if r[1] == "fix structure..."][0]
+        self.assertIn('fix_structure_dialog("p")', row[2])
+
+        form = file_dialogs.fix_structure_dialog(window, "p")
+        ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+        self.assertEqual(form.output_command.text(), "fix_structure p, async_=1")
+        form.input_object.setEditText("nothing here")
+        self.assertFalse(ok.isEnabled())
+        form.input_object.setEditText("p")
+        form.input_ph.setValue(5.5)
+        form.input_water.setChecked(False)
+        self.assertEqual(
+            form.output_command.text(),
+            "fix_structure p, keep_water=0, ph=5.5, async_=1",
+        )
+        form.input_hydrogens.setChecked(False)
+        self.assertFalse(form.input_ph.isEnabled())
+        self.assertEqual(
+            form.output_command.text(),
+            "fix_structure p, hydrogens=0, keep_water=0, async_=1",
+        )
+        # the background thread needs a running main loop: call directly
+        with mock.patch.object(cmd, "async_", lambda func, *a, **k: func(*a, **k)):
+            ok.click()
+        self.assertEqual(cmd.count_atoms("p_fixed and resi 2 and name NZ"), 1)
+        self.assertEqual(cmd.count_atoms("p_fixed and hydro"), 0)
+        del app

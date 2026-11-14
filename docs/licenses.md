@@ -66,6 +66,8 @@ them.
 | [PySide6 and Qt 6](https://doc.qt.io/qtforpython-6/licenses.html) | GUI | LGPL-3.0-only (also offered under GPL-2.0-only and GPL-3.0-only) | `pymol/pymol_path/licenses/`, from [packaging/licenses](../packaging/licenses) |
 | [numpy](https://numpy.org) | arrays | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | `numpy-*.dist-info/licenses/` |
 | [RDKit](https://www.rdkit.org) | `load_smiles`; optional, `pip install 'pymolish[chem]'`, in every bundle | BSD-3-Clause | `rdkit-*.dist-info/LICENSE.md` |
+| [PDBFixer](https://github.com/openmm/pdbfixer) | `fix_structure`; optional, `pip install 'pymolish[fix]'`, in every bundle | MIT | `pdbfixer-*.dist-info/licenses/` |
+| [OpenMM](https://openmm.org) | needed by PDBFixer, and `minimize`; optional, same extra, in every bundle | MIT for the API and the Reference and CPU platforms, with small parts under other permissive licenses. The CUDA and OpenCL platforms are LGPL; a bundle does not contain them. | `pymol/pymol_path/licenses/OpenMM.txt`, from [packaging/licenses](../packaging/licenses) |
 | [Pillow](https://python-pillow.github.io) | needed by RDKit; in a bundle only | MIT-CMU | `pillow-*.dist-info/licenses/` |
 | [GLEW](https://glew.sourceforge.net) | OpenGL extensions | BSD 3-Clause; generated parts under the Mesa and MIT licenses | not included |
 | [GLM](https://github.com/g-truc/glm) | vector math, headers only | MIT | not included |

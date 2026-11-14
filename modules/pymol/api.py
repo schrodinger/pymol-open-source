@@ -266,7 +266,8 @@ from .editor import \
       fnab
 
 from .computing import \
-      clean
+      clean, \
+      fix_structure
 
 matrix_transfer = matrix_copy # legacy
 

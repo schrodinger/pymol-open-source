@@ -35,6 +35,11 @@ requires = [
 chem = [
   "rdkit>=2025.3",
 ]
+# "fix_structure" and "minimize"; the release bundles include them
+fix = [
+  "pdbfixer>=1.12",
+  "openmm>=8.2",
+]
 dev = [
   "biopython==1.88",
   "msgpack==1.2.4",

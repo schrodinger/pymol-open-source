@@ -766,6 +766,7 @@ def clean(self_cmd, sele):
             [ 1, rem_col + 'remove ligands', 'cmd.remove("organic and ('+sele+')")' ],
             [ 0, '', '' ],
             [ 1, 'optimize ligand geometry', 'cmd.clean("'+sele+'",async_=1)' ],
+            [ 1, 'fix structure...', 'pymol.gui.get_qtwindow().fix_structure_dialog("'+sele+'")' ],
             ]
 
 def state(self_cmd, sele):

@@ -4,6 +4,28 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.2
+
+	* Fix a structure
+	  - New command (cmd.* API): fix_structure. It repairs a protein
+	    or nucleic acid with PDBFixer and loads the result as a new
+	    object, <object>_fixed: missing heavy atoms of residues that
+	    are present, hydrogens for a pH, nonstandard residues replaced
+	    by the standard one; water and heterogens kept or dropped.
+	    The original is never changed.
+	  - A > clean > fix structure... opens a dialog with the options
+	    and the command it will run, in the background.
+	  - New optional dependencies pdbfixer and openmm, extra "fix":
+	    pip install 'pymolish[fix]'. The release bundles include them
+	    with the Reference and CPU platforms only (13 MB more to
+	    download, docs/baseline.md).
+	  - Not built: whole residues that are missing. PDBFixer finds
+	    them from SEQRES records, which a loaded object does not keep.
+	  - No change to existing cmd.* commands.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.12.1
 
 	* "clean" works for small molecules

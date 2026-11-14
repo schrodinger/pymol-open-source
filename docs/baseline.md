@@ -303,7 +303,12 @@ Linux bundle built on this machine with `packaging/pyinstaller.spec`,
 | without rdkit | 287 MB | 109 MB |
 | with rdkit 2026.9.2 (and the Pillow it needs) | 344 MB | 129 MB |
 
-rdkit adds 57 MB unpacked and 20 MB to the download. `load_smiles` runs in
+| with rdkit, pdbfixer 1.12.0 and openmm 8.6.1 (4.12.2) | 419 MB | 142 MB |
+
+rdkit adds 57 MB unpacked and 20 MB to the download; pdbfixer and openmm add
+75 MB and 13 MB. 64 MB of that is the `openmm` package with its force-field
+files; the OpenCL plugins of the wheel are left out. `fix_structure` runs in
+the bundle with the Reference and CPU platforms. `load_smiles` runs in
 the bundle with no change to the spec except the two license texts. rdkit
 2026.9.2 has wheels for Python 3.13 and 3.14.
 
