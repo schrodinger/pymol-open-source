@@ -501,8 +501,13 @@ from .fetching import \
 from . import smiles
 from .smiles import load_smiles
 
+from . import finding
+from .finding import search_sequence
+
 from . import grouping
 from .grouping import \
+     cluster_ligands, \
+     color_group_with_gradient, \
      copy_group, \
      extract_chain, \
      group_disable, \

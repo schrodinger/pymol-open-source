@@ -4,6 +4,31 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.11.4
+
+	* Sequence search, ligand clusters and group shades, ported from
+	  the pymolish plugin. This finishes the port: the plugin is no
+	  longer needed.
+	  - New commands (cmd.* API): search_sequence, cluster_ligands,
+	    color_group_with_gradient.
+	  - search_sequence takes a regular expression and makes one
+	    selection; no biopython. The plugin's version aligned with
+	    biopython and used alignment positions as residue numbers,
+	    which selected the wrong residues unless numbering started
+	    at 0. Not kept: approximate matches (min_score).
+	  - cluster_ligands uses one method, single linkage, with a
+	    distance cutoff or a number of groups, and gives the same
+	    result every time. It replaces cluster_ligands_by_position
+	    and cluster_ligands_from_group (k-means with random starts,
+	    hierarchical, distance).
+	  - color_group_with_gradient makes shades from dark to light and
+	    no longer defines color names, so a second gradient does not
+	    recolor the first. Not kept: gradient_type and num_colors.
+	  - No change to existing cmd.* commands.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.11.3
 
 	* Molecules from SMILES, ported from the pymolish plugin

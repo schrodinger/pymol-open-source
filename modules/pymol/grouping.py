@@ -295,3 +295,126 @@ def extract_chain(selection, chains="", group="", quiet=1, *, _self=cmd):
     if not int(quiet):
         print(" extract_chain: created %d objects" % len(rows))
     return [name for name, _ in rows]
+
+
+def cluster_ligands(
+    selection, count=0, cutoff=10.0, prefix="cluster", quiet=1, *, _self=cmd
+):
+    """
+    DESCRIPTION
+
+        "cluster_ligands" sorts objects into groups by where they are: the
+        centers of two objects in one group are connected by steps of at
+        most "cutoff". Made for many ligands or docking poses around one
+        protein.
+
+    USAGE
+
+        cluster_ligands selection [, count [, cutoff [, prefix ]]]
+
+    ARGUMENTS
+
+        selection = string: the objects, for example a group of ligands
+
+        count = integer: number of groups to make; the nearest objects are
+        joined first and the cutoff is not used {default: 0, use the cutoff}
+
+        cutoff = float: largest step between two centers in Angstrom
+        {default: 10}
+
+        prefix = string: the groups are named <prefix>_1, <prefix>_2, ...,
+        the largest first {default: cluster}
+
+    EXAMPLE
+
+        cluster_ligands poses
+        cluster_ligands organic, 3, prefix=site
+
+    NOTES
+
+        The objects are moved out of the group they were in. The first
+        state is used.
+
+    SEE ALSO
+
+        group, sort_group
+    """
+    import numpy
+
+    names = _self.get_object_list(selection)
+    if len(names) < 2:
+        raise pymol.CmdException("need two or more objects in '%s'" % selection)
+    centers = numpy.array(
+        [
+            _self.get_coords("(%s) and %%%s" % (selection, n), 1).mean(axis=0)
+            for n in names
+        ]
+    )
+    distance = numpy.linalg.norm(centers[:, None] - centers[None], axis=2)
+    # single linkage: join the nearest pairs first
+    label = list(range(len(names)))
+    left = len(names)
+    for d, i, j in sorted(
+        (distance[i, j], i, j) for i in range(len(names)) for j in range(i)
+    ):
+        if left <= int(count) or (not int(count) and d > float(cutoff)):
+            break
+        if label[i] != label[j]:
+            label = [label[i] if x == label[j] else x for x in label]
+            left -= 1
+    clusters = {}
+    for name, key in zip(names, label):
+        clusters.setdefault(key, []).append(name)
+    groups = []
+    for number, found in enumerate(sorted(clusters.values(), key=len, reverse=True)):
+        groups.append("%s_%d" % (prefix, number + 1))
+        _self.group(groups[-1], " ".join(found))
+    # groups of an earlier run that are empty now
+    for old in _self.get_names("group_objects"):
+        if old.startswith(prefix + "_") and not members(old, _self):
+            _self.delete(old)
+    if not int(quiet):
+        print(" cluster_ligands: %d objects in %d groups" % (len(names), len(groups)))
+    return groups
+
+
+def color_group_with_gradient(selection, color="blue", quiet=1, *, _self=cmd):
+    """
+    DESCRIPTION
+
+        "color_group_with_gradient" gives every object of a selection its
+        own shade of one color, from dark to light in the order of the
+        object list.
+
+    USAGE
+
+        color_group_with_gradient selection [, color ]
+
+    ARGUMENTS
+
+        selection = string: a group name or any selection
+
+        color = string: the color the shades are made from {default: blue}
+
+    EXAMPLE
+
+        color_group_with_gradient poses, orange
+
+    SEE ALSO
+
+        color, spectrum, palette, util.color_objs
+    """
+    import colorsys
+
+    names = _self.get_object_list(selection)
+    if not names:
+        raise pymol.CmdException("no molecular objects in '%s'" % selection)
+    hue, saturation, _ = colorsys.rgb_to_hsv(*_self.get_color_tuple(color))
+    for number, name in enumerate(names):
+        value = 0.3 + 0.7 * number / max(1, len(names) - 1)
+        rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+        _self.color(
+            "0x%02x%02x%02x" % tuple(round(c * 255) for c in rgb),
+            "(%s) and %%%s" % (selection, name),
+        )
+    return names

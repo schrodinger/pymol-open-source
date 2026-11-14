@@ -17,6 +17,9 @@ replace the commands of the pymolish plugin; remove the plugin from
 | `sort_group group [, reverse]` | Sorts the members by name, ignoring case. | `sort_group poses` |
 | `extract_chain selection [, chains [, group]]` | Makes one new object per chain, `<object>_<chain>`. The source is not changed. | `extract_chain poses, A+B, poses_AB` |
 
+| `cluster_ligands selection [, count [, cutoff [, prefix]]]` | Sorts objects into groups by where they are: by a distance cutoff, or into a given number of groups. | `cluster_ligands poses` |
+| `color_group_with_gradient selection [, color]` | Gives every object its own shade of one color, dark to light. | `color_group_with_gradient poses, orange` |
+
 The group row in the Objects panel has four of them in its A menu:
 duplicate group, sort members (a second click sorts Z to A), enable members,
 disable members.
@@ -54,6 +57,12 @@ server.
 In the window: Build > From SMILES..., filled from the clipboard. Needs
 rdkit: the downloadable builds have it, a pip install needs
 `pip install 'pymolish[chem]'`.
+
+## Sequence
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `search_sequence pattern [, name [, selection]]` | Selects the residues of every protein chain that match a sequence or a regular expression. | `search_sequence N[^P][ST], sequon` |
 
 ## Other
 
