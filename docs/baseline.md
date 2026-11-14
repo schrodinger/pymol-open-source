@@ -312,6 +312,20 @@ the bundle with the Reference and CPU platforms. `load_smiles` runs in
 the bundle with no change to the spec except the two license texts. rdkit
 2026.9.2 has wheels for Python 3.13 and 3.14.
 
+### minimize (4.12.3)
+
+`fix_structure`, then `minimize` with 500 steps, CPU platform, 32 threads,
+2026-11-14. Amber14 with GBn2 implicit solvent, heavy atoms restrained.
+
+| Protein | Atoms with hydrogens | No cutoff | 2.0 nm cutoff | 1.0 nm cutoff |
+| --- | --- | --- | --- | --- |
+| 12CA, 260 residues | 4009 | 126 to 272 s | 52 s | 4.3 to 5.9 s |
+| AlphaFold P04637, 393 residues | 6220 | 397 s | not run | 7.3 s |
+
+The heavy-atom RMSD to the start is the same with and without the cutoff
+(0.14 A for 12CA), so the command uses 1.0 nm. `fix_structure` takes 0.7 s
+on both. One force evaluation of 12CA: 1.2 s without a cutoff, 0.05 s with.
+
 ### Batch load (4.11.1)
 
 `load_files` on a folder of 502 small PDB files (24 atoms each, 2 of them

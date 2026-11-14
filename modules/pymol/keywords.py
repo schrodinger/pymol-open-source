@@ -188,6 +188,7 @@ def get_command_keywords(self_cmd=cmd):
         'mdelete'       : [ self_cmd.mdelete           , 0 , 0 , ''  , parsing.STRICT ],
         'mem'           : [ self_cmd.mem               , 0 , 0 , ''  , parsing.STRICT ],
         'meter_reset'   : [ self_cmd.meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
+        'minimize'      : [ self_cmd.minimize          , 0 , 0 , ''  , parsing.STRICT ],
         'minsert'       : [ self_cmd.minsert           , 0 , 0 , ''  , parsing.STRICT ],
         'mmove'         : [ self_cmd.mmove             , 0 , 0 , ''  , parsing.STRICT ],
         'rebond'        : [ self_cmd.rebond            , 0 , 0 , ''  , parsing.STRICT ],

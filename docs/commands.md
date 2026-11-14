@@ -70,9 +70,11 @@ rdkit: the downloadable builds have it, a pip install needs
 | --- | --- | --- |
 | `fix_structure selection [, missing_atoms [, hydrogens [, ph [, nonstandard [, keep_water [, keep_heterogens [, name]]]]]]]` | Repairs a protein with PDBFixer and loads the result as `<object>_fixed`: missing atoms, hydrogens for a pH, nonstandard residues. The original stays. | `fix_structure 1abc, ph=5.5` |
 
+| `minimize selection [, maxiter [, name]]` | Relaxes a protein with OpenMM (Amber14, implicit solvent), heavy atoms held near their place; the result is `<object>_min`. Needs complete residues and no ligands. | `minimize prot` |
+
 `clean` is a PyMOL command that works here: it minimizes one small molecule
 with rdkit. In the window: A > clean on an object, a group or a selection.
-`fix_structure` needs pdbfixer and openmm: the downloadable builds have
+`fix_structure` and `minimize` need pdbfixer and openmm: the downloadable builds have
 them, a pip install needs `pip install 'pymolish[fix]'`.
 
 ## Other

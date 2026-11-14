@@ -50,6 +50,7 @@ the published values. Only the first seven colors are designed as one set.
 | Clean | The A menu of an object, a group, a selection and of "all" has a "clean" submenu: remove waters, remove ions, remove waters and ions, remove ligands. Ions are what the `inorganic` selector matches; additives that contain carbon (glycerol, acetate) count as ligands (4.12.0). |
 | Optimize a ligand | `clean` works: it minimizes one small molecule (up to 1000 atoms) with the MMFF94 force field of rdkit. In the menu: A > clean > optimize ligand geometry; the Clean button of the Builder uses it too. In Open-Source PyMOL the command only raises an error. The atoms around the ligand are not seen, and bond orders are used as they are (4.12.1). |
 | Fix a structure | `fix_structure` repairs a protein with PDBFixer and loads the result as a new object: missing atoms of residues that are present, hydrogens for a pH, nonstandard residues replaced; water, ligands and ions kept or dropped. In the menu: A > clean > fix structure... opens the options. Gaps in the chain are not built (4.12.2). |
+| Relax a protein | `minimize` relaxes a protein with OpenMM (Amber14, implicit solvent) while holding the heavy atoms near their place, and loads the result as a new object. 260 residues take about 5 seconds. In the menu: A > clean > optimize protein geometry. It needs complete residues: run fix structure first. Ligands have no parameters and must be left out (4.12.3). |
 
 ## Speed
 

@@ -17,14 +17,6 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.check
         self.skipTest("TODO")
 
-    def testMinimize(self):
-        cmd.minimize
-        self.skipTest("TODO")
-
-    def testFastMinimize(self):
-        cmd.fast_minimize
-        self.skipTest("TODO")
-
     def testDump(self):
         cmd.dump
         self.skipTest("TODO")

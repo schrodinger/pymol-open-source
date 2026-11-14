@@ -267,7 +267,8 @@ from .editor import \
 
 from .computing import \
       clean, \
-      fix_structure
+      fix_structure, \
+      minimize
 
 matrix_transfer = matrix_copy # legacy
 
@@ -457,9 +458,7 @@ from .experimenting import \
       check,              \
       dump,               \
       get_bond_print,     \
-      fast_minimize,      \
       mem,                \
-      minimize,           \
       spheroid,           \
       focal_blur,         \
       callout,            \

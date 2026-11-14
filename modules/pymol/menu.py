@@ -767,6 +767,7 @@ def clean(self_cmd, sele):
             [ 0, '', '' ],
             [ 1, 'optimize ligand geometry', 'cmd.clean("'+sele+'",async_=1)' ],
             [ 1, 'fix structure...', 'pymol.gui.get_qtwindow().fix_structure_dialog("'+sele+'")' ],
+            [ 1, 'optimize protein geometry', 'cmd.minimize("'+sele+'",async_=1,quiet=0)' ],
             ]
 
 def state(self_cmd, sele):

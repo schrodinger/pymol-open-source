@@ -4,6 +4,30 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.3
+
+	* Relax a protein
+	  - cmd.minimize changed: it is now a command, "minimize selection
+	    [, maxiter [, name ]]". It relaxes a protein with OpenMM
+	    (Amber14, GBn2 implicit solvent, 10 A cutoff, CPU platform)
+	    with the heavy atoms held near their place, and loads the
+	    result as a new object, <object>_min. It prints the energy
+	    before and after and how far the heavy atoms moved.
+	  - Removed: the old cmd.minimize(sele, iter, grad, interval) and
+	    cmd.fast_minimize. They were marked "unsupported
+	    nonfunctional" and needed an external tinker program.
+	  - A > clean > optimize protein geometry.
+	  - fix_structure with hydrogens=1 now builds all hydrogens;
+	    hydrogens that are already there (for example from h_add) are
+	    replaced. Before, a second set was added next to them.
+	  - Limits: standard residues with all atoms, water and simple
+	    ions; no ligands; no chain with a gap. The message says what
+	    to do. 260 residues take about 5 s (docs/baseline.md).
+	  - Step 13 of the roadmap is finished.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.12.2
 
 	* Fix a structure

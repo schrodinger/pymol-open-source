@@ -93,41 +93,6 @@ DESCRIPTION
             realtime.assign("("+selection+")",int(preserve))
             realtime.setup("("+selection+")")
 
-    def fast_minimize(*args, **kwargs):
-        '''
-DESCRIPTION
-
-    "fast_minimize" is an unsupported nonfunctional command that may
-    eventually have something to do with doing a quick clean up of the
-    molecular structure.
-    
-'''
-        kwargs['_setup'] = 0
-        return minimize(*args, **kwargs)
-
-    def minimize(sele='', iter=500, grad=0.01, interval=50, _setup=1, _self=cmd):
-        '''
-DESCRIPTION
-
-    "fast_minimize" is an unsupported nonfunctional command that may
-    eventually have something to do with minimization.
-    
-'''
-        from chempy.tinker import realtime
-
-        if not sele:
-            names = _self.get_names("objects")
-            if not names:
-                return
-            sele = names[0]
-        sele = '(' + sele + ')'
-
-        if not int(_setup) or realtime.setup(sele):
-            _self.async_(realtime.mini, int(iter), float(grad), int(interval), sele)
-        else:
-            print(" minimize: missing parameters, can't continue")
-
-
     def dump(fnam, obj, state=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION

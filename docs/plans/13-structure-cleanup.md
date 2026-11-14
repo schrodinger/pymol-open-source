@@ -1,7 +1,8 @@
 # 13 — Clean, fix and optimize structures
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; source and PyPI
-metadata were read, nothing was installed, built or timed.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · **Done 2026-11-14, 4.12.0 to
+4.12.3.** The text below is the plan as written before the work; the notes
+at each slice say what changed.
 
 **Four layers, cheapest first: remove water and ions (no dependency), make the
 dead `clean` work for ligands (rdkit), repair proteins (PDBFixer), relax
@@ -87,7 +88,9 @@ only the Reference and CPU platforms of OpenMM.
 - Test: build `fab AKA`, delete one side-chain atom, fix, atom count is back;
   skipped without pdbfixer.
 
-**13d, `minimize`.** OpenMM, Amber14, implicit solvent, heavy atoms restrained
+**13d, `minimize`. Done in 4.12.3**, with a 1.0 nm cutoff (45 times faster,
+same result, `docs/baseline.md`); the nonfunctional tinker-based
+`cmd.minimize` and `cmd.fast_minimize` gave up the name. OpenMM, Amber14, implicit solvent, heavy atoms restrained
 so clashes relax without drift; `maxiter` argument.
 - Standard residues, water and ions only. A ligand without parameters gives a
   clear error: remove it or run on the protein alone.

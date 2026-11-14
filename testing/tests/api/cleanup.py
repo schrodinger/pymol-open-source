@@ -1,7 +1,8 @@
 """
 Structure cleanup: the "clean" submenu of the action menus
 (pymol.menu.clean) removes water, ions and ligands; "clean" minimizes a
-small molecule with rdkit; "fix_structure" repairs a protein with PDBFixer.
+small molecule with rdkit; "fix_structure" repairs a protein with PDBFixer;
+"minimize" relaxes it with OpenMM.
 """
 
 import sys
@@ -81,7 +82,7 @@ class TestCleanup(testing.PyMOLTestCase):
             # "remove waters" lives in the submenu only
             self.assertFalse([text for text in labels if "waters" in text])
             submenu = entries[labels.index("clean")][2]
-            self.assertEqual(len(submenu), 8)
+            self.assertEqual(len(submenu), 9)
 
 
 class TestClean(testing.PyMOLTestCase):
@@ -253,3 +254,67 @@ class TestFixStructure(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms("p_fixed and resi 2 and name NZ"), 1)
         self.assertEqual(cmd.count_atoms("p_fixed and hydro"), 0)
         del app
+
+
+class TestMinimize(testing.PyMOLTestCase):
+    def test_without_openmm(self):
+        cmd.fragment("ala", "m")
+        with mock.patch.dict(sys.modules, {"openmm": None, "openmm.app": None}):
+            with self.assertRaisesRegex(CmdException, r"pymolish\[fix\]"):
+                cmd.minimize("m")
+        self.assertIn("minimize", cmd.keyword)
+        self.assertFalse(hasattr(cmd, "fast_minimize"))  # the tinker stub
+
+    @needs_pdbfixer
+    def test_peptide(self):
+        cmd.fab("ACDEFGHIKLMNPQRSTVWY", "p", ss=1)  # with PyMOL's hydrogens
+        fixed = cmd.fix_structure("p")
+        # one set of hydrogens, named as the force field knows them
+        self.assertEqual(cmd.count_atoms(fixed + " and resn GLY and hydro"), 3)
+        # a clash to relax: push one side chain into its neighbor
+        cmd.translate([0.0, 0.0, 1.0], fixed + " and resi 5 and sidechain", camera=0)
+        heavy = cmd.count_atoms(fixed + " and not hydro")
+        name, before, after, rmsd = cmd.minimize(fixed)
+        self.assertEqual(name, "p_fixed_min")
+        self.assertLess(after, before)
+        self.assertLess(rmsd, 0.5)
+        self.assertEqual(cmd.count_atoms(name + " and not hydro"), heavy)
+        self.assertEqual(cmd.count_atoms(name), cmd.count_atoms(fixed))
+        self.assertLess(
+            cmd.rms_cur(
+                name + " and not hydro", fixed + " and not hydro", matchmaker=4
+            ),
+            0.5,
+        )
+        # the original did not move; the name is not reused
+        self.assertEqual(cmd.minimize(fixed, 20)[0], "p_fixed_min01")
+
+    @needs_pdbfixer
+    def test_hydrogens_are_built(self):
+        cmd.fab("AKA", "p")
+        cmd.remove("hydro")
+        fixed = cmd.fix_structure("p", hydrogens=0)  # adds the terminal oxygen
+        self.assertEqual(cmd.count_atoms(fixed + " and hydro"), 0)
+        name = cmd.minimize(fixed, name="relaxed")[0]
+        self.assertEqual(name, "relaxed")
+        self.assertGreater(cmd.count_atoms("relaxed and hydro"), 20)
+
+    @needs_pdbfixer
+    def test_refused(self):
+        # no terminal oxygen: the message sends the user to fix_structure
+        cmd.fab("AKA", "p")
+        with self.assertRaisesRegex(CmdException, "fix_structure"):
+            cmd.minimize("p")
+        # a ligand has no parameters
+        cmd.read_pdbstr(PDB, "m")
+        fixed = cmd.fix_structure("m", hydrogens=0)
+        with self.assertRaisesRegex(CmdException, "polymer"):
+            cmd.minimize(fixed)
+        # a chain with a hole
+        cmd.fab("AAAAAAAA", "long")
+        whole = cmd.fix_structure("long", name="whole")
+        cmd.remove("whole and resi 4-5")
+        with self.assertRaisesRegex(CmdException, "gap between residues 3 and 6"):
+            cmd.minimize("whole")
+        self.assertRaises(CmdException, cmd.minimize, "p or m")
+        self.assertEqual(len(cmd.get_names()), 5)  # nothing was made
