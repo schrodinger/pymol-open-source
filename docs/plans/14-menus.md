@@ -47,7 +47,7 @@ their rows, so the menus are audited once.**
 
 ## Slices
 
-**14a, red squares. Small, no dependency on other steps.**
+**14a, red squares. Done in 4.10.1.**
 - `icons.menu_icon`: fall back to the label's first word, so every
   "delete ..." and "remove ..." row gets the trash icon, tinted red.
   One line. Squares remain only where a row has a color and no icon: the

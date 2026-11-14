@@ -1182,7 +1182,6 @@ def sele_action(self_cmd, sele):
               [ 1, rem_col + 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
               [ 1, 'hydrogens' , hydrogens(self_cmd, sele) ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'duplicate'      ,'cmd.select(None,"'+sele+'")'          ], # broken...
               [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
               [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
               [ 0, ''          ,''                                  ],

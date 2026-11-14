@@ -4,6 +4,21 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.10.1
+
+	* Menus
+	  - "delete object", "delete group", "delete everything", "delete
+	    selections" and "remove waters" show a red trash icon. They had
+	    a red square, which looked like an error mark.
+	  - Rows that start with a word that has an icon get that icon
+	    ("rename object", "reset matrix", "drag coordinates", ...).
+	  - Removed the "duplicate" row from the selection action menu; it
+	    did not work. "copy to object" is next to it.
+	  - No cmd.* change.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.10.0
 
 	* Object color palettes
