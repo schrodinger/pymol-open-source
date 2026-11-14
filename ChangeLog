@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.6
+
+	* Structure repair
+	  - Fix: fix_structure stopped with "could not convert string to
+	    float: '?'" when the structure had a ligand whose definition at
+	    files.rcsb.org has no ideal coordinates (for example PID in
+	    3iis). PDBFixer cannot read such a definition. The ligand is
+	    now kept without hydrogens and a message names it.
+
+2026-11-14 pymolish-studio
+
 	* 4.12.5
 
 	* Menus
