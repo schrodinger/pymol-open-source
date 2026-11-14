@@ -88,7 +88,7 @@ Every dialog runs the command through `cmd.do`, so it lands in the log.
    0.4 s, the loop stays on the GUI thread.
 3. **12c fetch:** `fetching.py`, `color_plddt`, two File entries. Network tests
    stay out of `--run all`. Done in 4.11.2.
-4. **12d rdkit:** `load_smiles`, Build entry, extra `chem`, spec, CI, licenses row.
+4. **12d rdkit:** `load_smiles`, Build entry, extra `chem`, spec, CI, licenses row. Done in 4.11.3.
 5. **12e:** `search_sequence`, `cluster_ligands`.
 
 Each slice: one real test per kept command in `testing/tests/api/` (the

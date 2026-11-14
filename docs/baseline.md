@@ -293,6 +293,20 @@ marching cubes or mesh storage, and the OpenGL display path does not pay it.
 Not optimized: a 1σ contour of a whole EM map is noise, 2σ takes 1.3 s.
 
 
+### Bundle size with rdkit (4.11.3)
+
+Linux bundle built on this machine with `packaging/pyinstaller.spec`,
+2026-11-14, same tree, without and with the `chem` extra installed:
+
+| | unpacked | tar.gz |
+| --- | --- | --- |
+| without rdkit | 287 MB | 109 MB |
+| with rdkit 2026.9.2 (and the Pillow it needs) | 344 MB | 129 MB |
+
+rdkit adds 57 MB unpacked and 20 MB to the download. `load_smiles` runs in
+the bundle with no change to the spec except the two license texts. rdkit
+2026.9.2 has wheels for Python 3.13 and 3.14.
+
 ### Batch load (4.11.1)
 
 `load_files` on a folder of 502 small PDB files (24 atoms each, 2 of them

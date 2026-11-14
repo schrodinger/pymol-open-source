@@ -974,9 +974,9 @@ def file_export_objects(parent):
     return form
 
 
-def _ask_and_run(parent, title, label, command):
+def _ask_and_run(parent, title, label, command, text=""):
     """One text field; the command runs through cmd.do, so it is logged"""
-    text, ok = QtWidgets.QInputDialog.getText(parent, title, label)
+    text, ok = QtWidgets.QInputDialog.getText(parent, title, label, text=text)
     if ok and text.strip():
         parent.cmd.do(command % text.strip())
 
@@ -996,4 +996,16 @@ def file_fetch_fold(parent):
         "Get Predicted Structure",
         "UniProt accession (AlphaFold DB) or protein sequence (ESMFold):",
         "fetch_fold %s, async_=1",
+    )
+
+
+def build_from_smiles(parent):
+    """Build > From SMILES: the field starts with the clipboard text"""
+    clip = QtWidgets.QApplication.clipboard().text().strip()
+    _ask_and_run(
+        parent,
+        "From SMILES",
+        "SMILES:",
+        'load_smiles "%s"',
+        clip if len(clip.split()) == 1 else "",
     )

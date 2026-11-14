@@ -145,6 +145,8 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Redo [Ctrl-Y]', cmd.redo),
             ]),
             ('menu', 'Build', [
+                ('command', 'From SMILES...', self.build_from_smiles),
+                ('separator',),
                 ('menu', 'Fragment', [
                     ('command', 'Acetylene [Alt-J]', "editor.attach_fragment('pk1','acetylene',2,0)"),
                     ('command', 'Amide N->C [Alt-1]', "editor.attach_fragment('pk1','formamide',3,1)"),

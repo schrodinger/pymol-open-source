@@ -31,6 +31,10 @@ requires = [
 ]
 
 [project.optional-dependencies]
+# SMILES to 3D ("load_smiles"); the release bundles include it
+chem = [
+  "rdkit>=2025.3",
+]
 dev = [
   "biopython==1.88",
   "msgpack==1.2.4",

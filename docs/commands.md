@@ -45,6 +45,16 @@ Structure.... These commands ask rest.uniprot.org, alphafold.ebi.ac.uk and
 api.esmatlas.com; a sequence given to `fetch_fold` is sent to the ESMFold
 server.
 
+## Molecules from SMILES
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `load_smiles smiles [, name [, conformers [, group]]]` | Builds a molecule from a SMILES in quotes, with hydrogens and minimized 3D coordinates; conformers become states. A text or CSV file gives one molecule per line (SMILES, then an optional name). | `load_smiles "CC(=O)Oc1ccccc1C(=O)O", aspirin` |
+
+In the window: Build > From SMILES..., filled from the clipboard. Needs
+rdkit: the downloadable builds have it, a pip install needs
+`pip install 'pymolish[chem]'`.
+
 ## Other
 
 | Command | What it does | Example |

@@ -498,6 +498,9 @@ from .fetching import \
      fetch_fold, \
      list_uniprot_structures
 
+from . import smiles
+from .smiles import load_smiles
+
 from . import grouping
 from .grouping import \
      copy_group, \

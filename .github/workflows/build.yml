@@ -43,7 +43,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
-        pip install "$(ls dist/*.whl)[dev]"
+        pip install "$(ls dist/*.whl)[dev,chem]"
       env:
         # the 3.13 job ships the preview artifacts, so it is a release build
         DEBUG: ${{ matrix.python-version != '3.13' && '1' || '' }}
@@ -141,7 +141,7 @@ jobs:
       run: |
         pixi run -e ${{ matrix.python }} pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
         $whl = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
-        pixi run -e ${{ matrix.python }} pip install "$whl[dev]"
+        pixi run -e ${{ matrix.python }} pip install "$whl[dev,chem]"
 
     - name: Test
       run: pixi run -e ${{ matrix.python }} pymolish -ckqy testing\testing.py --run all
@@ -191,7 +191,7 @@ jobs:
     - name: Build PyMOL
       run: |
         pixi run -e ${{ matrix.python }} pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
-        pixi run -e ${{ matrix.python }} pip install "$(ls dist/*.whl)[dev]"
+        pixi run -e ${{ matrix.python }} pip install "$(ls dist/*.whl)[dev,chem]"
 
     - name: Test
       run: pixi run -e ${{ matrix.python }} pymolish -ckqy testing/testing.py --run all

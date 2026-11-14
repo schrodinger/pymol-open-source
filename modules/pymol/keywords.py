@@ -163,6 +163,7 @@ def get_command_keywords(self_cmd=cmd):
         'list_uniprot_structures': [ self_cmd.list_uniprot_structures, 0 , 0 , ''  , parsing.STRICT ],
         'load_mtz'      : [ self_cmd.load_mtz          , 0 , 0 , ''  , parsing.STRICT ],
         'load_png'      : [ self_cmd.load_png          , 0 , 0 , ''  , parsing.STRICT ],
+        'load_smiles'  : [ self_cmd.load_smiles        , 0 , 0 , ''  , parsing.STRICT ],
         'load_traj'     : [ self_cmd.load_traj         , 0 , 0 , ''  , parsing.STRICT ],
         'log'           : [ self_cmd.log               , 0 , 0 , ''  , parsing.STRICT ],
         'log_close'     : [ self_cmd.log_close         , 0 , 0 , ''  , parsing.STRICT ],

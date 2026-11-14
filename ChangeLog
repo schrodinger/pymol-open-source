@@ -4,6 +4,26 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.11.3
+
+	* Molecules from SMILES, ported from the pymolish plugin
+	  - New command (cmd.* API): load_smiles. 3D coordinates from
+	    rdkit (ETKDGv3, then MMFF94 or UFF). Build > From SMILES...
+	    starts with the clipboard text.
+	  - New optional dependency rdkit, extra "chem":
+	    pip install 'pymolish[chem]'. The release bundles include it
+	    (20 MB more to download, docs/baseline.md). Without rdkit the
+	    command says how to install it.
+	  - Different from the plugin: one conformer by default (was 10);
+	    conformers are states of one object, "split_states" makes
+	    objects (no "mode"); no "seed" and no "name_column": a file
+	    has the SMILES in column 1 and the name in column 2.
+	    paste_smiles is the menu entry.
+	  - No change to existing cmd.* commands.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.11.2
 
 	* Structures by UniProt accession, ported from the pymolish plugin
