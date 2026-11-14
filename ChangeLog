@@ -4,6 +4,21 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.4
+
+	* Builder
+	  - Fix: under WSL (WSLg, X11) a floating panel such as the Builder
+	    was drawn in the corner of the screen and could not be moved,
+	    closed or clicked. WSLg does not place "utility" windows, which
+	    is what Qt makes of a floating dock; there they are now dialog
+	    windows.
+	  - The ring buttons are drawn with white lines in the dark theme.
+	  - Removed: the "Undo Enabled" checkbox. It set suspend_undo, which
+	    this version of PyMOL does not support; opening the Builder
+	    printed a warning. Undo and Redo stay.
+
+2026-11-14 pymolish-studio
+
 	* 4.12.3
 
 	* Relax a protein

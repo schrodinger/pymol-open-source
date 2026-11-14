@@ -1271,6 +1271,7 @@ def execapp():
     app.setWindowIcon(make_pymol_qicon())
     theme.apply(app, theme.is_dark())
     theme.round_menus(app)
+    theme.float_docks_as_dialogs(app)
 
     window = PyMOLQtGUI()
     window.setWindowTitle("pymolish-studio")

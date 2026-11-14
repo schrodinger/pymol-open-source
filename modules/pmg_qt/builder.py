@@ -1041,6 +1041,7 @@ class _BuilderPanel(QtWidgets.QWidget):
         self.setLayout(self.layout)
         self.buttons_layout = QtWidgets.QVBoxLayout()
 
+        self.btn_icons = {}  # changeEvent may come before the buttons exist
         self.tabs = QtWidgets.QTabWidget(self)
         self.layout.setContentsMargins(5, 5, 5, 5);
         self.layout.setSpacing(5);
@@ -1111,8 +1112,6 @@ class _BuilderPanel(QtWidgets.QWidget):
             ]
         ]
 
-        self.btn_icons = {}
-
         requestsize = QtCore.QSize(48, 48)
         for row, btn_row in enumerate(buttons):
             for col, bb in enumerate(btn_row):
@@ -1120,7 +1119,6 @@ class _BuilderPanel(QtWidgets.QWidget):
                 btn = makeFragmentButton()
                 if btn_label.startswith('#'):
                     icons = self.icons[btn_label[1:]]
-                    btn.setIcon(icons[0])
                     btn.setIconSize(icons[1].actualSize(requestsize))
                     self.btn_icons[btn] = icons
                 else:
@@ -1258,7 +1256,6 @@ class _BuilderPanel(QtWidgets.QWidget):
               ( "@   ", None, None),
               ( "$Bumps", "Show VDW contacts during sculpting", "sculpt_vdw_vis_mode"),
               ( "@   ", None, None),
-              ( "#Undo Enabled", "", "suspend_undo"),
               ( "Undo", "Undo last change", self.undo),
               ( "Redo", "Redo last change", self.redo),
             ]
@@ -1271,23 +1268,13 @@ class _BuilderPanel(QtWidgets.QWidget):
                 btn_label, btn_tooltip, btn_command = bb
                 if btn_label[0] == '@':
                     btn = QtWidgets.QLabel(btn_label[1:])
-                elif btn_label[0] in ('#', '$'):
+                elif btn_label[0] == '$':
                     btn = QtWidgets.QCheckBox(btn_label[1:])
                     setting = btn_command
-                    value = self.cmd.get_setting_int(setting)
-                    if btn_label[0] == '$':
-                        btn.setChecked(bool(value))
-                        @btn.toggled.connect
-                        def _(checked, n=setting):
-                            self.cmd.set(n, checked, quiet=0)
-                    else:
-                        btn.setChecked(not value)
-                        def _(checked, n=setting):
-                            self.cmd.set(n, not checked, quiet=0)
-                        if setting == 'suspend_undo':
-                            self.setUndoEnabled(not value)
-                            _ = self.setUndoEnabled
-                        btn.toggled.connect(_)
+                    btn.setChecked(bool(self.cmd.get_setting_int(setting)))
+                    @btn.toggled.connect
+                    def _(checked, n=setting):
+                        self.cmd.set(n, checked, quiet=0)
                 else:
                     btn = makeFragmentButton()
                     btn.setText(btn_label)
@@ -1297,28 +1284,18 @@ class _BuilderPanel(QtWidgets.QWidget):
                 btn_row_layout.addWidget(btn)
             btn_row_layout.addStretch()
 
-    def setUndoEnabled(self, checked):
-        self.cmd.set('suspend_undo', not checked, quiet=0)
-        if not checked:
-            return
+        self.themeIcons()
 
-        on_per_object = set(oname for oname in self.cmd.get_object_list()
-                if self.cmd.get_setting_int('suspend_undo', oname))
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
+            self.themeIcons()
+        super().changeEvent(event)
 
-        n = len(on_per_object)
-        if n > 20:
-            on_per_object = sorted(on_per_object)[:15] + [
-                    "[{} more]".format(n - 15)]
-
-        if on_per_object:
-            QMB = QtWidgets.QMessageBox
-            check = QMB.question(None, 'Enable for objects?',
-                    'Building "Undo" is disabled for the following objects:\n\n' +
-                    '\n'.join(on_per_object) + '\n\n'
-                    'Enable "Undo" for these objects?', QMB.StandardButton.Yes | QMB.StandardButton.No)
-            if check == QMB.StandardButton.Yes:
-                for oname in on_per_object:
-                    self.cmd.unset('suspend_undo', oname)
+    def themeIcons(self):
+        """The ring icons are black lines: use the inverted ones on dark."""
+        dark = self.palette().window().color().lightness() < 128
+        for btn, icons in self.btn_icons.items():
+            btn.setIcon(icons[dark])
 
     def getIcons(self):
         self.icons = {}

@@ -76,3 +76,32 @@ class TestTheme(testing.PyMOLTestCase):
             self.assertEqual(theme.ui_scale(), 1.5)
             settings.return_value.value.side_effect = lambda key, default: "1.2"
             self.assertEqual(theme.ui_scale(), 1.2)
+
+    def test_float_docks_as_dialogs(self):
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from pymol.Qt import QtCore, QtWidgets
+        from pmg_qt import theme
+
+        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+        mask = QtCore.Qt.WindowType.WindowType_Mask
+        f = theme._DialogDocks()
+        app.installEventFilter(f)
+        try:
+            win = QtWidgets.QMainWindow()
+            dock = QtWidgets.QDockWidget("d", win)
+            dock.setFloating(True)
+            dock.show()
+            self.assertEqual(dock.windowFlags() & mask, QtCore.Qt.WindowType.Dialog)
+            self.assertTrue(dock.isVisible() and dock.isFloating())
+            win.addDockWidget(QtCore.Qt.DockWidgetArea.TopDockWidgetArea, dock)
+            dock.setFloating(False)  # docked again: no longer a window
+            self.assertFalse(dock.isWindow())
+        finally:
+            app.removeEventFilter(f)
+
+        # only where WSLg draws X11 windows
+        with_filter = []
+        fake = type("A", (), {"platformName": lambda s: "xcb"})()
+        fake.installEventFilter = with_filter.append
+        theme.float_docks_as_dialogs(fake, {})
+        self.assertEqual(with_filter, [])
