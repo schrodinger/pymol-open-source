@@ -63,7 +63,7 @@ The top-level "remove waters" row goes away (it moved): one less duplicate for
 
 ## Slices
 
-**13a, remove.** Menu rows only; no new command, the selectors are the API.
+**13a, remove. Done in 4.12.0.** Menu rows only; no new command, the selectors are the API.
 Test: PDB string with protein, water, Na and a ligand; after each entry the
 matching `count_atoms` is 0 and the rest is unchanged.
 

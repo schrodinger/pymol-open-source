@@ -758,6 +758,14 @@ def hydrogens(self_cmd, sele):
            [ 1, 'remove nonpolar' , 'cmd.remove("'+sele+' & hydro & not nbr. (don.|acc.)")' ],
            ]
 
+def clean(self_cmd, sele):
+    return [[ 2, 'Clean:', '' ],
+            [ 1, rem_col + 'remove waters', 'cmd.remove("solvent and ('+sele+')")' ],
+            [ 1, rem_col + 'remove ions', 'cmd.remove("inorganic and ('+sele+')")' ],
+            [ 1, rem_col + 'remove waters and ions', 'cmd.remove("(solvent or inorganic) and ('+sele+')")' ],
+            [ 1, rem_col + 'remove ligands', 'cmd.remove("organic and ('+sele+')")' ],
+            ]
+
 def state(self_cmd, sele):
     return [[ 2, 'State:'       ,''                        ],
               [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+sele+'")'        ],
@@ -1172,7 +1180,7 @@ def sele_action(self_cmd, sele):
               [ 1, 'origin'         ,'cmd.origin("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'drag coordinates'     , 'cmd.drag("'+sele+'")'    ],
-              [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],
+              [ 1, 'clean'       , clean(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
               [ 1, 'modify', modify_sele(self_cmd, sele) ],
               [ 1, 'preset'         ,presets(self_cmd, sele)         ],
@@ -1244,7 +1252,7 @@ def group_action(self_cmd, sele):
             [ 1, del_col + 'delete group', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],
-            [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
+            [ 1, 'clean'     , clean(self_cmd, sele)    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'state'          , state(self_cmd, sele)         ],
             [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1264,7 +1272,7 @@ def mol_action(self_cmd, sele):
             [ 1, 'reset matrix' , 'cmd.reset(object="'+sele+'")' ],
             [ 0, ''               ,''                             ],
             [ 1, 'drag coordinates' , 'cmd.drag("('+sele+')")' ],
-            [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],
+            [ 1, 'clean'       , clean(self_cmd, sele) ],
             [ 0, ''          ,''                                              ],
             [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
             [ 1, 'find',     find(self_cmd, sele) ],
@@ -1279,7 +1287,6 @@ def mol_action(self_cmd, sele):
             [ 1, del_col + 'delete object', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],
-            [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
             [ 0, ''          ,''                                              ],
               [ 1, 'state'          , state(self_cmd, sele)         ],
               [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1514,7 +1521,7 @@ def all_action(self_cmd, sele):
               [ 1, 'hydrogens' ,hydrogens(self_cmd, sele)     ],
 #              [ 1, 'add hydrogens' ,'cmd.h_add("'+sele+'")'     ],
 #              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+sele+'))")'     ],
-              [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
+              [ 1, 'clean'     , clean(self_cmd, sele) ],
               [ 0, ''             , ''                      ],
               [ 1, del_col + 'delete selections', 'map(cmd.delete,cmd.get_names("selections"))'     ],
               [ 0, ''          ,''                                              ],

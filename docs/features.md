@@ -42,6 +42,13 @@ loaded. `palette default` is the PyMOL order.
 `colorblind` is Okabe-Ito followed by Paul Tol's bright and muted sets, with
 the published values. Only the first seven colors are designed as one set.
 
+## New commands and menu entries
+
+| What | How it works now |
+| --- | --- |
+| Commands from the pymolish plugin | 18 commands are built in: groups, folders, UniProt and predicted structures, SMILES, sequence search. [Commands](commands.md) lists them (4.11.0 to 4.11.4). |
+| Clean | The A menu of an object, a group, a selection and of "all" has a "clean" submenu: remove waters, remove ions, remove waters and ions, remove ligands. Ions are what the `inorganic` selector matches; additives that contain carbon (glycerol, acetate) count as ligands (4.12.0). |
+
 ## Speed
 
 Each change was measured before and after on the same machine. Method and all
