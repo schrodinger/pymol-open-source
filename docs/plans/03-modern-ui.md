@@ -1,6 +1,6 @@
 # 3 — Modern workspace and metadata panel
 
-[Roadmap](../../PLAN.md) · Draft; no UI prototype implemented
+[Roadmap](../../PLAN.md) · Slices 1 to 4 shipped, 5 partly; slice 6 (menus) is [step 14](14-menus.md)
 
 **Evolve the existing main window into a clear molecular workspace.** Deliver
 movable, resizable panels and a useful metadata table before replacing every
@@ -108,7 +108,7 @@ banner) are not imitated.
 | 4 | **Toggle bar** under the content panel: mouse mode (the Mouse menu), Wizard (the Wizard menu), SEQ (sequence viewer), `>_` (show or hide the command area). The states panel sits above it ([step 6](06-states-panel.md)). | `object_panel.py` footer, filled by the window | Done 4.5.14 |
 | 5 | Saved layouts are versioned again (2) so the command area starts at the bottom. `pymolish -x` (no external GUI) hides the toolbar and the command area as before. | `pymol_qt_gui.py` | Done 4.5.14 |
 | 6 | Scenes as a docked panel with thumbnails, like the reference's left panel. Today "Scenes" opens the existing dialog. | | Open |
-| 7 | Icons for the toolbar. Text labels for now. The menu icons of step 11 (Lucide) are the set to use. | | Open |
+| 7 | Icons for the toolbar, from the Lucide set of step 11. | `action_toolbar.py`, `icons.py` | Done 4.7.0 ([step 7](07-toolbar-icons-scale.md)) |
 | 11 | **Menu look.** Request 2026-11-12 with a reference picture: rounded menus, roomy rows, thin-line icons, hairline separators. One style for every menu in the window (`pymol.sty`); `theme.round_menus` makes the window corners see-through. Icons: 43 Lucide drawings (ISC license, `data/pmg_qt/icons/lucide/`), matched to menu labels in `icons.py` and tinted with the text color; delete, reinitialize and quit keep their red. Menu titles are muted captions. Tear-off rows are removed. | `icons.py`, `pymol.sty`, `theme.py`, `object_panel.py` | Done 4.5.18 |
 | 8 | Timeline. Not planned: no timeline feature exists in this code base. | | Skipped |
 | 10 | **Menus stay on the screen under WSLg.** Reported 2026-11-12: with the window maximized, the Color menu of the Objects panel opened its submenu to the right, off the screen. Cause: under Wayland the compositor places popups, and WSLg's does not flip or slide them. On WSL the GUI now starts through X11 (`QT_QPA_PLATFORM=xcb;wayland` unless the user set one), where Qt places menus itself. Checked maximized at 150 %: menu inside the screen, submenu to its left. | `theme.py` `prefer_x11_on_wsl` | Done 4.5.17 |

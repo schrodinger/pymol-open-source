@@ -1,6 +1,6 @@
 # 1 — Performance and GPU
 
-[Roadmap](../../PLAN.md) · Draft; no timings measured in this review
+[Roadmap](../../PLAN.md) · 1a done, 1b in progress; timings are in the Status sections and in [docs/baseline.md](../baseline.md)
 
 **Improve the operation a profile identifies.** Interactive graphics already use
 OpenGL. Loading, geometry generation, ray tracing, callbacks and GPU submission

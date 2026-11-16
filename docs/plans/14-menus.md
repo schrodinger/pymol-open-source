@@ -1,7 +1,7 @@
 # 14 — Action and right-click menus
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; menu code was read,
-nothing was changed or counted beyond the `grep` numbers below.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · 14a and 14b done, one decision
+applied in 4.12.5, 14c waits for the user's answer on the table below.
 
 **The red squares are a rendering artifact, fixed in one line (14a, do it
 early). The real cleanup (14b, 14c) waits until steps 12 and 13 have added
@@ -33,7 +33,6 @@ their rows, so the menus are audited once.**
   | `sele_action2`: 10 of its 16 rows are also in `sele_action`; one caller | `menu.py:1195`, `:1718` |
   | `group_action`: 17 of its 21 rows are also in `mol_action` | `menu.py:1221`, `:1252` |
   | `duplicate`, marked `# broken...` | `menu.py:1185` |
-  | `clean`, raises until [step 13](13-structure-cleanup.md) | `mol_action`, `sele_action` |
   | `test1`, `test2` builders, no caller found in Python or C++ | `menu.py:1487`, `:1494` |
   | zoom, orient, center, origin at the top of every A menu and in the toolbar | removed from the A and right-click menus in 4.12.5 (decision 2026-11-14); the toolbar and a double click on a row stay |
 
@@ -69,7 +68,8 @@ their rows, so the menus are audited once.**
 
 A throwaway script called every builder with real objects (a peptide, a
 selection, a group, a map, a mesh, a surface, a distance) and walked the
-submenus. Before numbers: `menu.py` has 1,869 lines and 127 builders.
+submenus. Before numbers: `menu.py` has 1,869 lines and 127 builders
+(1,809 lines after 4.12.5; the row counts below are from before it).
 
 | Menu | Top rows | Rows at all levels |
 | --- | --- | --- |
