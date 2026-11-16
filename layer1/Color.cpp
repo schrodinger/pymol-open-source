@@ -774,8 +774,10 @@ const char *ColorGetName(PyMOLGlobals * G, int index)
   if((index >= 0) && (index < I->Color.size())) {
     return I->Color[index].Name;
   } else if((index & cColor_TRGB_Mask) == cColor_TRGB_Bits) {
-    index = (((index & 0xFFFFFF) | ((index << 2) & 0xFC000000) |        /* convert 6 bits of trans into 8 */
-              ((index >> 4) & 0x03000000)));
+    /* convert 6 bits of trans into 8; unsigned: the shift overflows an int */
+    const unsigned trgb = index;
+    index = (trgb & 0xFFFFFF) | ((trgb << 2) & 0xFC000000) |
+            ((trgb >> 4) & 0x03000000);
     if(index & 0xFF000000)      /* if transparent */
       snprintf(I->RGBName, std::size(I->RGBName), "0x%08x", index);
     else                        /* else */

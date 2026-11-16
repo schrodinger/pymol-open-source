@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.14.1
+
+	* Core
+	  - Fix: the name of a color number with transparency bits
+	    (0x4xxxxxxx) was computed with a left shift that overflows a
+	    signed int, which is undefined behavior. Found by running
+	    preset.look under the sanitizers. Same name as before.
+	  - No cmd.* change.
+
+2026-11-16 pymolish-studio
+
 	* 4.14.0
 
 	* Presets and looks
