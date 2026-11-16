@@ -10133,16 +10133,11 @@ pymol::Result<> ExecutiveLabel(PyMOLGlobals* G, const char* str1,
 }
 
 /*========================================================================*/
-#ifdef _WEBGL
-#else
 pymol::Result<int> ExecutiveIterate(PyMOLGlobals* G, const char* str1,
     const char* expr, int read_only, int quiet, PyObject* space)
-#endif
 {
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRecInit(&op1);
-#ifdef _WEBGL
-#endif
   SelectorTmp tmpsele1(G, str1);
   int sele1 = tmpsele1.getIndex();
   op1.i1 = 0;
@@ -10150,11 +10145,8 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals* G, const char* str1,
     op1.code = OMOP_ALTR;
     op1.i1 = 0;
     op1.i2 = read_only;
-#ifdef _WEBGL
-#else
     op1.s1 = expr;
     op1.py_ob1 = space;
-#endif
 
     if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
       return pymol::Error();
@@ -10387,15 +10379,10 @@ pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
 }
 
 /*========================================================================*/
-#ifdef _WEBGL
-#else
 pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
     const char* str1, const char* expr, int read_only, int quiet,
     PyObject* space)
-#endif
 {
-#ifdef _WEBGL
-#endif
   SelectorTmp tmpsele1(G, str1);
   int sele1 = tmpsele1.getIndex();
   if (sele1 >= 0) {
@@ -10421,11 +10408,8 @@ pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
 
     for (state = start_state; state < stop_state; state++) {
       op1.code = OMOP_AlterState;
-#ifdef _WEBGL
-#else
       op1.s1 = expr;
       op1.py_ob1 = space;
-#endif
       op1.i2 = state;
       op1.i3 = read_only;
       if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {

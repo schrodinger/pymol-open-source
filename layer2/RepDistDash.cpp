@@ -31,9 +31,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"ShaderMgr.h"
 #include"CoordSet.h"
-#ifdef _WEBGL
-#include "WebPyMOLLibrary.h"
-#endif
 
 #include <optional>
 

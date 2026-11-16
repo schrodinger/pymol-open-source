@@ -51,8 +51,6 @@ Z* -------------------------------------------------------------------
 
 #include "Property.h"
 
-#ifdef _WEBGL
-#endif
 
 #define cMaxNegResi 100
 
@@ -9194,8 +9192,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   PyMOLGlobals *G = I->G;
   PyObject* expr_co = nullptr;
   int compileType = Py_single_input;
-#ifdef _WEBGL
-#endif
   PRINTFD(G, FB_ObjectMolecule)
     " %s-DEBUG: sele %d op->code %d\n", __func__, sele, op->code ENDFD;
   if(sele >= 0) {
@@ -10147,8 +10143,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       op->py_ob1))
                     op->i1++;
                   else
-#ifdef _WEBGL
-#endif
                     ok = false;
                 }
                 break;
@@ -10164,8 +10158,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                           op->i1++;
                           hit_flag = true;
                         } else
-#ifdef _WEBGL
-#endif
                           ok = false;
                       }
                     }

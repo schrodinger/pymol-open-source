@@ -4252,9 +4252,7 @@ static OptimizeSphereData GetOptimizeSphereData(
       }
       leftOverCGO->add_to_cgo(op, pc);
     }
-#ifndef _WEBGL
     ok &= !I->G->Interrupt;
-#endif
   }
   return sphereData;
 }

@@ -4,9 +4,6 @@
 #include "Feedback.h"
 
 #include <stdlib.h>
-#ifdef _WEBGL
-#include <emscripten.h>
-#endif
 
 #include <iostream>
 // -----------------------------------------------------------------------------
@@ -14,10 +11,7 @@
   // Prints a backtrace during runtime of the last ^ stack frames
   void print_trace();
   void print_trace() {
-#ifdef _WEBGL
-#else
     printf("Use debugger with `b %s` to get a backtrace\n", __func__);
-#endif
   }
 
 bool glCheckOkay() {
@@ -36,16 +30,12 @@ bool CheckGLErrorOK(PyMOLGlobals* G, std::string_view errString)
 {
   GLenum err;
   if ((err = glGetError()) != 0) {
-#ifdef _WEBGL
-    print_trace();
-#else
     if (G) {
       PRINTFB(G, FB_CGO, FB_Errors)
       "GL_Error: 0x%04x @ %s\n", err, errString.data() ENDFB(G);
     } else {
       printf("GL_ERROR : 0x%04x %s\n", err, errString.data());
     }
-#endif
   }
   return err == 0;
 }

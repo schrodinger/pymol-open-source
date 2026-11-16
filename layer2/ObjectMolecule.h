@@ -34,8 +34,6 @@ Z* -------------------------------------------------------------------
 #include "Sculpt.h"
 #include <memory>
 
-#ifdef _WEBGL
-#endif
 
 #define cKeywordAll "all"
 #define cKeywordNone "none"
@@ -144,8 +142,6 @@ struct ObjectMoleculeOpRec {
   ObjectMolecule **obj1VLA, *obj3;
   AtomInfoType *ai, **ai1VLA;
   PyObject *py_ob1;
-#ifdef _WEBGL
-#endif
   float ttt[16], *mat1;
   int nvv1, nvv2;
   int include_static_singletons;

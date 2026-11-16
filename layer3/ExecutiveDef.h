@@ -74,8 +74,6 @@ struct CExecutive : public Block {
 
   std::vector<PanelRec> Panel{};
 
-#ifdef _WEBGL
-#endif
   int CaptureFlag {};
   int LastMotionCount {};
   CGO *selIndicatorsCGO { nullptr };

@@ -202,10 +202,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   bool use_shaders = SettingGet<bool>(G, cSetting_use_shaders);
   int last_grid_active = I->grid.active;
   I->n_texture_refreshes = 0;
-#if defined(_WEBGL) && defined(PYMOL_EVAL)
-  if (!OrthoEvalCheck(G))
-    return;
-#endif
   PRINTFD(G, FB_Scene)
   " SceneRender: entered. pick %p x %d y %d smp %p\n", (void*) renderInfo.pick,
       renderInfo.mousePos.x, renderInfo.mousePos.y,
@@ -336,9 +332,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
     if (!(renderInfo.pick || renderInfo.sceneMultipick))
       bg_grad(G);
 
-#ifndef _WEBGL
     glLineWidth(SettingGet<float>(G, cSetting_line_width));
-#endif
     glEnable(GL_DEPTH_TEST);
 
     /* get matrixes for unit objects */
@@ -652,9 +646,7 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
 
   auto use_shader = info->use_shaders;
 
-#ifndef _WEBGL
   glLineWidth(fat ? 3.0 : 1.0);
-#endif
 
   switch (obj->getRenderContext()) {
   case pymol::RenderContext::UnitWindow:
@@ -751,10 +743,6 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
   CScene* I = G->Scene;
   int state = SceneGetState(G);
   RenderInfo info;
-#if defined(_WEBGL) && defined(PYMOL_EVAL)
-  if (!OrthoEvalCheck(G))
-    return;
-#endif
   info.pick = pickmgr;
   info.pass = pass;
   info.vertex_scale = I->VertexScale;

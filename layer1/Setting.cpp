@@ -2787,8 +2787,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_chromadepth:
   case cSetting_transparency_mode:
   if (index == cSetting_transparency_mode)
-#ifdef _WEBGL
-#endif
     ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvAll);
   case cSetting_depth_cue:
   case cSetting_fog:

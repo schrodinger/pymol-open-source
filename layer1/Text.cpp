@@ -57,10 +57,6 @@ struct CText {
   float Spacing, Just;
   float LabelBuf[2];
 
-#ifdef _WEBGL
-  bool XHRFetched[NFONTS] = {};
-  bool XHRFailed[NFONTS] = {};
-#endif
 
   bool Flat = false;
   bool IsPicking = false;
@@ -454,10 +450,7 @@ int TextInit(PyMOLGlobals * G)
   I->addFont(4, new CFontGLUT(G, &FontGLUTBitmapHelvetica18));
 
 #ifdef _PYMOL_FREETYPE
-#if !defined(_WEBGL) || defined(_WEBGL_INCLUDE_DEFAULT_FONT)
   I->addFont(5, FontTypeNew(G, TTF_DejaVuSans_dat, TTF_DejaVuSans_len));
-#endif
-#ifndef _WEBGL
   I->addFont(6, FontTypeNew(G, TTF_DejaVuSans_Oblique_dat, TTF_DejaVuSans_Oblique_len));
   I->addFont(7, FontTypeNew(G, TTF_DejaVuSans_Bold_dat, TTF_DejaVuSans_Bold_len));
   I->addFont(8, FontTypeNew(G, TTF_DejaVuSans_BoldOblique_dat, TTF_DejaVuSans_BoldOblique_len));
@@ -471,7 +464,6 @@ int TextInit(PyMOLGlobals * G)
   I->addFont(16, FontTypeNew(G, TTF_GenI102_dat, TTF_GenI102_len));
   I->addFont(17, FontTypeNew(G, TTF_DejaVuSerif_Oblique_dat, TTF_DejaVuSerif_Oblique_len));
   I->addFont(18, FontTypeNew(G, TTF_DejaVuSerif_BoldOblique_dat, TTF_DejaVuSerif_BoldOblique_len));
-#endif
 #endif
 
   return true;

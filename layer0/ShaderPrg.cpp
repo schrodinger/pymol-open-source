@@ -27,9 +27,6 @@ Z* -------------------------------------------------------------------
 #include "Vector.h"
 #include "Texture.h"
 #include "Matrix.h"
-#ifdef _WEBGL
-#include "WebPyMOLLibrary.h"
-#endif
 
 const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
 

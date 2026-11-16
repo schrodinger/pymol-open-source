@@ -220,14 +220,6 @@ bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent)
 	    xoff = I->xpos;
 	    yoff = I->ypos;
         I->texture->texture_subdata_2D(xoff, yoff, w, h, temp_buffer.data());
-#ifdef _WEBGL
-              static bool error_flag = false;
-              if ((glGetError()) != 0 && error_flag) {
-                PRINTFB(G, FB_OpenGL, FB_Output)
-                  " IE11 texSubImage2D bug detected, supressing...\n" ENDFB(G);
-                error_flag = true;
-              }
-#endif
           }
         }
 	if (I->ypos + h > I->maxypos){

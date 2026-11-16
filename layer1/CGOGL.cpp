@@ -201,10 +201,6 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
   (void) narrays;
   if (I->use_shader) {
 
-#ifdef _WEBGL
-    uint buffers[3] = {0, 0, 0};
-    glGenBuffers(3, buffers);
-#endif
 
     if (arrays & CGO_VERTEX_ARRAY)
       glEnableVertexAttribArray(VERTEX_POS);
@@ -220,29 +216,13 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
     }
 
     if (arrays & CGO_VERTEX_ARRAY) {
-#ifdef _WEBGL
-      glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-      glBufferData(
-          GL_ARRAY_BUFFER, sizeof(float) * nverts * 3, data, GL_STATIC_DRAW);
-      glVertexAttribPointer(
-          VERTEX_POS, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
-#else
     glVertexAttribPointer(
         VERTEX_POS, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE, 0, data);
-#endif
       data += nverts * VERTEX_POS_SIZE;
     }
     if (arrays & CGO_NORMAL_ARRAY) {
-#ifdef _WEBGL
-      glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-      glBufferData(
-          GL_ARRAY_BUFFER, sizeof(float) * nverts * 3, data, GL_STATIC_DRAW);
-      glVertexAttribPointer(
-          VERTEX_NORMAL, VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
-#else
     glVertexAttribPointer(
         VERTEX_NORMAL, VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, data);
-#endif
       data += nverts * VERTEX_NORMAL_SIZE;
     }
     if (I->isPicking) {
@@ -250,29 +230,14 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
         data += nverts * VERTEX_COLOR_SIZE;
       }
       if (arrays & CGO_PICK_COLOR_ARRAY) {
-#ifdef _WEBGL
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
-        glBufferData(GL_ARRAY_BUFFER, nverts * 4, data, GL_STATIC_DRAW);
-        glVertexAttribPointer(
-            VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
-#else
       glVertexAttribPointer(
           VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_FALSE, 0, data);
-#endif
         data += nverts * VERTEX_PICKCOLOR_SIZE;
       }
     } else {
       if (arrays & CGO_COLOR_ARRAY) {
-#ifdef _WEBGL
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
-        glBufferData(
-            GL_ARRAY_BUFFER, sizeof(float) * nverts * 4, data, GL_STATIC_DRAW);
-        glVertexAttribPointer(
-            VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
-#else
       glVertexAttribPointer(
           VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE, 0, data);
-#endif
         data += nverts * VERTEX_COLOR_SIZE;
       }
       if (arrays & CGO_PICK_COLOR_ARRAY) {
@@ -296,9 +261,6 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
       glDisableVertexAttribArray(VERTEX_POS);
     if (arrays & CGO_NORMAL_ARRAY)
       glDisableVertexAttribArray(VERTEX_NORMAL);
-#ifdef _WEBGL
-    glDeleteBuffers(3, buffers);
-#endif
 
   } else {
     int pl, pla, plc;
@@ -848,10 +810,8 @@ static void CGO_gl_draw_connectors(CCGORenderer* I, CGO_op_data pc)
   } else {
     lineWidth = SettingGetGlobal_f(I->G, cSetting_label_connector_width);
   }
-#ifndef _WEBGL
   if (!use_geometry_shaders)
     glLineWidth(lineWidth);
-#endif
 
   auto* vbo = I->G->ShaderMgr->getGPUBuffer<VertexBufferGL>(sp->vboid);
   if (!vbo)
@@ -975,9 +935,7 @@ static void CGO_gl_uniform3f(CCGORenderer* I, CGO_op_data pc)
 
 static void CGO_gl_linewidth(CCGORenderer* I, CGO_op_data pc)
 {
-#ifndef _WEBGL
   glLineWidth(**pc);
-#endif
 }
 
 /**
@@ -986,9 +944,7 @@ static void CGO_gl_linewidth(CCGORenderer* I, CGO_op_data pc)
 static void glLineWidthAndUniform(
     float line_width, CShaderPrg* shaderPrg = nullptr)
 {
-#ifndef _WEBGL
   glLineWidth(line_width);
-#endif
 
   if (shaderPrg && shaderPrg->name == "trilines")
     shaderPrg->Set1f("line_width", line_width);
@@ -1834,9 +1790,7 @@ void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
   R->info = info;
   R->rep = rep;
 
-#ifndef _WEBGL
   glLineWidth(SettingGet_f(G, set1, set2, cSetting_cgo_line_width));
-#endif
 
   for (auto it = I->begin(); !it.is_stop(); ++it) {
     const auto op = it.op_code();

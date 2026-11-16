@@ -28,18 +28,10 @@ Z* -------------------------------------------------------------------
 #include <string>
 #include <unordered_map>
 
-#ifdef _WEBGL
-#define GET_FRAGDEPTH_SUPPORT() webpymol_get_fragdepth_support()
-#else
 #define GET_FRAGDEPTH_SUPPORT() 1
-#endif
 
-#if !defined(_WEBGL)
 #include <mutex>
 #define LOCK_GUARD_MUTEX(name, var) std::lock_guard<std::mutex> name(var)
-#else
-#define LOCK_GUARD_MUTEX(name, var)
-#endif
 
 class CShaderPrg {
 public:
@@ -299,12 +291,10 @@ public:
   PyMOLGlobals * G;
   int shaders_present;
 
-#ifndef _WEBGL
   // for deleting buffers in the correct thread
   std::vector<GLuint> vbos_to_free;
   std::mutex vbos_to_free_mutex;
   std::mutex gpu_objects_to_free_mutex;
-#endif
 
   CShaderPrg *current_shader;
   int is_picking;

@@ -274,11 +274,8 @@ pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
     int reset, int quiet);
 int ExecutiveVdwFit(PyMOLGlobals* G, const char* s1, int state1, const char* s2,
     int state2, float buffer, int quiet);
-#ifdef _WEBGL
-#else
 pymol::Result<int> ExecutiveIterate(PyMOLGlobals* G, const char* str1,
     const char* expr, int read_only, int quiet, PyObject* space);
-#endif
 pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* s1,
     PyObject* list, int read_only, int quiet, PyObject* space);
 
@@ -305,12 +302,9 @@ pymol::Result<> ExecutiveLabel(PyMOLGlobals* G, const char* s1,
     const char* expr, int quiet, int eval_mode);
 
 int ExecutiveCountMotions(PyMOLGlobals* G);
-#ifdef _WEBGL
-#else
 pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
     const char* str1, const char* expr, int read_only, int quiet,
     PyObject* space);
-#endif
 pymol::Result<> ExecutiveColor(
     PyMOLGlobals* G, const char* name, const char* color, int flags, int quiet);
 pymol::Result<> ExecutiveColorFromSele(

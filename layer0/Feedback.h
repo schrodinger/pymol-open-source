@@ -263,8 +263,6 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
  * variable arguments.
 */
 
-#ifdef _WEBGL
-#else
 
 #define PRINTFB(G,sysmod,mask) \
 { \
@@ -281,7 +279,6 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 
 #define PRINTF { FeedbackLineType _FBstr; (snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
 #define ENDF(G)  ); G->Feedback->add(_FBstr);}
-#endif
 
 
 /* debugging: goes to stderr */

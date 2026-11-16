@@ -260,19 +260,6 @@ const static int tex_lut[tex::max_params] = {
 #define GL_RGBA16F GL_RGBA32F
 #endif
 
-#ifdef _WEBGL
-static int tex_format_internal_byte(tex::format f) {
-  return tex_lut[(int)f];
-};
-
-static int tex_format_internal_float(tex::format f) {
-  return tex_format_internal_byte(f);
-};
-
-static int tex_format_internal_half_float(tex::format f) {
-  return tex_format_internal_byte(f);
-};
-#else
 static int tex_format_internal_float(tex::format f) {
   using namespace tex;
   switch (f) {
@@ -335,7 +322,6 @@ static int tex_format_internal_byte(tex::format f) {
     break;
   }
 };
-#endif
 
 template <typename T> static int tex_tab(T val) { return tex_lut[(int)val]; }
 

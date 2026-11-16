@@ -38,10 +38,6 @@ Z* -------------------------------------------------------------------
 #endif
 
 #include "CGO.h"
-#ifdef _WEBGL
-#include "Matrix.h"
-#include "WebPyMOLLibrary.h"
-#endif
 #define MAX_LOG_LEN 1024
 
 #include <algorithm>
@@ -793,9 +789,7 @@ CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
   is_picking = 0;
   reload_bits = RELOAD_ALL_SHADERS;
 
-#ifndef _WEBGL
   vbos_to_free.reserve(256);
-#endif
 }
 
 CShaderMgr::~CShaderMgr() {
@@ -865,7 +859,6 @@ int CShaderMgr::GeometryShadersPresent() {
  * glDeleteBuffers for vbos_to_free
  */
 void CShaderMgr::FreeAllVBOs() {
-#ifndef _WEBGL
   freeAllGPUBuffers();
 
   LOCK_GUARD_MUTEX(lock, vbos_to_free_mutex);
@@ -876,7 +869,6 @@ void CShaderMgr::FreeAllVBOs() {
   glDeleteBuffers(vbos_to_free.size(), &vbos_to_free[0]);
 
   vbos_to_free.clear();
-#endif
 }
 
 void CShaderMgr::AddVBOsToFree(GLuint *vboid, int nvbos){
@@ -891,16 +883,8 @@ void CShaderMgr::AddVBOsToFree(GLuint *vboid, int nvbos){
  * thread-safe deferred glDeleteBuffers(1, &vboid)
  */
 void CShaderMgr::AddVBOToFree(GLuint vboid){
-#ifdef _WEBGL // No threads, immediately delete
-  if (glIsBuffer(vboid)) {
-    glDeleteBuffers(1, &vboid);
-  } else {
-    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "WARNING: CShaderMgr_AddVBOToFree() buffer is not a VBO %d", vboid ENDFB(G);
-  }
-#else
   LOCK_GUARD_MUTEX(lock, vbos_to_free_mutex);
   vbos_to_free.push_back(vboid);
-#endif
 }
 
 CShaderPrg *CShaderMgr::Enable_DefaultShaderWithSettings(
@@ -1599,18 +1583,12 @@ void CShaderMgr::freeGPUBuffer(size_t hashid) {
   LOCK_GUARD_MUTEX(lock, gpu_objects_to_free_mutex);
   _gpu_objects_to_free_vector.push_back(hashid);
 
-#ifdef _WEBGL
-  freeAllGPUBuffers(); // immediate free on web
-#endif
 }
 
 void CShaderMgr::freeGPUBuffers(std::vector<size_t> &&hashids) {
   LOCK_GUARD_MUTEX(lock, gpu_objects_to_free_mutex);
   _gpu_objects_to_free_vector.insert(_gpu_objects_to_free_vector.end(),
                                      hashids.begin(), hashids.end());
-#ifdef _WEBGL
-  freeAllGPUBuffers(); // immediate free on web
-#endif
 }
 
 void CShaderMgr::freeGPUBuffers(size_t * arr, size_t len) {
