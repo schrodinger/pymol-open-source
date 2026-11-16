@@ -1116,7 +1116,7 @@ void OrthoNewLine(PyMOLGlobals* G, const char* prompt, int crlf)
   bool do_print = Feedback(G, FB_Python, FB_Output);
   bool do_print_with_escapes = false;
 
-#if !defined(_WIN32) && !defined(_WEBGL) && !defined(_PYMOL_LIB)
+#ifndef _WIN32
   do_print_with_escapes = do_print &&
                           SettingGetGlobal_b(G, cSetting_colored_feedback) &&
                           isatty(STDOUT_FILENO);

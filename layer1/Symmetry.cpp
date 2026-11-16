@@ -190,7 +190,7 @@ int CSymmetry::getNSymMat() const {
  * @param sym_op List of symmetry operations, e.g. ["x,y,z", "-x,-y,z"]
  */
 void SymmetrySpaceGroupRegister(PyMOLGlobals * G, const char* sg, const std::vector<std::string>& sym_op) {
-#if !defined(_PYMOL_NOPY) && defined(_PYMOL_XRAY)
+#ifdef _PYMOL_XRAY
   if (!P_xray)
     return;
 

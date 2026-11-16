@@ -200,6 +200,41 @@ save round trip. `layer1/` changes: real GUI.
   shift in `ColorGetName`, reached by the new `testLook`.
 - Not tried: the job itself on GitHub (GCC 11 on Ubuntu 22.04; here GCC 13).
 
+**8i done 2026-11-16 in 4.14.2.**
+
+- 12 macros, one commit each (`59cc08ee` to `374acdcc`) and a last pass for
+  conditions that name two of them: 2,207 lines gone from 97 files.
+
+  | Macro | Lines removed |
+  | --- | --- |
+  | `PURE_OPENGL_ES_2` | 568 |
+  | `_PYMOL_LIB` | 498 |
+  | `_PYMOL_NOPY` | 475 |
+  | `WITH_UNUSED_FUNCTIONS` | 354 |
+  | `_WEBGL` | 190 |
+  | `PYMOL_EVAL` | 40 |
+  | `_PYMOL_NO_RAY` | 31 |
+  | `_PYMOL_EMBEDDED`, `PICKLETOOLS`, `_PYMOL_INCENTIVE`, `_PYMOL_ACTIVEX`, `_MACPYMOL_XCODE` | 51 |
+
+- Tool: `unifdef` 2.12, the Ubuntu package unpacked in a scratch directory
+  (`apt-get download unifdef`, `dpkg -x`); nothing was installed.
+- Proof, per commit: `g++ -E -P -D__LINE__=0` of all 197 translation units of
+  `layer0` to `layer5`, `layerGraphics`, `layerCTest` and `ov`, in two
+  configurations (the defines of this machine's build; no optional feature
+  and asserts on): the SHA-256 of every output is the same before and after.
+  The limit of the proof: it is Linux text. Branches under `_WIN32` or
+  `__APPLE__` are covered by `unifdef` being mechanical and by the first CI
+  run on those systems.
+- Then, once for the whole slice: build, the suite (1069 tests), Catch2 (136
+  cases), a PSE save and load.
+- Kept: `os_gl_glut.h` and `os_gl_glut_pretend.h`. Their 22 key and button
+  constants are used at about 100 places; only the file names are history.
+- Seen, not done: the shaders in `data/shaders/` have their own
+  `PURE_OPENGL_ES_2` blocks. The C++ line that set that shader variable was
+  inside a removed branch, so those blocks are dead as well, but shader text
+  has no such proof: it needs a real GUI check on each renderer path. Other
+  macros were not surveyed again (the 2026-11-14 list was taken as given).
+
 ## Review 2026-11-14: is it finished, and what is next
 
 `grep` counts and CI configuration only; nothing was built or changed.

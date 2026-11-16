@@ -768,9 +768,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp* I, GadgetSet* gs)
   CGOFree(gs->ShapeCGO);
   gs->ShapeCGO = cgo;
 
-  // #ifndef _PYMOL_NOPY
   CGOPreloadFonts(gs->ShapeCGO);
-  // #endif
 
   cgo = CGONewSized(I->G, 100);
   CGODotwidth(cgo, 5);

@@ -290,7 +290,7 @@ static pymol::Result<int> get_select_list_mode(CPyMOL* I, const char* mode)
 }
 
 
-#if defined(__cplusplus) && !defined(_WEBGL)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -1768,9 +1768,7 @@ void PyMOL_Stop(CPyMOL * I)
 
 void PyMOL_Free(CPyMOL * I)
 {
-#if !defined(_PYMOL_ACTIVEX) && !defined(_MACPYMOL_XCODE)
   PYMOL_API_LOCK
-#endif
     /* take PyMOL down gracefully */
     PyMOLOptions_Free(I->G->Option);
 
@@ -1781,9 +1779,7 @@ void PyMOL_Free(CPyMOL * I)
   FreeP(I->G);
   delete I; // allocated with new in PyMOL_NewWithOptions
   return;
-#if !defined(_PYMOL_ACTIVEX) && !defined(_MACPYMOL_XCODE)
   PYMOL_API_UNLOCK;
-#endif
 }
 
 struct PyMOLGlobals* PyMOL_GetGlobals(CPyMOL * I)

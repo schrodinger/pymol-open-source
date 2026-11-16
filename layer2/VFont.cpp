@@ -40,7 +40,6 @@ struct _CVFont {
   int NFont;
 };
 
-//#ifndef _PYMOL_NOPY
 static VFontRec *VFontRecNew(PyMOLGlobals * G)
 {
   int a;
@@ -52,7 +51,6 @@ static VFontRec *VFontRecNew(PyMOLGlobals * G)
   I->pen = VLAlloc(float, 1000);
   return (I);
 }
-//#endif
 
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                     const char *text, float *pos, float *scale, float *matrix, float *color)

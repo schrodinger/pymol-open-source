@@ -4,6 +4,19 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.14.2
+
+	* Core
+	  - Removed the #ifdef branches of 12 macros that nothing defines
+	    (PURE_OPENGL_ES_2, _PYMOL_NOPY, _WEBGL, _PYMOL_NO_RAY,
+	    _PYMOL_LIB, PYMOL_EVAL, WITH_UNUSED_FUNCTIONS, _PYMOL_EMBEDDED,
+	    PICKLETOOLS, _PYMOL_ACTIVEX, _PYMOL_INCENTIVE, _MACPYMOL_XCODE):
+	    2207 lines in 97 files. The compiler sees the same text as
+	    before, so the program is unchanged.
+	  - No cmd.* change.
+
+2026-11-16 pymolish-studio
+
 	* 4.14.1
 
 	* Core
