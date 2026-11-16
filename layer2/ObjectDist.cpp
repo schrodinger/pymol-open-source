@@ -34,8 +34,6 @@ Z* -------------------------------------------------------------------
 #include"DistSet.h"
 #include"ListMacros.h"
 #include "Interactions.h"
-#ifdef _PYMOL_INCENTIVE
-#endif
 
 static void ObjectDistUpdateExtents(ObjectDist * I);
 
@@ -443,13 +441,10 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
       /* this does the actual work of creating the distances for this state */
       /* I->DSet[a] = new DistSet(G, selections, states, etc) -- created this new DistSet */
       if (5 <= mode && mode <= 7) {
-#ifdef _PYMOL_INCENTIVE
-#else
         PRINTFB(G, FB_ObjectDist, FB_Errors)
           " ObjectDist-Error: modes 5-7 only available in Incentive PyMOL\n"
           ENDFB(G);
         I->DSet[a] = nullptr;
-#endif
       } else if (mode == 9) { // 9: halogen-bond interaction
         I->DSet[a].reset(pymol::FindHalogenBondInteractions(G,
             I->DSet[a].release(), sele1, state1, sele2, state2, cutoff, &dist));
