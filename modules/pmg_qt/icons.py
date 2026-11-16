@@ -81,6 +81,7 @@ LABELS = {
     "draw/ray": "aperture",
     "ui scale": "scaling",
     "more actions": "ellipsis",
+    "more": "ellipsis",
 }
 
 

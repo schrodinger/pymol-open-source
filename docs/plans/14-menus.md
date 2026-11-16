@@ -1,7 +1,8 @@
 # 14 — Action and right-click menus
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · 14a and 14b done, one decision
-applied in 4.12.5, 14c waits for the user's answer on the table below.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · **Done 2026-11-16 in 4.13.0**:
+14a in 4.10.1, 14b on 2026-11-14, 14c in 4.13.0. What 14c did, and where it
+left the draft, is under "14c result".
 
 **The red squares are a rendering artifact, fixed in one line (14a, do it
 early). The real cleanup (14b, 14c) waits until steps 12 and 13 have added
@@ -99,10 +100,52 @@ No action menu has two rows with the same command, with one exception
 | 9 | Keep | Everything else. Done in 4.12.5, against the first draft of this row: zoom, orient, center and origin left every A and right-click menu | The toolbar zooms, orients and centers; a double click on a row zooms on it. |
 
 Rows 1 to 4 remove dead things and fix a bug: they change nothing a user
-relies on. Rows 5 to 8 move rows that people know by position: say which of
-them to apply. 14c waits for that answer.
+relies on. Rows 5 to 8 move rows that people know by position. Decided
+2026-11-16: the user left the choice open ("select best option and apply");
+all eight rows were applied, because each one removes rows or duplicated
+code and none removes a function.
 
-**14c, apply.**
+**14c, apply. Done 2026-11-16 in 4.13.0.**
+
+### 14c result
+
+| | Before 14b | Before 14c | After |
+| --- | --- | --- | --- |
+| `menu.py` lines | 1,869 | 1,809 | 1,745 |
+| Builders | 127 | 127 | 122 |
+| A on an object, top rows | 23 | 19 | 10 |
+| A on a group, top rows | 25 | 21 | 13 |
+| A on a selection, top rows | 19 | 15 | 16 |
+
+- One builder for objects and groups: `mol_action(cmd, name, group=0)`.
+  `group_action` stays as a one-line name, because the C++ panel asks for it
+  and the pymolish plugin wraps it. The rest of the old menu is in `mol_more`.
+- One builder for selections: `sele_action(cmd, name, picked=0)`.
+  `sele_action2` is deleted; the right click on a selected atom calls
+  `sele_action(..., 1)`, which leaves out drag and clean.
+- Right click on a row of the Objects panel: `context_menu` in
+  `object_panel.py`.
+
+Where the result differs from the draft below:
+
+- **"duplicate object" is one click** (`cmd.copy` to `<name>_cpy`), like
+  "duplicate group". "copy to object" is under "more", not under "duplicate".
+- **The selection menu gained a row:** "duplicate selection" was only in the
+  right-click variant. Order is now rename, duplicate, delete in every menu.
+- **The right-click variant of the selection menu** shows "modify" as a
+  submenu instead of five flat rows, and has align and hydrogens.
+- **Right click on a row has Color once**, on top: Show as, Color · rename,
+  duplicate, delete · Action, Show, Hide, Label. A row type without a part
+  (a measurement has no "show as" and no labels) leaves it out.
+- **A group keeps its three member rows on top** (sort, enable, disable).
+
+Checks: `testing/tests/api/menu.py` `testConsolidated` (row counts, no two
+rows with one command, the commands compile, duplicate works twice) and
+`testExclude`; `testing/tests/api/object_panel.py` `test_context_menu`. Real
+window on WSLg at 150 %: the right-click menu, A on an object, A on a group.
+
+The draft, as written before the work:
+
 - One builder for selection actions (`sele_action2` becomes a flag); one for
   object and group actions.
 - Target A menu, about 10 top rows:

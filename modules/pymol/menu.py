@@ -185,12 +185,6 @@ def mol_as(self_cmd, sele):
         +rep_action(self_cmd, sele,'show_as')
         )
 
-def mol_toggle(self_cmd, sele):
-    return (
-        [[ 2, 'As:'   , '']]
-        +rep_action(self_cmd, sele,'toggle')
-        )
-
 def show_misc(self_cmd, sele):
     return [[ 2, 'Show:', '' ],
             [ 1, 'lines', 'cmd.show("lines","'+sele+'")'],
@@ -269,14 +263,6 @@ def cgo_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     , ''                                ],
               [ 1, 'cgo'    , 'cmd.hide("cgo"    ,"'+sele+'")'  ],
              ]
-
-def simple_show(self_cmd, sele):
-    return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'everything'  , 'cmd.show("everything","'+sele+'")'          ]]
-
-def simple_hide(self_cmd, sele):
-    return [[ 2, 'Hide:'     ,''                                ],
-              [ 1, 'everything'    ,'cmd.hide("everything","'+sele+'")'        ]]
 
 def map_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
@@ -944,10 +930,10 @@ def exclude(self_cmd, sele):
             [ 1, 'object'   , modify_by_object(self_cmd, sele,'and not') ],
             [ 1, 'selection' , modify_by_sele(self_cmd, sele,'and not') ],
             [ 0, ''               ,''                             ],
-            [ 1, 'polymer'   , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
+            [ 1, 'polymer'   , 'cmd.select("'+sele+'","('+sele+') and not polymer",enable=1)'],
             [ 1, 'solvent'   , 'cmd.select("'+sele+'","('+sele+') and not solvent",enable=1)'],
             [ 1, 'organic'   , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
-            [ 1, 'inorganic' , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
+            [ 1, 'inorganic' , 'cmd.select("'+sele+'","('+sele+') and not inorganic",enable=1)'],
             ]
 
 def expand(self_cmd, sele):
@@ -1073,7 +1059,6 @@ def find(self_cmd, sele):
               [ 1, 'halogen-bond interactions', halogen_bond(self_cmd, sele)],
               [ 1, 'salt-bridge interactions', salt_bridge(self_cmd, sele)],
               [ 1, 'pi interactions', [[ 2, 'Pi Interactions:', '']] + [
-                  [1, 'all', 'cmd.pi_interactions("'+sele+'_pi_interactions","'+sele+'",reset=1)'],
                   [1, 'pi-pi', 'cmd.distance("'+sele+'_pi_pi","'+sele+'","same",reset=1,mode=6)'],
                   [1, 'pi-cation', 'cmd.distance("'+sele+'_pi_cation","'+sele+'","same",reset=1,mode=7)'],
               ]],
@@ -1173,14 +1158,19 @@ def move_to_group(self_cmd, sele):
         for gname in gnames if gname != sele
     ]
 
-def sele_action(self_cmd, sele):
+def sele_action(self_cmd, sele, picked=0):
+    # picked: the "actions" submenu of a right click on a selected atom,
+    # whose parent menu already has drag and clean
     return [[ 2, 'Action:'       ,''                        ],
-              [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
+              [ 1, 'duplicate selection'      ,'cmd.select(None,"'+sele+'")'          ],
+              [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
+            ] + ([] if picked else [
               [ 1, 'drag coordinates'     , 'cmd.drag("'+sele+'")'    ],
               [ 1, 'clean'       , clean(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
+            ]) + [
               [ 1, 'modify', modify_sele(self_cmd, sele) ],
               [ 1, 'preset'         ,presets(self_cmd, sele)         ],
               [ 1, 'find', find(self_cmd, sele) ],
@@ -1198,55 +1188,17 @@ def sele_action(self_cmd, sele):
               ]
 
 
-def sele_action2(self_cmd, sele):
-    return [[ 2, 'Action:'       ,''                        ],
-              [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")'          ],
-              [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
-              [ 0, ''               ,''                             ],
-              [ 1, 'preset'         ,presets(self_cmd, sele)         ],
-              [ 1, 'find', find(self_cmd, sele) ],
-              [ 0, ''               ,''                             ],
-              [ 1, rem_col + 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
-              [ 0, ''               ,''                             ],
-              [ 1, 'around'         , around(self_cmd, sele)         ],
-              [ 1, 'expand'         , expand(self_cmd, sele)         ],
-              [ 1, 'extend'         , extend(self_cmd, sele)         ],
-              [ 1, 'invert'         , invert(self_cmd, sele)         ],
-              [ 1, 'complete'       , complete(self_cmd, sele)         ],
-              [ 0, ''          ,''                                              ],
-              [ 1, 'duplicate selection'      ,'cmd.select(None,"'+sele+'")'          ],
-              [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
-              [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
-            [ 0, ''          ,''                                  ],
-              [ 1, 'masking'      , masking(self_cmd, sele)         ],
-              [ 1, 'movement'       , movement(self_cmd, sele)         ],
-              [ 1, 'compute'        , compute(self_cmd, sele)         ],
-              ]
-
-
-def group_action(self_cmd, sele):
-    from pymol import grouping
-    return [[ 2, 'Action:'     , ''                       ],
-            [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
-            [ 1, 'reset' , 'cmd.reset(object="'+sele+'")' ],
+def mol_more(self_cmd, sele, group=0):
+    return [[ 2, 'More:'     , ''                       ],
+            [ 1, 'drag matrix' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset matrix' , 'cmd.reset(object="'+sele+'")' ],
+          ] + ([] if group else [
+            [ 1, 'drag coordinates' , 'cmd.drag("('+sele+')")' ],
+            [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
+          ]) + [
             [ 0, ''               ,''                             ],
-            [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
-            [ 1, 'find',     find(self_cmd, sele) ],
-            [ 1, 'align',     mol_align(self_cmd, sele) ],
             [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],
-            [ 0, ''               ,''                             ],
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
-            [ 0, ''             , ''                       ],
-            [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
-            [ 1, 'duplicate group', 'cmd.copy_group("'+sele+'")' ],
-            [ 1, 'sort members', 'cmd.sort_group("%s",%d)' % (sele, grouping.is_sorted(sele, self_cmd)) ],
-            [ 1, 'enable members', 'cmd.group_enable("'+sele+'")' ],
-            [ 1, 'disable members', 'cmd.group_disable("'+sele+'")' ],
-            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
-            [ 1, del_col + 'delete group', 'cmd.delete("'+sele+'")'    ],
-            [ 0, ''          ,''                                              ],
-            [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],
-            [ 1, 'clean'     , clean(self_cmd, sele)    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'state'          , state(self_cmd, sele)         ],
             [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1255,34 +1207,34 @@ def group_action(self_cmd, sele):
             [ 1, 'compute'        , compute(self_cmd, sele)         ],
             ]
 
-def mol_action(self_cmd, sele):
+def mol_action(self_cmd, sele, group=0):
+    from pymol import grouping
+    kind = 'group' if group else 'object'
     return [[ 2, 'Action:'     , ''                       ],
-            [ 1, 'drag matrix' , 'cmd.drag("'+sele+'")' ],
-            [ 1, 'reset matrix' , 'cmd.reset(object="'+sele+'")' ],
-            [ 0, ''               ,''                             ],
-            [ 1, 'drag coordinates' , 'cmd.drag("('+sele+')")' ],
-            [ 1, 'clean'       , clean(self_cmd, sele) ],
-            [ 0, ''          ,''                                              ],
+            [ 1, 'rename ' + kind, 'cmd.wizard("renaming","'+sele+'")'          ],
+            [ 1, 'duplicate group', 'cmd.copy_group("'+sele+'")' ] if group else
+            [ 1, 'duplicate object', 'cmd.copy(cmd.get_unused_name("'+sele+'_cpy",0),"'+sele+'",zoom=0)' ],
+            [ 1, del_col + 'delete ' + kind, 'cmd.delete("'+sele+'")'    ],
+            [ 0, ''             , ''                       ],
+          ] + ([
+            [ 1, 'sort members', 'cmd.sort_group("%s",%d)' % (sele, grouping.is_sorted(sele, self_cmd)) ],
+            [ 1, 'enable members', 'cmd.group_enable("'+sele+'")' ],
+            [ 1, 'disable members', 'cmd.group_disable("'+sele+'")' ],
+            [ 0, ''             , ''                       ],
+          ] if group else []) + [
+            [ 1, 'clean'     , clean(self_cmd, sele)    ],
             [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
             [ 1, 'find',     find(self_cmd, sele) ],
             [ 1, 'align',     mol_align(self_cmd, sele) ],
-            [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],
-            [ 0, ''               ,''                             ],
-            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
-            [ 0, ''             , ''                       ],
-            [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
-            [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
-            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
-            [ 1, del_col + 'delete object', 'cmd.delete("'+sele+'")'    ],
-            [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 0, ''          ,''                                              ],
-              [ 1, 'state'          , state(self_cmd, sele)         ],
-              [ 1, 'masking'        , masking(self_cmd, sele)         ],
-              [ 1, 'sequence'       , sequence(self_cmd, sele)         ],
-              [ 1, 'movement'       , movement(self_cmd, sele)         ],
-              [ 1, 'compute'        , compute(self_cmd, sele)         ],
-              ]
+            [ 1, 'more'      , mol_more(self_cmd, sele, group) ],
+            ]
+
+def group_action(self_cmd, sele):
+    # its own name: the C++ panel asks for it and plugins wrap it
+    return mol_action(self_cmd, sele, 1)
 
 def slice_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
@@ -1463,20 +1415,6 @@ def ramp_color(self_cmd, sele):
                         ] + list(ramp_spectrum_dict)
             ]
 
-def test1(self_cmd, sele):
-        return [[ 2, 'Test1:'     , ''                      ],
-              [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
-              [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],
-              [ 1, 'origin'   , 'cmd.origin("all")'   ],
-              ]
-
-def test2(self_cmd, sele):
-        return [[ 2, 'Test2:'     , ''                      ],
-              [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
-              [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],
-              [ 1, 'origin'   , 'cmd.origin("all")'   ],
-              ]
-
 def all_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                      ],
               [ 1, 'preset'  , presets(self_cmd, "all")     ],
@@ -1511,8 +1449,6 @@ def label_props(self_cmd, sele):
               [ 0, ''               , ''                                  ],
               [ 1, 'text type'      , 'cmd.label("'+sele+'","text_type")'    ],
               [ 1, 'numeric type'   , 'cmd.label("'+sele+'","numeric_type")' ],
-              [ 0, ''               , ''                                  ],
-              [ 1, 'stereochemistry', 'cmd.label("'+sele+'","stereo")' ]
               ]
 
 def label_ids(self_cmd, sele):
@@ -1683,7 +1619,7 @@ def pick_sele(self_cmd, sele, title):
         [ 2, title, '' ],
         [ 1, 'disable'    , 'cmd.disable("'+sele+'")' ],
         [ 0, ''             , ''                      ],
-        [ 1, 'actions', sele_action2(self_cmd, sele) ],
+        [ 1, 'actions', sele_action(self_cmd, sele, 1) ],
         [ 0, ''             , ''                      ],
         [ 1, 'color'      , mol_color(self_cmd, sele) ],
         [ 1, 'show'      , mol_show(self_cmd, sele) ],

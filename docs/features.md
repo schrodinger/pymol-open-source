@@ -22,6 +22,7 @@ Numbers in brackets are pymolish-studio versions; the
 | Objects panel | Lists objects, selections and groups. Click a row to show or hide, double-click to zoom; each row has the Action, Show, Hide, Label and Color menus (4.5.11, 4.5.15). |
 | States panel | First, previous, play, next, last, jump to a state, speed. Appears when there is more than one state or movie frame (4.6.0). |
 | Menus | The right-click menu opens at the pointer as a normal menu, with icons (4.5.18). |
+| Shorter menus | The A menu of an object has 10 rows instead of 19; the less used ones are under "more". Right click on a row of the Objects panel gives Show as, Color, rename, duplicate and delete at once (4.13.0). |
 | Name | Title, About box and icon say pymolish-studio (4.8.0). |
 | Object colors | The palette button in the toolbar picks the colors that new objects get. The choice is remembered (4.10.0). |
 

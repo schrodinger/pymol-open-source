@@ -74,6 +74,44 @@ class TestObjectPanel(testing.PyMOLTestCase):
         more.menu().aboutToShow.emit()
         self.assertEqual([a.text() for a in more.menu().actions()], ["hide"])
 
+    def test_context_menu(self):
+        from pmg_qt.object_panel import context_menu
+
+        def texts(name, kind):
+            popup = context_menu(None, cmd, name, kind)
+            return [a.text() for a in popup.actions() if not a.isSeparator()]
+
+        cmd.fragment("ala", "m")
+        cmd.select("s", "m and name CA")
+        cmd.group("g", "m")
+        rest = ["Action", "Show", "Hide", "Label"]
+        for name, kind, word in (
+            ("m", "object:molecule", "object"),
+            ("g", "object:group", "group"),
+            ("s", "selection", "selection"),
+        ):
+            flat = [
+                "%s %s" % (verb, word) for verb in ("rename", "duplicate", "delete")
+            ]
+            self.assertEqual(texts(name, kind), ["Show as", "Color"] + flat + rest)
+        cmd.pseudoatom("p")
+        cmd.distance("d", "p", "m and name CA")
+        self.assertEqual(
+            texts("d", "object:measurement"),
+            ["Color", "rename", "delete", "Action", "Show", "Hide"],
+        )
+        # a flat row runs its command, a submenu is filled when opened
+        popup = context_menu(None, cmd, "m", "object:molecule")
+        actions = {a.text(): a for a in popup.actions()}
+        actions["Show as"].menu().aboutToShow.emit()
+        self.assertIn(
+            "cartoon", [a.text() for a in actions["Show as"].menu().actions()]
+        )
+        actions["duplicate object"].trigger()
+        self.assertEqual(cmd.count_atoms("m_cpy"), cmd.count_atoms("m"))
+        actions["delete object"].trigger()
+        self.assertNotIn("m", cmd.get_names())
+
     def test_icons(self):
         from pymol.Qt import QtGui
         from pmg_qt import icons

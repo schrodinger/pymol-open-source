@@ -4,6 +4,36 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.13.0
+
+	* Menus
+	  - The A menu of an object is shorter, 10 rows instead of 19:
+	    rename, duplicate, delete, clean, preset, find, align,
+	    hydrogens, group, more. "more" holds drag matrix, reset
+	    matrix, drag coordinates, copy to object, generate, assign
+	    sec. struc., state, masking, sequence, movement and compute.
+	    Nothing was removed from it. The A menu of a group has the
+	    same rows plus sort, enable and disable members.
+	  - New: "duplicate object" in the A menu copies the object to
+	    <name>_cpy. "duplicate selection" is now also in the A menu
+	    of a selection.
+	  - Right click on a row of the Objects panel: Show as and Color,
+	    then rename, duplicate and delete without opening a submenu,
+	    then Action, Show, Hide and Label.
+	  - Fix: modify > exclude > polymer and > inorganic of a selection
+	    both excluded the organic atoms.
+	  - Removed: find > pi interactions > all and label > other
+	    properties > stereochemistry. Neither worked: they need
+	    commands that only the commercial PyMOL has. "pi-pi" and
+	    "pi-cation" stay.
+	  - pymol.menu (plugins): mol_action and group_action are one
+	    builder, mol_action(cmd, name, group=0); group_action still
+	    exists. sele_action2 is now sele_action(cmd, name, 1). Removed,
+	    they had no caller: test1, test2, mol_toggle, simple_show,
+	    simple_hide.
+
+2026-11-16 pymolish-studio
+
 	* 4.12.9
 
 	* Structures from the internet
