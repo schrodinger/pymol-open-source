@@ -73,11 +73,6 @@ Z* -------------------------------------------------------------------
 
 /* evaluation product (placarded) */
 
-#ifdef PYMOL_EVAL
-#ifndef _PYMOL_IP_SPLASH
-#define _PYMOL_IP_SPLASH
-#endif
-#endif
 
 
 /* END PROPRIETARY CODE SEGMENT */

@@ -7511,9 +7511,6 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
 /*========================================================================*/
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef PYMOL_EVAL
-#include "RayEvalMessage.h"
-#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -7581,9 +7578,6 @@ void RayPrepare(CRay * I, float v0, float v1, float v2,
   I->Pos = pos;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef PYMOL_EVAL
-  RayDrawEvalMessage(I);
-#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 

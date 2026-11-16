@@ -1218,9 +1218,6 @@ float* OrthoGetOverlayColor(PyMOLGlobals* G)
 /*========================================================================*/
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef PYMOL_EVAL
-#include "OrthoEvalMessage.h"
-#endif
 #ifdef PYMOL_BETA
 #include "OrthoBetaMessage.h"
 #endif
@@ -1715,11 +1712,6 @@ static void OrthoDrawLoop(PyMOLGlobals* G, CGO* orthoCGO)
 static void OrthoDrawMessages(PyMOLGlobals* G, CGO* orthoCGO)
 {
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef PYMOL_EVAL
-#ifndef _NO_DISPLAY_EVAL
-  OrthoDrawEvalMessage(G, orthoCGO);
-#endif
-#endif
 #ifdef PYMOL_BETA
   OrthoDrawBetaMessage(G);
 #endif

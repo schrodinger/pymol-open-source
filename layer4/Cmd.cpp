@@ -2898,12 +2898,8 @@ static PyObject *CmdSplash(PyObject * self, PyObject * args)
     }
   } else {
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef PYMOL_EVAL
-    result = 2;
-#else
 #ifdef _PYMOL_IP_EXTRAS
     result = 0;
-#endif
 #endif
     /* END PROPRIETARY CODE SEGMENT */
   }

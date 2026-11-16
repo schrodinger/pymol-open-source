@@ -3868,10 +3868,6 @@ static void SceneImage(PyMOLGlobals* G, const Extent2D& extent, int antialias,
     if(IncentiveCopyToClipboard(G, di->quiet)) {
     }
 #else
-#ifdef PYMOL_EVAL
-    PRINTFB(G, FB_Scene, FB_Warnings)
-      " Warning: Clipboard image transfers disabled in Evaluation builds.\n" ENDFB(G);
-#endif
 #endif
   }
 }

@@ -5455,9 +5455,6 @@ static PyObject* ExecutiveGetNamedEntries(
   return (PConvAutoNone(result));
 }
 
-#ifdef PYMOL_EVAL
-#include "ExecutiveEvalMessage.h"
-#endif
 
 int ExecutiveGetSession(
     PyMOLGlobals* G, PyObject* dict, const char* names, int partial, int quiet)
@@ -5530,9 +5527,6 @@ int ExecutiveGetSession(
     PyDict_SetItemString(dict, "main", tmp);
     Py_XDECREF(tmp);
 
-#ifdef PYMOL_EVAL
-    ExecutiveEvalMessage(G, dict);
-#endif
   }
 
   return true;
@@ -5704,7 +5698,6 @@ int ExecutiveSetSession(
       }
     }
   }
-#ifndef PYMOL_EVAL
   if (ok) {
     tmp = PyDict_GetItemString(session, "eval_nag");
     if (tmp) {
@@ -5719,7 +5712,6 @@ int ExecutiveSetSession(
       }
     }
   }
-#endif
 
   if (ok) { /* colors must be restored before settings and objects */
     tmp = PyDict_GetItemString(session, "colors");
