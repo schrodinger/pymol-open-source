@@ -3053,7 +3053,6 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
   const BondType *bond;
   int a;
 
-#ifndef PICKLETOOLS
   PyMOLGlobals *G = I->G;
   int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
 
@@ -3076,7 +3075,6 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 
     return result;
   }
-#endif
   result = PyList_New(I->NBond);
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
@@ -3201,7 +3199,6 @@ static PyObject* AtomColumnAsPyList(const ObjectMolecule& mol,
   for (int i = 0; i < mol.NAtom; ++i) {
     PyObject* value = func(mol.AtomInfo[i]);
 
-#ifndef PICKLETOOLS
     // Simple optimization: Repeated property lists will reference the same
     // Python object
     if (prev != value && PyObject_RichCompareBool(prev, value, Py_EQ)) {
@@ -3215,19 +3212,16 @@ static PyObject* AtomColumnAsPyList(const ObjectMolecule& mol,
     if (value != Py_None) {
       pruned_size = i + 1;
     }
-#endif
 
     PyList_SetItem(list, i, value);
   }
 
-#ifndef PICKLETOOLS
   assert(pruned_size <= mol.NAtom);
 
   // Simple optimization: Prune "None" tail
   PyList_SetSlice(list, pruned_size, mol.NAtom, nullptr);
 
   assert(PyList_Size(list) == pruned_size);
-#endif
 
   return list;
 }
@@ -3259,7 +3253,6 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
   PyObject *result = nullptr;
   const AtomInfoType *ai;
   int a;
-#ifndef PICKLETOOLS
   int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
 
   if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
@@ -3338,7 +3331,6 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     FreeP(strinfo);
     return result;
   }
-#endif
   result = PyList_New(I->NAtom);
   ai = I->AtomInfo;
   for(a = 0; a < I->NAtom; a++) {
