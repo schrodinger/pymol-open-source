@@ -16,7 +16,7 @@ deliverables. Build speed, launch speed and download size also need separate dat
 
 4.5.3: CI runs only for pushes/PRs to `master`, on Python 3.13 and 3.14. Windows and macOS get their native libraries through pixi (`pixi.toml`, conda-forge only; the upstream `schrodinger` channel and the msgpack-c git clone are gone; catch2 is `2.13.*` because 2.13.3 has no osx-arm64 build). Linux keeps apt. Releases carry a `SHA256SUMS` file. Note: this fork has recorded zero Actions runs so far; Actions must be enabled once in the repository's Actions tab before any of this executes.
 
-2026-11-16: 5c proposed below (builds without GitHub Actions). CI is red on one test, not on size; nothing in the workflow was changed.
+2026-11-16: 5c proposed below (builds without GitHub Actions). CI was red on one test, not on size; the test is fixed in 4.12.7, not yet confirmed by a CI run. Nothing in the workflow was changed.
 
 ## Current state and risks to verify
 
@@ -152,10 +152,13 @@ a one-time compiler install, macOS no.
 - Every run since 2026-11-14 fails in the **Test** step on Linux and Windows,
   on one test: `testLoadEmbedded` (`Error: embedded data 'wats' not found`).
   The bundle steps come after the tests, so no bundle is made. The macOS job
-  passes and uploads its bundle on every run. The same test passes locally
-  (`--run all` on `feature6`: 1060 tests, OK). The cause is not found yet.
-- So the cheapest way to get all three bundles is to fix that one test. The
-  rest of this section is the route that does not depend on Actions.
+  passes and uploads its bundle on every run.
+- Cause, fixed in 4.12.7: the C++ tests (`ctest.py`) replaced `cmd._parser`,
+  and `load_embedded` then looked in the wrong parser. Test files run in
+  file-system order: `ctest.py` came before `importing.py` on the Linux and
+  Windows runners, after it on macOS and locally. A CI run has to confirm it.
+- So Actions can make all three bundles again. The rest of this section is
+  the route that does not depend on Actions.
 
 ### Where each target can be built
 
@@ -238,8 +241,8 @@ Ways to get the macOS bundle, cheapest first:
 
 ### Proposed order
 
-1. Decide: fix `testLoadEmbedded` on CI (all three bundles come back, no new
-   setup), or go local for Linux and Windows.
+1. Push and let CI confirm the 4.12.7 fix. If all three bundles come back,
+   the local route below is optional.
 2. If local: get the Build Tools installed, run the Windows block once by
    hand, fix what breaks, then put both blocks into one script
    `packaging/build_local.sh` (Linux in podman, Windows on the host). No script
