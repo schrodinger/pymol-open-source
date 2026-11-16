@@ -23,7 +23,7 @@ mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
 
-# the default list in layer1/Color.cpp, here for cbc:
+# the default list in layer1/Color.cpp, for palettes.cycle:
 _color_cycle = [
     26   , # /* carbon */
     5    , # /* cyan */
@@ -66,8 +66,6 @@ _color_cycle = [
     23   , # /* deepblue */
     51   , # /* brown */
     ]
-
-_color_cycle_len = len(_color_cycle)
 
 class _verbose_cmd_proxy:
     def __init__(self, cmd):
@@ -770,8 +768,10 @@ def label_segments(sele="all",_self=cmd):
 
 def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
     '''
-    Color all chains a different color
+    Color all chains a different color, in the order of the active palette
     '''
+    from . import palettes
+    colors = palettes.cycle()
     legacy = int(legacy)
     for c, a in enumerate(_self.get_chains(selection)):
         if len(a.split()) != 1:
@@ -779,7 +779,7 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
         if legacy:
             color = c + int(first_color)
         else:
-            color = _color_cycle[c % _color_cycle_len]
+            color = colors[c % len(colors)]
         if not quiet:
             print(" util.cbc: color %s, (chain %s)" % (color, a))
         _self.color(color, "(chain %s and (%s))" % (a, selection), quiet=quiet)

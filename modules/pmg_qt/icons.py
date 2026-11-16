@@ -14,11 +14,8 @@ LABELS = {
     "new": "circle-plus",
     "pseudoatom": "circle-dot",
     "zoom": "zoom-in",
-    "zoom (vis)": "zoom-in",
     "orient": "compass",
-    "orient (vis)": "compass",
     "center": "crosshair",
-    "center (vis)": "crosshair",
     "origin": "locate-fixed",
     "reset": "rotate-ccw",
     "movie": "clapperboard",
@@ -84,6 +81,7 @@ LABELS = {
     "draw/ray": "aperture",
     "ui scale": "scaling",
     "more actions": "ellipsis",
+    "more": "ellipsis",
 }
 
 

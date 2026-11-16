@@ -593,11 +593,16 @@ if True:
             return result
 
     def new_parse_closure(self_cmd): # create parser and return an instance-specific parse function closure
-        try:
-            p = Parser(self_cmd)
-        except:
-            traceback.print_exc()
-        self_cmd._parser = p
+        # one parser per cmd: a second PInit on the same cmd (the C++ test
+        # instances) must not replace the parser the first one still runs.
+        # vars(), not getattr: a pymol2 Cmd falls back to the global cmd
+        p = vars(self_cmd).get('_parser')
+        if p is None:
+            try:
+                p = Parser(self_cmd)
+            except:
+                traceback.print_exc()
+            self_cmd._parser = p
         return lambda s,secure,p=p:p.parse(s,secure)
 
     def new_complete_closure(self_cmd): # return an instance-specific complete function closure

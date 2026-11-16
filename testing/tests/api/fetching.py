@@ -1,7 +1,7 @@
 """
-fetch_by_uniprot, list_uniprot_structures, fetch_fold and color_plddt
-(modules/pymol/fetching.py). The servers are replaced by canned answers;
-test_live asks the real ones and is not part of "--run all".
+fetch_by_uniprot, fetch_uniprot_ligands, list_uniprot_structures, fetch_fold
+and color_plddt (modules/pymol/fetching.py). The servers are replaced by
+canned answers; test_live asks the real ones and is not part of "--run all".
 """
 
 import json
@@ -78,6 +78,47 @@ class TestFetching(testing.PyMOLTestCase):
         self.serve({"P04637.json": json.dumps({})})
         self.assertRaises(CmdException, cmd.fetch_by_uniprot, "P04637")
 
+    def test_uniprot_ligands(self):
+        def component(name, weight):
+            return {
+                "nonpolymer_comp": {
+                    "chem_comp": {"id": name, "name": name, "formula_weight": weight}
+                }
+            }
+
+        cmd.fragment("benzene", "_lig")
+        sdf = cmd.get_str("mol", "_lig")
+        cmd.delete("_lig")
+        entries = [
+            {"nonpolymer_entities": [component("AZM", 222.2), component("ZN", 65.4)]},
+            {"nonpolymer_entities": [component("BEZ", 122.1), component("XXX", 300)]},
+            {"nonpolymer_entities": None},
+        ]
+        self.serve(
+            {
+                "P04637.json": json.dumps(XREF),
+                "graphql": json.dumps({"data": {"entries": entries}}),
+                "AZM_ideal": sdf,
+                "BEZ_ideal": sdf,
+                "ZN_ideal": sdf,
+            }
+        )
+        # ZN is too light, XXX has no ideal model
+        names = cmd.fetch_uniprot_ligands("p04637")
+        self.assertEqual(names, ["P04637_AZM", "P04637_BEZ"])
+        self.assertEqual(cmd.get_object_list("P04637_ligands"), names)
+        self.assertEqual(cmd.count_atoms("P04637_AZM"), 12)
+        # the two PDB ids of the accession were asked for in one request
+        asked = [url for url, _ in self.asked if "graphql" in url]
+        self.assertEqual(len(asked), 1)
+        self.assertIn("1TUP", asked[0])
+        cmd.delete("*")
+        self.assertEqual(
+            cmd.fetch_uniprot_ligands("P04637", 0, 1, "lig"), ["P04637_AZM"]
+        )
+        self.assertIn("P04637_ZN", cmd.fetch_uniprot_ligands("P04637", 0, 0, "any"))
+        self.assertRaises(CmdException, cmd.fetch_uniprot_ligands, "P04637", 1000)
+
     def test_fold_alphafold(self):
         entries = [
             {"entryId": "AF-P04637-F1", "pdbUrl": "http://x/F1.pdb"},
@@ -141,6 +182,7 @@ class TestFetching(testing.PyMOLTestCase):
         for name in (
             "fetch_by_uniprot",
             "fetch_fold",
+            "fetch_uniprot_ligands",
             "list_uniprot_structures",
             "color_plddt",
         ):
@@ -150,6 +192,7 @@ class TestFetching(testing.PyMOLTestCase):
     @testing.requires("network", "no_run_all")
     def test_live(self):
         self.assertIn("1TUP", cmd.list_uniprot_structures("P04637"))
+        self.assertEqual(len(cmd.fetch_uniprot_ligands("P00918", limit=3)), 3)
         self.assertEqual(cmd.fetch_fold("AF-P04637-F1"), "AF_P04637_F1")
         self.assertGreater(cmd.count_atoms("AF_P04637_F1"), 1000)
         name = cmd.fetch_fold("MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQ")

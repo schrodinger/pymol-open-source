@@ -496,6 +496,7 @@ from .fetching import \
      color_plddt, \
      fetch_by_uniprot, \
      fetch_fold, \
+     fetch_uniprot_ligands, \
      list_uniprot_structures
 
 from . import smiles

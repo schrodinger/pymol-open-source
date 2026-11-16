@@ -95,6 +95,7 @@ def get_command_keywords(self_cmd=cmd):
         'fetch'         : [ self_cmd.fetch             , 0,  0 , ''  , parsing.STRICT ],
         'fetch_by_uniprot': [ self_cmd.fetch_by_uniprot   , 0 , 0 , ''  , parsing.STRICT ],
         'fetch_fold'   : [ self_cmd.fetch_fold         , 0 , 0 , ''  , parsing.STRICT ],
+        'fetch_uniprot_ligands': [ self_cmd.fetch_uniprot_ligands, 0 , 0 , ''  , parsing.STRICT ],
         'fix_structure' : [ self_cmd.fix_structure     , 0 , 0 , ''  , parsing.STRICT ],
         'fit'           : [ self_cmd.fit               , 0 , 0 , ''  , parsing.STRICT ],
         'fix_chemistry' : [ self_cmd.fix_chemistry     , 0 , 0 , ''  , parsing.STRICT ],

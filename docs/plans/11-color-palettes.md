@@ -125,3 +125,23 @@ Differences from the plan above:
 - **pastel is the plugin list unchanged.** After about twelve objects its
   colors are hard to tell apart; the neighbor distance in the test (0.14) is
   set by this list.
+
+### Follow-up, 4.13.1
+
+Asked for on 2026-11-16 after using it.
+
+- **The menu is a list with wide strips.** Ten colors per palette, 14 px each,
+  also for the PyMOL order. The six-color square icon was too small to read.
+  A `QListWidget` in the menu, because a menu icon is always a small square.
+- **Picking recolors at once.** Click or arrow keys; "Recolor objects now" is
+  gone. The `palette` command still recolors only with `recolor=1`.
+- **`util.cbc` follows the palette**, so C > by chain and the presets do too.
+  This was on the Skipped list. `util._color_cycle` stays as the PyMOL order.
+- **pastel is redefined:** cyan, green, red, blue, yellow, then seven more.
+  Stronger than the plugin list and all twelve can be told apart.
+- **Three more palettes for a dark background:** nord, dracula, catppuccin,
+  values as published, close colors left out. A fourth for a white background
+  (Catppuccin Latte) was dropped: six of its fourteen colors are below 3:1
+  on white.
+- **The neighbor distance in the test is 0.2** (was 0.14, set by the old
+  pastel list).

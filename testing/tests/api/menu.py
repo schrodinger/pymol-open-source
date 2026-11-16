@@ -232,8 +232,77 @@ class TestMenu(testing.PyMOLTestCase):
         self._make_seles()
         sele = 's1'
         m = menu.sele_action(cmd, sele)
-        d = self._to_dict(m)
-        self._eval_first(d['zoom'])
+        self._eval_first(m)
+
+    def testConsolidated(self):
+        # 14c: one builder for objects and groups, one for selections
+        self._make_seles(1)
+        cmd.group('g1', 'm1')
+        for name in ('sele_action2', 'test1', 'test2', 'mol_toggle',
+                     'simple_show', 'simple_hide'):
+            self.assertFalse(hasattr(menu, name), name)
+
+        def labels(m):
+            return [row[1] for row in m if row[0] == 1]
+
+        def commands(m):
+            return [row[2] for row in m if row[0] == 1 and isinstance(row[2], str)]
+
+        mol = labels(menu.mol_action(cmd, 'm1'))
+        self.assertEqual(mol[:2], ['rename object', 'duplicate object'])
+        self.assertEqual(len(mol), 10)
+        group = labels(menu.group_action(cmd, 'g1'))
+        self.assertEqual(group[:2], ['rename group', 'duplicate group'])
+        self.assertEqual(len(group), 13)
+        more = self._to_dict(menu.mol_action(cmd, 'm1'))['more']
+        self.assertIn('copy to object', labels(more))
+        self.assertNotIn('copy to object', labels(self._to_dict(
+            menu.group_action(cmd, 'g1'))['more']))
+        full = labels(menu.sele_action(cmd, 's1'))
+        picked = labels(menu.sele_action(cmd, 's1', 1))
+        self.assertEqual(set(full) - set(picked), {'drag coordinates', 'clean'})
+        # no menu has two rows with the same command
+        for m in (menu.mol_action(cmd, 'm1'), more, menu.group_action(cmd, 'g1'),
+                  menu.sele_action(cmd, 's1'), menu.sele_action(cmd, 's1', 1),
+                  menu.exclude(cmd, 's1')):
+            self.assertEqual(len(commands(m)), len(set(commands(m))))
+        cmd.do(self._to_dict(menu.mol_action(cmd, 'm1'))['duplicate object'], echo=0)
+        self.assertEqual(cmd.count_atoms('m1_cpy'), cmd.count_atoms('m1'))
+        cmd.do(self._to_dict(menu.mol_action(cmd, 'm1'))['duplicate object'], echo=0)
+        self.assertIn('m1_cpy01', cmd.get_names())
+        # every direct command of these menus is valid Python
+        for m in (menu.mol_action(cmd, 'm1'), more, menu.group_action(cmd, 'g1'),
+                  menu.sele_action(cmd, 's1')):
+            for command in commands(m):
+                compile(command, 'menu', 'exec')
+
+    def testExclude(self):
+        cmd.fab('AG', 'm1')
+        cmd.pseudoatom('m1', resn='ZN', elem='Zn', hetatm=1)
+        for label, left in (('polymer', 'not polymer'), ('inorganic', 'not inorganic')):
+            cmd.select('s1', 'm1')
+            cmd.do(self._to_dict(menu.exclude(cmd, 's1'))[label], echo=0)
+            self.assertEqual(cmd.count_atoms('s1'), cmd.count_atoms('m1 and ' + left))
+            self.assertLess(cmd.count_atoms('s1'), cmd.count_atoms('m1'))
+            self.assertGreater(cmd.count_atoms('s1'), 0)
+
+    def testNoViewRows(self):
+        # zoom, orient, center, origin: toolbar and double click, not menus
+        self._make_seles(1)
+        cmd.group('g1', 'm1')
+        for m in [
+            menu.all_action(cmd, 'all'),
+            menu.mol_action(cmd, 'm1'),
+            menu.group_action(cmd, 'g1'),
+            menu.sele_action(cmd, 's1'),
+            menu.main_menu(cmd, (0., 0., 0.), (0, 0)),
+            menu.all_option(cmd, 'all'),
+            menu.pick_sele(cmd, 's1', ''),
+            menu.pick_option(cmd, 'm1', ''),
+            menu.seq_option(cmd, 'm1', '/m1/'),
+        ]:
+            labels = {row[1].split(' ')[0] for row in m}
+            self.assertFalse(labels & {'zoom', 'orient', 'center', 'origin'})
 
     def testSeqOption(self):
         self._make_objects(1)

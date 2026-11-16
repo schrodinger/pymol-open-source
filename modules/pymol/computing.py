@@ -113,7 +113,21 @@ def _openmm():
         raise pymol.CmdException(
             "this command needs pdbfixer and openmm: "
             "pip install 'pymolish[fix]'") from None
-    return PDBFixer, openmm.app
+
+    class Fixer(PDBFixer):
+        # ponytail: PDBFixer 1.12 stops on a ligand definition without
+        # ideal coordinates ("?", for example PID). Such a ligand gets no
+        # hydrogens; delete this class when PDBFixer reads these files.
+        def _downloadCCDDefinition(self, residueName):
+            try:
+                return super()._downloadCCDDefinition(residueName)
+            except ValueError:
+                print(' fix_structure: no hydrogens for %s, its definition '
+                      'at files.rcsb.org has no ideal coordinates'
+                      % residueName)
+                self._ccdCache[residueName.upper()] = None
+
+    return Fixer, openmm.app
 
 
 def _new_object(pdbstr, name, _self):
@@ -176,7 +190,8 @@ NOTES
     does not keep.
 
     For the hydrogens of a ligand PDBFixer downloads its definition from
-    files.rcsb.org; without a connection the ligand gets none. The result
+    files.rcsb.org; without a connection, or when the definition has no
+    ideal coordinates, the ligand gets none. The result
     comes back as PDB text: bond orders of ligands are single, colors and
     representations are the defaults.
 

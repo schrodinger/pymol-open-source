@@ -22,14 +22,16 @@ Numbers in brackets are pymolish-studio versions; the
 | Objects panel | Lists objects, selections and groups. Click a row to show or hide, double-click to zoom; each row has the Action, Show, Hide, Label and Color menus (4.5.11, 4.5.15). |
 | States panel | First, previous, play, next, last, jump to a state, speed. Appears when there is more than one state or movie frame (4.6.0). |
 | Menus | The right-click menu opens at the pointer as a normal menu, with icons (4.5.18). |
+| Shorter menus | The A menu of an object has 10 rows instead of 19; the less used ones are under "more". Right click on a row of the Objects panel gives Show as, Color, rename, duplicate and delete at once (4.13.0). |
 | Name | Title, About box and icon say pymolish-studio (4.8.0). |
-| Object colors | The palette button in the toolbar picks the colors that new objects get. The choice is remembered (4.10.0). |
+| Object colors | The palette button in the toolbar shows the palettes as color strips. Picking one recolors the loaded objects, and new objects and "by chain" follow it. The choice is remembered (4.10.0, 4.13.1). |
 
 ### Object color palettes
 
-Each new object takes the next color of the palette for its carbons. Pick one
-in the toolbar or type `palette vivid`; `palette soft, 1` also recolors what is
-loaded. `palette default` is the PyMOL order.
+Each new object takes the next color of the palette for its carbons, and
+C > by chain gives each chain the next color. Picking a palette in the toolbar
+also recolors what is loaded; typed, `palette vivid` leaves it alone and
+`palette soft, 1` recolors. `palette default` is the PyMOL order.
 
 | Palette | Made for | Colors |
 | --- | --- | --- |
@@ -38,15 +40,20 @@ loaded. `palette default` is the PyMOL order.
 | `pastel` | dark background | ![pastel](img/palette-pastel.png) |
 | `soft` | white background | ![soft](img/palette-soft.png) |
 | `colorblind` | any background | ![colorblind](img/palette-colorblind.png) |
+| `nord` | dark background | ![nord](img/palette-nord.png) |
+| `dracula` | dark background | ![dracula](img/palette-dracula.png) |
+| `catppuccin` | dark background | ![catppuccin](img/palette-catppuccin.png) |
 
 `colorblind` is Okabe-Ito followed by Paul Tol's bright and muted sets, with
 the published values. Only the first seven colors are designed as one set.
+`nord`, `dracula` and `catppuccin` are the accent colors of the editor themes
+of those names (Nord frost and aurora, Dracula, Catppuccin Mocha).
 
 ## New commands and menu entries
 
 | What | How it works now |
 | --- | --- |
-| Commands from the pymolish plugin | 18 commands are built in: groups, folders, UniProt and predicted structures, SMILES, sequence search. [Commands](commands.md) lists them (4.11.0 to 4.11.4). |
+| Commands from the pymolish plugin | 19 commands are built in: groups, folders, UniProt structures and ligands, predicted structures, SMILES, sequence search. [Commands](commands.md) lists them (4.11.0 to 4.11.4, 4.12.9). |
 | Clean | The A menu of an object, a group, a selection and of "all" has a "clean" submenu: remove waters, remove ions, remove waters and ions, remove ligands. Ions are what the `inorganic` selector matches; additives that contain carbon (glycerol, acetate) count as ligands (4.12.0). |
 | Optimize a ligand | `clean` works: it minimizes one small molecule (up to 1000 atoms) with the MMFF94 force field of rdkit. In the menu: A > clean > optimize ligand geometry; the Clean button of the Builder uses it too. In Open-Source PyMOL the command only raises an error. The atoms around the ligand are not seen, and bond orders are used as they are (4.12.1). |
 | Fix a structure | `fix_structure` repairs a protein with PDBFixer and loads the result as a new object: missing atoms of residues that are present, hydrogens for a pH, nonstandard residues replaced; water, ligands and ions kept or dropped. In the menu: A > clean > fix structure... opens the options. Gaps in the chain are not built (4.12.2). |
@@ -70,7 +77,8 @@ numbers: [baseline.md](baseline.md).
   No Python needed. Unsigned preview builds (4.4.0, 4.5.1).
 - **The program is called `pymolish`.** In Python it is still
   `import pymol`, so scripts keep working (4.5.5).
-- **Python 3.11 or newer** when you build it yourself (4.1.0):
+- **Python 3.13 or newer** when you build it yourself (4.12.8; it was
+  3.11 since 4.1.0):
   [Install from source](install.md).
 
 ## Removed

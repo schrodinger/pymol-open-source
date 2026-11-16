@@ -1,66 +1,55 @@
 # pymolish-studio — reviewed roadmap
 
-Reviewed 2026-11-08 against revision `3250e7a3`, the working tree, and primary
-documentation linked below. This is a draft implementation plan: source inspection
-and UI research are complete; builds, benchmarks, and prototypes have not run.
+First reviewed 2026-11-08 against revision `3250e7a3`. Checked again 2026-11-16
+at 4.12.6 (`f30d3525`) against the code, the detailed plans and the git log; the
+user's decisions of that day are applied (4.12.8 to 4.13.0) and listed in
+[PLAN-DONE.md](PLAN-DONE.md).
 
 **Keep Qt Widgets with PySide6, simplify the supported product, measure performance,
 modernize the existing window, and deliver downloadable builds early.** Changing
 bindings does not move molecular computation to the GPU. Follow
 [AGENTS.md](AGENTS.md): smaller, faster, simpler, prettier.
 
-Finished steps are in [PLAN-DONE.md](PLAN-DONE.md). A step moves there when its
-last milestone ships; its detailed plan stays in `docs/plans/`.
+Finished steps are in [PLAN-DONE.md](PLAN-DONE.md), and so are the shipped
+milestones of the steps that are still open. A step moves there when its last
+milestone ships; its detailed plan stays in `docs/plans/`.
 
-## Open steps
+## Open work, in execution order
 
-| Step | Detailed plan | Recommendation |
-| --- | --- | --- |
-| 1 | [Performance and GPU](docs/plans/01-performance-gpu.md) | Baseline first; optimize measured CPU, rendering, and interaction bottlenecks. |
-| 3 | [Modern workspace and metadata](docs/plans/03-modern-ui.md) | Improve the existing window; ship docks and an object metadata table first. |
-| 8 | [Modern C++ in the core](docs/plans/08-cpp-modernization.md) | No rewrite. One idiom per PR behind sanitizers and tests; vendored C stays; files go in profile order so cleanup and step 1 meet. |
-| 14 | [Action and right-click menus](docs/plans/14-menus.md) | 14a done (4.10.1): destructive rows show a red trash icon. 14b done: the list is in the plan. 14c applies it after the user approves it. |
+One table: what is open, in the order to do it. The step numbers are the
+user's original numbers; the letters are milestones of the detailed plans.
+
+| Order | Step | What is left | Exit condition |
+| --- | --- | --- | --- |
+| 5 | **1b** — [Performance and GPU](docs/plans/01-performance-gpu.md) | Renderer default on WSL, draw cost of sticks and surfaces, the two triangulation passes, the ray tracer's voxel table. One measured bottleneck per change. | Each change has before and after numbers. |
+| 5 | **3** — [Modern workspace and metadata](docs/plans/03-modern-ui.md) | Scenes as a dock, rows moved by dragging, a picked atom selects its row, sequence viewer and scene buttons still drawn by the core, spacing of the remaining dialogs, removal of the old C++ panel. | Each increment ships in a reviewable test build. |
+| none | **8** — [Modern C++ in the core](docs/plans/08-cpp-modernization.md) | No rewrite. One idiom per PR behind sanitizers and tests; vendored C stays; files go in profile order so cleanup and step 1 meet. Next: 8h (run Catch2 in CI, one line), 8i (dead `#ifdef` branches, needs `unifdef` on the development machine), then 8c to 8g. Many PRs, no date. | Each slice passes the suite, the sanitizer job, `bench.py` and a PSE round trip. |
+| none | **5c** — [Release builds without GitHub Actions](docs/plans/05-builds-binaries.md) | A proposal of 2026-11-16 inside finished step 5: Linux in podman, Windows on the host, macOS not possible off Apple hardware. Nothing is built yet. | The user accepts or drops the proposal. |
+
+Steps 8 and 5c never got an order number. GPU compute is not on the critical
+path. What needs the user's answer first is in "Waiting for the user", not
+repeated in this table.
 
 ## Validation of the original draft
 
+Rows that still steer an open step. The rows about finished steps are in
+[PLAN-DONE.md](PLAN-DONE.md).
+
 | Original idea or claim | Verdict and correction |
 | --- | --- |
-| PySide6 is the best fit | **Keep.** Qt 6 is already supported. PyQt6 is another binding to the same toolkit, not a different renderer. See step 0 for the sourced comparison. |
-| Qt already provides docking | **Confirmed, partly implemented.** `PyMOLQtGUI` enables nested/tabbed docks. Workspace layout persistence was not found in the inspected GUI code. |
 | Require a Core profile during binding cleanup | **Reject as an early change.** `Scene.cpp` and `Ortho.cpp` still use fixed-function calls. Audit and migrate required rendering paths separately. |
-| Remove Tk, its adapters, GLUT and other bindings in one PR | **Split.** Qt plugin initialization still uses legacy helpers, and `legacysupport.py` imports `pmg_tk.startup`. Preserve needed functions before removing their implementation. |
 | Enable OpenMP by default | **Already largely true.** `setup.py` defaults it on outside macOS. Marching cubes uses it; `Ray.cpp` has its own workers. Check races and oversubscription before adding parallelism. |
 | Move PDB/mmCIF parsing from Python to C++ | **Correct the premise.** Native readers already exist in `ObjectMolecule.cpp`, `ObjectMolecule2.cpp`, and `CifMoleculeReader.cpp`. Profile the actual load path. |
 | GPU ray tracing and marching cubes are next | **Defer.** OpenGL 4.3 compute cannot be the common requirement for native macOS OpenGL. Step 1 gives the platform constraint and experiment gate. |
-| Add five performance scripts from scratch | **Reuse first.** Existing loading, shader, iteration and asynchronous-build checks provide a starting point. Some are excluded from `--run all`; headless tests do not establish GPU performance. |
-| Stop updating `ChangeLog` | **Reject.** Public `cmd.*` behavior changes must still update it. Preserve historical entries. |
-| Optional libraries are immediately removable | **Conditional.** COLLADA, MMTF, trajectories, and glTF have real dependencies. CI explicitly enables `json=True`; retained native glTF needs nlohmann-json. |
-| PNG or glTF replaces movie encoding | **Incorrect.** Image sequences, encoded movies, and 3D scenes are different outputs. Preserve an explicit supported movie workflow. |
 | Replace the whole window beside the old one | **Prefer incremental changes.** Two windows duplicate command, dialog, plugin, and lifecycle integration. Extract only the panel being implemented. |
-| Object and sequence panels can simply become docks | **Underestimated.** Existing internal controls involve C++ drawing; a Qt replacement needs separate behavior and performance checks. |
-| `cmd.get_coords()` is a NumPy view | **Correct.** It returns selection coordinates as an array; the explicit borrowed-memory option is `get_coordset(copy=0)`, with documented lifetime hazards. |
-| `cmd.add_dock()` is a 20-line task | **Defer the API.** Ownership, thread access, headless behavior, and layout restoration matter. Use existing window access first. |
-| Cross-platform binaries are a small mechanical task | **Underestimated.** Resources, shared libraries, Qt plugins, architecture, and clean-machine testing need milestones. |
-| Test PRs only on Linux/Python 3.12 | **Reject for this migration.** Preserve three-OS and Python 3.11–3.14 coverage; optimize caching and artifact jobs first. |
-| Latest pins prove compatibility; LTS defines the runtime floor | **Not established.** The PySide6 6.12.0 pin is real, but a minimum version needs tests. LTS does not imply unrestricted access to all maintenance packages. |
+| Object and sequence panels can simply become docks | **Underestimated.** Existing internal controls involve C++ drawing; a Qt replacement needs separate behavior and performance checks. The Objects panel was rebuilt in Qt in 4.5.11; the sequence viewer is still drawn by the core. |
+| Test PRs only on Linux/Python 3.12 | **Reject for this migration.** Preserve three-OS coverage; optimize caching and artifact jobs first. Python is 3.13 and 3.14 only, in CI and in `pyproject.toml` (decided 2026-11-16, 4.12.8; the draft said 3.11–3.14). |
 | Replace GLEW, collapse directories, cap setup.py at 300 lines | **Skip without evidence.** These can add coupling and churn without improving a measured workflow. |
 
 Evidence and implementation boundaries are linked in each step. “Keep” means a
 recommended direction, not a claim that an implementation has passed tests.
 
-## Open work, in execution order
-
-The topic numbers remain the user's original numbers. The letters identify
-milestones in the detailed plans, not new topics.
-
-| Order | Work | Exit condition | Relative size |
-| --- | --- | --- | --- |
-| 5 | **1b — measured optimization** and **3 — workspace increments** | Performance changes have before/after evidence; docks and table ship in reviewable test builds. | 3 slices 1-3 done 2026-11-08 (4.5.0: objects dock, layout persistence, Panels menu); slice 4 done (4.5.11 Qt Objects panel replaces the viewport's object list; 4.5.14 workspace layout: action toolbar on top, command area at the bottom, toggle bar); slice 5 partly done (4.5.2 dark theme, 4.5.7 UI Scale for high-resolution screens and dark-theme color audit); 1b started (4.5.10 session load 6.6x faster, 4.5.12 surface build 1.24x, 4.7.7 to 4.7.9 surface build another 1.5x; GUI frame time measured 2026-11-14, software rendering under WSL is the main cost); renderer default on WSL, sticks and surface draw cost, and slice 6 open |
-| 14 | **14c — menu consolidation** | Approved keep, merge, drop list applied; fewer rows and fewer lines in `menu.py`. | Medium. 14b done 2026-11-14: the audit and a keep, merge, drop table of nine rows are in the plan. 14c waits for the user to approve that table. |
-
-Orders 9 to 14 were requested on 2026-11-14 and do not block order 5.
-
-### Working rules for orders 9 to 14
+## Working rules
 
 - One slice per session and per PR. Each plan names the files and lines to
   open, so a session starts there instead of exploring again.
@@ -69,18 +58,26 @@ Orders 9 to 14 were requested on 2026-11-14 and do not block order 5.
   a "Deleted" list. Nothing on a "Skipped" list is built without a new request.
 - [caveman](https://github.com/JuliusBrussee/caveman) shortens replies only;
   optional. The larger saving is the narrow slice and a fresh session per slice.
-- Decided on 2026-11-14: rdkit, PDBFixer and OpenMM are approved optional
-  dependencies; the palette is remembered in `QSettings`; `LICENSE` gets a
-  header above the unchanged notice. Still the user's: the license line for
-  the two images (9, 10), which dropped plugin commands to bring back (12),
-  approval of the menu table (14b, in `docs/plans/14-menus.md`).
 
-Cleanup precedes speculative optimization. Recording a baseline is preparation.
-UI work needs the binding decision and a usable test build, not completion of
-every unrelated removal. GPU compute is not on the critical path. Plugin
-compatibility work starts before Tk removal; final extension documentation can
-follow the first UI increments. Artifact work can start after the binding change
-while the remaining legacy cleanup proceeds.
+## Waiting for the user
+
+| # | Decision | Where it is described | What it holds up |
+| --- | --- | --- | --- |
+| 1 | On WSL, should the app select the `d3d12` driver itself? Frames go from 50 to 120 ms down to 0.7 to 11 ms; lines are then 1 pixel wide, so `trilines` goes on with it and mesh lines stay thin. | [01-performance-gpu.md](docs/plans/01-performance-gpu.md), Status 2026-11-14 | The first open item of 1b |
+| 2 | Delete the old C++ object panel (Display > Internal GUI)? The Qt panel replaced it in 4.5.11. `pymolish -x` still uses it. | [03-modern-ui.md](docs/plans/03-modern-ui.md), Objects panel | One removal PR |
+| 3 | Rights line for the icon and the logo: who made them, which license. | [09-icons-logo.md](docs/plans/09-icons-logo.md), `docs/licenses.md` | A complete license list; no code |
+| 4 | 5c: build the Linux and Windows bundles on the development machine, or stay with GitHub Actions now that the failing test is fixed (4.12.7)? | [05-builds-binaries.md](docs/plans/05-builds-binaries.md), 5c | 5c |
+
+The user's to do, not decisions:
+
+- Merge to `master`: it is at 4.8.0. Everything since (steps 10 to 14, 4.9.0
+  to 4.13.0) is on `feature5` and `feature6`, with no pull request; the newest
+  commits of `feature6` are not pushed. Release bundles and every check marked
+  "first CI run" wait for it: the icon of the Windows program, the release
+  notes, the `chem` and `fix` extras on three systems.
+- Remove the pymolish plugin from `~/.pymol/startup`: it still wins over the
+  native commands.
+- Look at the Windows artifact after the merge.
 
 ## Shared completion criteria
 

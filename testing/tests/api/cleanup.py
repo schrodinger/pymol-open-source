@@ -210,6 +210,27 @@ class TestFixStructure(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms("bare and solvent"), 2)
 
     @needs_pdbfixer
+    def test_ligand_without_ideal_coordinates(self):
+        # the definition of PID at files.rcsb.org looks like this
+        cif = (
+            "data_EOH\n_chem_comp.id EOH\nloop_\n"
+            "_chem_comp_atom.atom_id\n_chem_comp_atom.type_symbol\n"
+            "_chem_comp_atom.pdbx_leaving_atom_flag\n"
+            "_chem_comp_atom.pdbx_model_Cartn_x_ideal\n"
+            "_chem_comp_atom.pdbx_model_Cartn_y_ideal\n"
+            "_chem_comp_atom.pdbx_model_Cartn_z_ideal\n"
+            "_chem_comp_atom.charge\n_chem_comp_atom.pdbx_aromatic_flag\n"
+            "C1 C N ? ? ? 0 N\n"
+        )
+        cmd.read_pdbstr(PDB, "m")
+        with mock.patch("pdbfixer.pdbfixer.urlopen") as urlopen:
+            urlopen.return_value.read.return_value = cif.encode()
+            cmd.fix_structure("m")
+        self.assertTrue(urlopen.called)
+        self.assertGreater(cmd.count_atoms("m_fixed and polymer and hydro"), 5)
+        self.assertEqual(cmd.count_atoms("m_fixed and resn EOH and hydro"), 0)
+
+    @needs_pdbfixer
     def test_dialog(self):
         import os
 

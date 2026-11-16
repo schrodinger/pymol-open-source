@@ -2,6 +2,118 @@
 CHANGE LOG
 =========================================================================
 
+2026-11-16 pymolish-studio
+
+	* 4.13.1
+
+	* Object color palettes
+	  - The palette button opens a list with a strip of the first ten
+	    colors of each palette, the PyMOL order included. A click or
+	    the arrow keys pick a palette and recolor the carbons of the
+	    loaded objects at once. "Recolor objects now" is gone.
+	  - util.cbc (C > by chain, the presets) colors chains in the
+	    order of the active palette. With "palette default" it colors
+	    as before.
+	  - pastel is new: 12 stronger colors that start with cyan, green,
+	    red, blue and yellow (was 25 near-white ones). A session keeps
+	    the colors it was saved with unless pastel is the active
+	    palette when it is loaded.
+	  - New palettes for a dark background: nord, dracula, catppuccin.
+	  - cmd.palette itself is unchanged: recolor is still 0 by default.
+
+
+2026-11-16 pymolish-studio
+
+	* 4.13.0
+
+	* Menus
+	  - The A menu of an object is shorter, 10 rows instead of 19:
+	    rename, duplicate, delete, clean, preset, find, align,
+	    hydrogens, group, more. "more" holds drag matrix, reset
+	    matrix, drag coordinates, copy to object, generate, assign
+	    sec. struc., state, masking, sequence, movement and compute.
+	    Nothing was removed from it. The A menu of a group has the
+	    same rows plus sort, enable and disable members.
+	  - New: "duplicate object" in the A menu copies the object to
+	    <name>_cpy. "duplicate selection" is now also in the A menu
+	    of a selection.
+	  - Right click on a row of the Objects panel: Show as and Color,
+	    then rename, duplicate and delete without opening a submenu,
+	    then Action, Show, Hide and Label.
+	  - Fix: modify > exclude > polymer and > inorganic of a selection
+	    both excluded the organic atoms.
+	  - Removed: find > pi interactions > all and label > other
+	    properties > stereochemistry. Neither worked: they need
+	    commands that only the commercial PyMOL has. "pi-pi" and
+	    "pi-cation" stay.
+	  - pymol.menu (plugins): mol_action and group_action are one
+	    builder, mol_action(cmd, name, group=0); group_action still
+	    exists. sele_action2 is now sele_action(cmd, name, 1). Removed,
+	    they had no caller: test1, test2, mol_toggle, simple_show,
+	    simple_hide.
+
+2026-11-16 pymolish-studio
+
+	* 4.12.9
+
+	* Structures from the internet
+	  - New command (cmd.* API): fetch_uniprot_ligands accession
+	    [, min_weight [, limit [, group [, async_ ]]]]. It loads every
+	    different small molecule found in the PDB entries of a protein
+	    into the group <accession>_ligands, as objects named
+	    <accession>_<ligand id>. Each is the ideal model from the PDB
+	    chemical component dictionary, not the bound pose. Molecules
+	    lighter than min_weight (100 Da) are left out: ions, sulfate,
+	    glycerol. It asks data.rcsb.org and files.rcsb.org. The
+	    pymolish plugin had this command; it was left out in 4.11.2.
+
+2026-11-16 pymolish-studio
+
+	* 4.12.8
+
+	* Python
+	  - Changed: Python 3.13 is the oldest supported version (it was
+	    3.11). Only 3.13 and 3.14 are built and tested; pip now
+	    refuses to install on an older Python. The downloadable
+	    programs bring their own Python and are not affected.
+
+2026-11-16 pymolish-studio
+
+	* 4.12.7
+
+	* Tests and CI
+	  - Fix: the C++ tests (pymol._cmd.test2) replaced cmd._parser with a
+	    new parser that no command went through. Afterwards load_embedded
+	    answered "embedded data not found". The test files run in the
+	    order the file system lists them, so testLoadEmbedded failed on
+	    the Linux and Windows CI runners and passed on macOS and locally.
+	    new_parse_closure now makes one parser per cmd and keeps it.
+	  - ctest.py checks that cmd._parser is the same object after test2.
+
+2026-11-14 pymolish-studio
+
+	* 4.12.6
+
+	* Structure repair
+	  - Fix: fix_structure stopped with "could not convert string to
+	    float: '?'" when the structure had a ligand whose definition at
+	    files.rcsb.org has no ideal coordinates (for example PID in
+	    3iis). PDBFixer cannot read such a definition. The ligand is
+	    now kept without hydrogens and a message names it.
+
+2026-11-14 pymolish-studio
+
+	* 4.12.5
+
+	* Menus
+	  - Removed: the zoom, orient, center and origin rows of the A
+	    menu (objects, groups, selections, maps, meshes, surfaces,
+	    slices, "all") and of the right-click menus of the viewport
+	    and of the sequence viewer, also "zoom (vis)", "orient (vis)"
+	    and "center (vis)". Use the toolbar (Zoom, Orient), a double
+	    click on a row of the object panel, or the commands zoom,
+	    orient, center and origin, which are unchanged.
+
 2026-11-14 pymolish-studio
 
 	* 4.12.4

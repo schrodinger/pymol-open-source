@@ -174,6 +174,39 @@ def fill_menu(menu, entries, cmd):
             action.setIcon(icon or _swatch(color))
 
 
+def context_menu(parent, cmd, name, kind):
+    """The right-click menu of a row: show as and color, then the rename,
+    duplicate and delete rows of its action menu, then its other menus."""
+    popup = QtWidgets.QMenu(parent)
+    buttons = MENUS.get(kind, MENUS["object:"])
+
+    def entries(button):
+        return menu_entries(cmd, name, kind, button) or []
+
+    def later(title, rows):  # a submenu, filled when it is first opened
+        sub = popup.addMenu(title)
+        sub.aboutToShow.connect(lambda: sub.isEmpty() and fill_menu(sub, rows(), cmd))
+
+    show_as = [row[2] for row in entries(1) if row[1] == "as"]
+    if show_as:
+        later("Show as", lambda: show_as[0])
+    if buttons[4]:
+        later("Color", lambda: entries(4))
+    popup.addSeparator()
+    first_words = ("rename", "duplicate", "delete")
+    flat = [
+        row
+        for row in entries(0)
+        if row[0] == 1 and plain_label(row[1])[0].split(" ")[0] in first_words
+    ]
+    fill_menu(popup, flat, cmd)
+    popup.addSeparator()
+    for button, (_, title) in enumerate(BUTTONS[:4]):
+        if buttons[button]:
+            later(title, lambda b=button: entries(b))
+    return popup
+
+
 def popup_at_cursor(parent, entries, cmd):
     """Show a pymol.menu list as a context menu at the mouse pointer, once
     the caller has returned to the event loop. The core calls this through
@@ -564,23 +597,11 @@ class ObjectPanel(QtWidgets.QDockWidget):
             self.refresh_soon()
 
     def _context_menu(self, position):
-        """Right click or the Menu key: the five menus of the row as submenus."""
+        """Right click or the Menu key on a row."""
         item = self.tree.itemAt(position) or self.tree.currentItem()
         if item is None:
             return
-        name, kind = item.data(0, UserRole)
-        popup = QtWidgets.QMenu(self.tree)
-        for button, (_, title) in enumerate(BUTTONS):
-            if MENUS.get(kind, MENUS["object:"])[button]:
-                sub = popup.addMenu(title)
-                sub.aboutToShow.connect(
-                    lambda s=sub, b=button: (
-                        s.isEmpty()
-                        and fill_menu(
-                            s, menu_entries(self.cmd, name, kind, b), self.cmd
-                        )
-                    )
-                )
+        popup = context_menu(self.tree, self.cmd, *item.data(0, UserRole))
         popup.exec(self.tree.viewport().mapToGlobal(position))
         self.refresh_soon()
 

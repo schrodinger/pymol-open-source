@@ -16,6 +16,8 @@ deliverables. Build speed, launch speed and download size also need separate dat
 
 4.5.3: CI runs only for pushes/PRs to `master`, on Python 3.13 and 3.14. Windows and macOS get their native libraries through pixi (`pixi.toml`, conda-forge only; the upstream `schrodinger` channel and the msgpack-c git clone are gone; catch2 is `2.13.*` because 2.13.3 has no osx-arm64 build). Linux keeps apt. Releases carry a `SHA256SUMS` file. Note: this fork has recorded zero Actions runs so far; Actions must be enabled once in the repository's Actions tab before any of this executes.
 
+2026-11-16: 5c proposed below (builds without GitHub Actions). CI was red on one test, not on size; the test is fixed in 4.12.7, not yet confirmed by a CI run. Nothing in the workflow was changed.
+
 ## Current state and risks to verify
 
 - [Build backend](../../_custom_build/backend.py) supports wheels and editable
@@ -132,6 +134,120 @@ rule when implementing. Keep packaging requirements out of core runtime deps.
 - Before public releases, establish platform signing/notarization and installer
   handling as needed. For previews, identify unsigned status honestly; do not
   instruct testers to disable system protection globally.
+
+## 5c — Release builds without GitHub Actions (proposal, 2026-11-16)
+
+Question: can the Windows and macOS bundles be built on the development
+machine (Windows 11 x64 host, Ubuntu 24.04 in WSL2, 32 threads, 332 GB free on
+`C:`) instead of on GitHub Actions? Short answer: Linux yes, Windows yes after
+a one-time compiler install, macOS no.
+
+### What was measured first
+
+- Bundle size is not what stops Actions. The `workflow_dispatch` run of
+  2026-11-13 built all three bundles there: Linux 111 MB, macOS 79 MB, Windows
+  75 MB. With the `chem` and `fix` extras the Linux bundle built locally today
+  is 419 MB unpacked and 142 MB as `.tar.gz`. A release file may be up to
+  2 GiB, and a public repository pays nothing for minutes or artifact storage.
+- Every run since 2026-11-14 fails in the **Test** step on Linux and Windows,
+  on one test: `testLoadEmbedded` (`Error: embedded data 'wats' not found`).
+  The bundle steps come after the tests, so no bundle is made. The macOS job
+  passes and uploads its bundle on every run.
+- Cause, fixed in 4.12.7: the C++ tests (`ctest.py`) replaced `cmd._parser`,
+  and `load_embedded` then looked in the wrong parser. Test files run in
+  file-system order: `ctest.py` came before `importing.py` on the Linux and
+  Windows runners, after it on macOS and locally. A CI run has to confirm it.
+- So Actions can make all three bundles again. The rest of this section is
+  the route that does not depend on Actions.
+
+### Where each target can be built
+
+| Target | Where | Verdict | Why |
+|---|---|---|---|
+| Linux x86_64 | `podman` on this machine, image `ubuntu:22.04` | Works now | podman 4.9.3 is installed. The container keeps the glibc 2.35 baseline of the CI runner; a bundle built directly in WSL (glibc 2.39) does not start on older distributions. |
+| Windows x86_64 | The Windows host of this machine, started from WSL | Works after a one-time install | WSL can run `pwsh.exe`. The host has git and winget but no MSVC, no pixi and no CMake. |
+| macOS arm64 | Not on this machine | Not possible | See below. |
+
+### Windows: build on the host, not in a container
+
+One-time setup on the Windows side:
+
+```powershell
+# needs an administrator once; the account in use is a standard user
+winget install Microsoft.VisualStudio.2022.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+# per user, no administrator
+winget install prefix-dev.pixi
+```
+
+Each build, from WSL. The commands inside are the ones of the `build-Windows`
+job in [build.yml](../../.github/workflows/build.yml), unchanged:
+
+```sh
+git clone --depth 1 "file://$PWD" /mnt/c/b/pymolish   # NTFS path: MSBuild is unreliable on \\wsl.localhost
+cd /mnt/c/b/pymolish && pwsh.exe -NoProfile -Command '
+  pixi run -e py313 pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
+  $whl = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
+  pixi run -e py313 pip install "$whl[dev,chem,fix]"
+  pixi run -e py313 pymolish -ckqy testing\testing.py --run all
+  pixi run -e py313 pyinstaller --noconfirm packaging/pyinstaller.spec
+  Compress-Archive -Path dist\pymolish -DestinationPath dist\pymolish-Windows-X64.zip'
+```
+
+Then start `dist\pymolish\pymolish.exe` from another directory: this is a real
+desktop with a real GPU, which the CI runner is not. Publishing stays the
+`gh release upload` line of the `release` job, run by hand from WSL.
+
+Not verified: none of the above ran, because MSVC is not installed. Open
+points for the first run: whether `create_buildinfo.py` is content with a
+shallow clone, and long paths (hence the short `C:\b`).
+
+Rejected for Windows:
+
+- **Windows containers.** They need the Windows Containers feature and an
+  administrator, a base image of several GB, and MSVC inside the image anyway.
+  The host already is Windows; a container adds work and removes nothing.
+  podman in WSL runs Linux containers only: a container shares the kernel of
+  its host.
+- **Cross-compiling in a Linux container** (MinGW or clang-cl, plus Wine).
+  PyInstaller does not cross-freeze: it must run on the system it targets.
+  Running it under Wine with PySide6 is unsupported and would ship a binary
+  that no test ever ran natively.
+- **MinGW through pixi, without an administrator.** `setup.py` has a MinGW
+  branch, so this may work, but it yields a different binary from the MSVC one
+  CI tests. Try it only if nobody can install the Build Tools.
+
+### macOS: why not on this machine
+
+1. **No macOS containers exist.** A container uses the kernel of its host;
+   there is no macOS kernel on a Windows or Linux machine. The "macOS in
+   Docker" projects are virtual machines in disguise.
+2. **A macOS virtual machine is not an option either.** Apple's license allows
+   macOS only on Apple hardware, and the target is arm64: Apple-silicon macOS
+   does not boot in a VM on an x86 processor.
+3. **Cross-compiling is half a solution.** The C++ extension could in theory
+   be built with a cross toolchain and Apple's SDK (same license limit), but
+   PyInstaller still has to run on macOS to make the bundle, and nothing built
+   here could be started here. An untested bundle fails the acceptance rule at
+   the end of this plan.
+
+Ways to get the macOS bundle, cheapest first:
+
+1. Keep only the `build-MacOS` job on GitHub Actions. It is green today, takes
+   2 to 6 minutes and produces an 81 MB bundle.
+2. A real Mac (owned or borrowed): install pixi, run the three commands of the
+   `build-MacOS` job. Signing and notarization also need a Mac.
+3. A rented Mac by the hour (for example AWS EC2 Mac, MacStadium, Scaleway).
+   Costs money; only worth it if 1 and 2 are both ruled out.
+
+### Proposed order
+
+1. Push and let CI confirm the 4.12.7 fix. If all three bundles come back,
+   the local route below is optional.
+2. If local: get the Build Tools installed, run the Windows block once by
+   hand, fix what breaks, then put both blocks into one script
+   `packaging/build_local.sh` (Linux in podman, Windows on the host). No script
+   before the commands have run once.
+3. macOS stays on Actions until a Mac is available.
 
 ## Additional ideas and acceptance
 

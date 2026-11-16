@@ -86,36 +86,45 @@ class TestActionToolbar(testing.PyMOLTestCase):
         IconOnly = QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly
         self.assertEqual(
             sorted(b.toolTip() for b in buttons if b.toolButtonStyle() == IconOnly),
-            ["Colors that new objects get", "More view actions", "Redo", "Undo"],
+            ["Colors of objects and chains", "More view actions", "Redo", "Undo"],
         )
 
     def test_palette(self):
         from unittest import mock
         from pymol import palettes
+        from pymol.Qt import QtCore
         from pmg_qt import action_toolbar, theme
+
+        Qt = QtCore.Qt
 
         # -k (how the tests run): the saved palette is not applied
         with mock.patch.object(theme, "object_palette", return_value="deep"):
             bar = action_toolbar.ActionToolbar(cmd, defaultdict(list))
         self.assertEqual(palettes.active, "default")
-        menu = bar.colors.menu()
-        actions = {a.data(): a for a in menu.actions() if a.data()}
-        self.assertEqual(list(actions), ["default", *palettes.PALETTES])
-        self.assertEqual(actions["deep"].text(), "Deep (white background)")
-        self.assertFalse(actions["deep"].icon().isNull())
+        view = bar.palettes
+        role = Qt.ItemDataRole.UserRole
+        names = [view.item(i).data(role) for i in range(view.count())]
+        self.assertEqual(names, ["default", *palettes.PALETTES])
+        self.assertEqual(view.item(2).text(), "Deep (white background)")
+        # wide enough to tell the colors apart: ten of them, 14 px each
+        self.assertEqual(view.item(2).icon().availableSizes()[0].width(), 140)
+        self.assertGreaterEqual(view.width(), view.sizeHintForColumn(0))
         try:
+            # picking recolors what is loaded and is saved
+            cmd.fragment("ala")
             with mock.patch.object(theme, "set_object_palette") as save:
-                actions["deep"].trigger()
+                view.setCurrentRow(names.index("deep"))
             save.assert_called_once_with("deep")
             self.assertEqual(palettes.active, "deep")
+            self.assertEqual(cmd.count_atoms("elem C & color deep_01"), 3)
 
-            cmd.palette("soft")  # typed: the menu follows when it opens
-            menu.aboutToShow.emit()
-            self.assertEqual([n for n, a in actions.items() if a.isChecked()], ["soft"])
-
-            cmd.fragment("ala")
-            menu.actions()[-1].trigger()  # Recolor objects now
-            self.assertEqual(cmd.count_atoms("elem C & color soft_01"), 3)
+            # typed: the list follows when the menu opens, nothing is saved
+            cmd.palette("soft")
+            with mock.patch.object(theme, "set_object_palette") as save:
+                bar.colors.menu().aboutToShow.emit()
+            save.assert_not_called()
+            self.assertEqual(view.currentItem().data(role), "soft")
+            self.assertEqual(cmd.count_atoms("elem C & color deep_01"), 3)
 
             # without -k the saved palette is back at start
             cmd.palette("default")
