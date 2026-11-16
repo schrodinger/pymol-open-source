@@ -100,6 +100,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get --no-install-recommends install \
+            catch2 \
             libfreetype6-dev \
             libglew-dev \
             libglm-dev \
@@ -111,11 +112,14 @@ jobs:
     - name: Build
       run: |
         pip install --upgrade pip
-        pip install -v --config-settings json=True '.[dev]'
+        pip install -v --config-settings testing=True --config-settings json=True '.[dev]'
 
     - name: Test
+      # libstdc++ is preloaded too: python does not link it, and ASan aborts
+      # on the first C++ exception (the Catch2 tests throw) if it cannot find
+      # __cxa_throw when it starts
       run: |
-        LD_PRELOAD=$(gcc -print-file-name=libasan.so) pymolish -ckqy testing/testing.py --run all
+        LD_PRELOAD="$(gcc -print-file-name=libasan.so) $(gcc -print-file-name=libstdc++.so)" pymolish -ckqy testing/testing.py --run all
 
 
   build-Windows:

@@ -109,7 +109,8 @@ save round trip. `layer1/` changes: real GUI.
   `-fsanitize=address,undefined -fno-sanitize-recover=undefined` and runs the
   Python suite; any report fails the job. Run it locally with the same
   `CXXFLAGS` / `CFLAGS` / `LDFLAGS` and
-  `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0`.
+  `LD_PRELOAD="$(gcc -print-file-name=libasan.so) $(gcc -print-file-name=libstdc++.so)" ASAN_OPTIONS=detect_leaks=0`
+  (libstdc++ since 8h).
 - The first run found three bugs, fixed in `c2de3087`: `free()` of an object
   made with `new` (`PyMOL_Free`), left shifts of negative ints in the sculpting
   hash, and four uninitialized `bool` in `ObjectCGOState`.
@@ -149,7 +150,8 @@ save round trip. `layer1/` changes: real GUI.
   changes there wait for one.
 - Not done: the Catch2 tests are compiled in CI but no step runs them
   (`pymolish --testing`); Catch2 is not installed on the development machine,
-  so adding the step could not be tried.
+  so adding the step could not be tried. (Corrected in 8h below: the suite
+  runs them.)
 
 **8b in progress.**
 
@@ -178,6 +180,25 @@ save round trip. `layer1/` changes: real GUI.
   terminated or needs no terminator, though several rely on the destination
   struct having been zero-filled. Then the fixed buffer types themselves
   (`OrthoLineType`, `WordType`, ...).
+
+**8h done 2026-11-16.**
+
+- The premise was wrong: the Catch2 tests have run in CI all along.
+  `testing/tests/api/ctest.py` calls them from the Python suite, and the three
+  build jobs compile with `testing=True`. The logs of run 43864077834 show
+  "All tests passed (735 assertions in 135 test cases)" on Linux, Windows and
+  macOS.
+- What was missing: the sanitizer job built without `testing=True`, so there
+  they were skipped. It now builds them and installs `catch2`.
+- That needed one more change. With only `libasan.so` preloaded into a
+  `python` that does not link libstdc++, ASan cannot find `__cxa_throw` and
+  aborts on the first C++ exception (`Test_Image.cpp` expects one). Preloading
+  `libstdc++.so` next to it fixes that.
+- Tried on the development machine in a copy of the tree (`git archive`, its
+  own venv, the job's flags): 136 Catch2 cases and the 1069 tests of the
+  suite pass. The first run found one defect, fixed in 4.14.1: a signed left
+  shift in `ColorGetName`, reached by the new `testLook`.
+- Not tried: the job itself on GitHub (GCC 11 on Ubuntu 22.04; here GCC 13).
 
 ## Review 2026-11-14: is it finished, and what is next
 
