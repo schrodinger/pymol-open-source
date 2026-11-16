@@ -667,9 +667,6 @@ static bool is_session_blacklisted(int index) {
   case cSetting_use_shaders:
   case cSetting_pick32bit:
   case cSetting_display_scale_factor:
-#if defined(_PYMOL_ACTIVEX)
-  case cSetting_async_builds:
-#endif
     return true;
   }
 
@@ -3053,12 +3050,10 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     // Driver update breaks lighting
     set_b(I, cSetting_precomputed_lighting, 1);
 
-#ifndef _PYMOL_ACTIVEX
     if (auto count = std::thread::hardware_concurrency() > 1) {
       set_i(I, cSetting_max_threads, count);
     }
     /* END PROPRIETARY CODE SEGMENT */
-#endif
 #endif
 
 #ifndef _PYMOL_FREETYPE
