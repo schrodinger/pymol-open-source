@@ -46,7 +46,7 @@ the published values. Only the first seven colors are designed as one set.
 
 | What | How it works now |
 | --- | --- |
-| Commands from the pymolish plugin | 18 commands are built in: groups, folders, UniProt and predicted structures, SMILES, sequence search. [Commands](commands.md) lists them (4.11.0 to 4.11.4). |
+| Commands from the pymolish plugin | 19 commands are built in: groups, folders, UniProt structures and ligands, predicted structures, SMILES, sequence search. [Commands](commands.md) lists them (4.11.0 to 4.11.4, 4.12.9). |
 | Clean | The A menu of an object, a group, a selection and of "all" has a "clean" submenu: remove waters, remove ions, remove waters and ions, remove ligands. Ions are what the `inorganic` selector matches; additives that contain carbon (glycerol, acetate) count as ligands (4.12.0). |
 | Optimize a ligand | `clean` works: it minimizes one small molecule (up to 1000 atoms) with the MMFF94 force field of rdkit. In the menu: A > clean > optimize ligand geometry; the Clean button of the Builder uses it too. In Open-Source PyMOL the command only raises an error. The atoms around the ligand are not seen, and bond orders are used as they are (4.12.1). |
 | Fix a structure | `fix_structure` repairs a protein with PDBFixer and loads the result as a new object: missing atoms of residues that are present, hydrogens for a pH, nonstandard residues replaced; water, ligands and ions kept or dropped. In the menu: A > clean > fix structure... opens the options. Gaps in the chain are not built (4.12.2). |

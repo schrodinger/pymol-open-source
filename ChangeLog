@@ -4,6 +4,21 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.12.9
+
+	* Structures from the internet
+	  - New command (cmd.* API): fetch_uniprot_ligands accession
+	    [, min_weight [, limit [, group [, async_ ]]]]. It loads every
+	    different small molecule found in the PDB entries of a protein
+	    into the group <accession>_ligands, as objects named
+	    <accession>_<ligand id>. Each is the ideal model from the PDB
+	    chemical component dictionary, not the bound pose. Molecules
+	    lighter than min_weight (100 Da) are left out: ions, sulfate,
+	    glycerol. It asks data.rcsb.org and files.rcsb.org. The
+	    pymolish plugin had this command; it was left out in 4.11.2.
+
+2026-11-16 pymolish-studio
+
 	* 4.12.8
 
 	* Python

@@ -1,6 +1,6 @@
 """
-Structures by UniProt accession: the entries of the PDB, predicted models
-from AlphaFold DB or ESMFold, and pLDDT colors. Ported from the pymolish
+Structures by UniProt accession: the entries of the PDB and their ligands,
+predicted models from AlphaFold DB or ESMFold, and pLDDT colors. Ported from the pymolish
 plugin (MIT, same author); new code, MIT. Standard library HTTP only.
 """
 
@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import pymol
@@ -17,6 +18,8 @@ cmd = __import__("sys").modules["pymol.cmd"]
 UNIPROT = "https://rest.uniprot.org/uniprotkb/"
 ALPHAFOLD = "https://alphafold.ebi.ac.uk/api/prediction/"
 ESMFOLD = "https://api.esmatlas.com/foldSequence/v1/pdb/"
+RCSB = "https://data.rcsb.org/graphql?query="
+LIGAND = "https://files.rcsb.org/ligands/download/%s_ideal.sdf"
 
 _ACCESSION = re.compile(
     r"[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}"
@@ -132,7 +135,7 @@ def fetch_by_uniprot(accession, limit=0, group="", async_=0, quiet=1, *, _self=c
 
     SEE ALSO
 
-        list_uniprot_structures, fetch_fold, fetch
+        list_uniprot_structures, fetch_uniprot_ligands, fetch_fold, fetch
     """
     if int(async_):
         return _self.async_(
@@ -158,6 +161,99 @@ def fetch_by_uniprot(accession, limit=0, group="", async_=0, quiet=1, *, _self=c
     _self.zoom(group or accession)
     if not int(quiet):
         print(" fetch_by_uniprot: loaded %d of %d" % (len(names), len(codes)))
+    return names
+
+
+def pdb_ligands(codes, min_weight=100.0):
+    """{component id: name} of the small molecules in PDB entries. Ions and
+    small additives fall below min_weight (Da)."""
+    found = {}
+    for start in range(0, len(codes), 100):  # keeps the URL under 2,000 letters
+        query = (
+            "{entries(entry_ids:%s){nonpolymer_entities{nonpolymer_comp"
+            "{chem_comp{id name formula_weight}}}}}"
+            % json.dumps(codes[start : start + 100])
+        )
+        answer = json.loads(_get(RCSB + urllib.parse.quote(query)) or "{}")
+        for entry in (answer.get("data") or {}).get("entries") or []:
+            for entity in (entry or {}).get("nonpolymer_entities") or []:
+                component = entity["nonpolymer_comp"]["chem_comp"]
+                if (component.get("formula_weight") or 0) >= min_weight:
+                    found[component["id"]] = component.get("name") or ""
+    return found
+
+
+def fetch_uniprot_ligands(
+    accession, min_weight=100, limit=0, group="", async_=0, quiet=1, *, _self=cmd
+):
+    """
+    DESCRIPTION
+
+        "fetch_uniprot_ligands" loads every different small molecule found
+        in the PDB entries of a protein, given its UniProt accession, into
+        one group.
+
+    USAGE
+
+        fetch_uniprot_ligands accession [, min_weight [, limit [, group
+            [, async_ ]]]]
+
+    ARGUMENTS
+
+        accession = string: UniProt accession, for example P00918
+
+        min_weight = float: leave out lighter molecules, in Da; this drops
+        ions, sulfate and glycerol {default: 100}
+
+        limit = integer: load only the first ligands, by name {default: 0,
+        all}
+
+        group = string: name of the group {default: <accession>_ligands}
+
+        async_ = 0/1: download in the background {default: 0}
+
+    EXAMPLE
+
+        fetch_uniprot_ligands P00918, limit=20
+
+    NOTES
+
+        The objects are named <accession>_<ligand id>. Each ligand is the
+        ideal model from the PDB chemical component dictionary, alone and
+        near the origin, not in the place where it binds: use
+        "fetch_by_uniprot" for the bound ligands.
+
+    SEE ALSO
+
+        fetch_by_uniprot, list_uniprot_structures
+    """
+    if int(async_):
+        args = (accession, min_weight, limit, group, 0, quiet)
+        return _self.async_(fetch_uniprot_ligands, *args, _self=_self)
+    accession = accession.strip().upper()
+    codes = [row[0] for row in pdb_entries(accession)]
+    found = pdb_ligands(codes, float(min_weight))
+    if not found:
+        raise pymol.CmdException(
+            "no ligand in the %d PDB entries of %s" % (len(codes), accession)
+        )
+    names = []
+    for component in sorted(found)[: int(limit) or None]:
+        sdf = _get(LIGAND % component)
+        if "M  END" not in sdf:
+            print(" fetch_uniprot_ligands: skipped %s: no ideal model" % component)
+            continue
+        names.append("%s_%s" % (accession, component))
+        _self.read_molstr(sdf, names[-1], zoom=0)
+        if not int(quiet):
+            print(" %-4s %s" % (component, found[component]))
+    if not names:
+        raise pymol.CmdException("no ligand could be downloaded")
+    group = group or accession + "_ligands"
+    _self.group(group, " ".join(names))
+    _self.zoom(group)
+    if not int(quiet):
+        print(" fetch_uniprot_ligands: loaded %d of %d" % (len(names), len(found)))
     return names
 
 

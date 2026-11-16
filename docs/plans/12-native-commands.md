@@ -1,7 +1,8 @@
 # 12 — pymolish plugin commands, native
 
 [Roadmap](../../PLAN.md) · Request 2026-11-14 · **Done 2026-11-14, 4.11.0 to
-4.11.4.** 18 commands in five new files (`grouping.py`, `batch.py`,
+4.11.4.** 18 commands (19 since 4.12.9: `fetch_uniprot_ligands` came back on
+the user's request of 2026-11-16) in five new files (`grouping.py`, `batch.py`,
 `fetching.py`, `smiles.py`, `finding.py`), listed in
 [docs/commands.md](../commands.md). The text below is the plan as written
 before the work (plugin 0.1.27, `b970e67`).
@@ -46,7 +47,7 @@ and its meta commands behind: 58 commands become about 17.**
 | Groups, 18 → 7 | `group_next`, `group_previous`, `group_enable`, `group_disable`, `copy_group`, `sort_group`, `extract_chain` (one command for one or all chains) | `group_info`, `group_status`, `list_*`: listings; `group_toggle`, `sort_all_groups`, `create_sorted_group`, `copy_group_objects`, `merge_to_*`: variants. Say which you use and it stays. |
 | I/O, 9 → 3 | `load_files` (with `recursive=`), `export_objects` (group or name pattern), `load_smiles` | `load_recursive`, `list_loadable_files`, `export_group`, `export_by_pattern`: folded in; `paste_smiles`: becomes a menu entry; `export_byres_to_csv`: niche |
 | Selection, 3 → 1 | `search_sequence`, rebuilt on `pepseq` and `re` | `water`, `ions`: selectors `solvent` and `inorganic` exist |
-| Structure, 10 → 4 | `fetch_by_uniprot`, `fetch_fold`, `cluster_ligands`, `list_uniprot_structures` | `multialign`: `extra_fit` (wrap only if it cannot take a group); `list_objects_with_prefix`: `cmd.get_names`; `remove_ions`, `remove_metals`: [step 13](13-structure-cleanup.md); `fetch_uniprot_ligands`: user's call |
+| Structure, 10 → 4 | `fetch_by_uniprot`, `fetch_fold`, `cluster_ligands`, `list_uniprot_structures` | `multialign`: `extra_fit` (wrap only if it cannot take a group); `list_objects_with_prefix`: `cmd.get_names`; `remove_ions`, `remove_metals`: [step 13](13-structure-cleanup.md); `fetch_uniprot_ligands`: brought back in 4.12.9 |
 | Visualization, 9 → 2 | `color_plddt`, `color_group_with_gradient` | palettes: [step 11](11-color-palettes.md); `color_secondary_structure`: C > by ss exists; `ui_scale`: toolbar |
 | Meta, 9 → 0 | | `help` is the help; version is `get_version`; logo is the About box; no upgrade or installer |
 
