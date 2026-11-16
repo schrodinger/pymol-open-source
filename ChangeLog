@@ -4,6 +4,16 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.12.8
+
+	* Python
+	  - Changed: Python 3.13 is the oldest supported version (it was
+	    3.11). Only 3.13 and 3.14 are built and tested; pip now
+	    refuses to install on an older Python. The downloadable
+	    programs bring their own Python and are not affected.
+
+2026-11-16 pymolish-studio
+
 	* 4.12.7
 
 	* Tests and CI

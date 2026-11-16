@@ -12,7 +12,7 @@ with `pip`. It takes a few minutes the first time.
 
 | Needed | For |
 | --- | --- |
-| C++17 compiler (gcc 8 or newer), Python 3.11 or newer with `pip` | the build; `pip` fetches CMake itself |
+| C++17 compiler (gcc 8 or newer), Python 3.13 or newer with `pip` | the build; `pip` fetches CMake itself |
 | OpenGL, GLEW, GLM, libpng, FreeType | drawing, pictures, text |
 | PySide6, numpy | the window and arrays; `pip` installs them |
 

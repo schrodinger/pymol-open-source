@@ -70,7 +70,8 @@ numbers: [baseline.md](baseline.md).
   No Python needed. Unsigned preview builds (4.4.0, 4.5.1).
 - **The program is called `pymolish`.** In Python it is still
   `import pymol`, so scripts keep working (4.5.5).
-- **Python 3.11 or newer** when you build it yourself (4.1.0):
+- **Python 3.13 or newer** when you build it yourself (4.12.8; it was
+  3.11 since 4.1.0):
   [Install from source](install.md).
 
 ## Removed

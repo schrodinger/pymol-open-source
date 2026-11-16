@@ -8,7 +8,7 @@ imports it at launch as `pymol.plugins.startup.<name>` and calls its
 | --- | --- |
 | User directory | `~/.pymol/startup/`, on Windows `%APPDATA%\pymol\startup\`. Plugin > Plugin Manager can add search paths (restart needed). |
 | Bundled plugins | `data/startup/` in this repository |
-| Needs | pymolish 4.3.0 or later, Python 3.11+, PySide6 through `pymol.Qt` only |
+| Needs | pymolish 4.3.0 or later, Python 3.13+, PySide6 through `pymol.Qt` only |
 | Without a GUI (`pymolish -c`) | Commands load. A plugin that calls `addmenuitemqt` is skipped with a one-line notice. |
 
 Both examples below were run on 4.5.10, headless and in the GUI.

@@ -1,7 +1,7 @@
 [project]
 name = "pymolish"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dynamic=["version"]
 license = "LicenseRef-Open-Source-PyMOL AND MIT"
 license-files = ["LICENSE", "LICENSE-MIT"]
