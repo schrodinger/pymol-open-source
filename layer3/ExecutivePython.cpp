@@ -1,6 +1,5 @@
 #include "Executive.h"
 #include "ExecutivePython.h"
-#ifndef _PYMOL_NOPY
 #include "ObjectAlignment.h"
 #include "ObjectCGO.h"
 #include "ObjectCallback.h"
@@ -318,4 +317,3 @@ pymol::Result<PyObject*> ExecutiveGetRawAlignment(PyMOLGlobals* G,
   return pymol::make_error("No such alignment: ", name);
 }
 
-#endif

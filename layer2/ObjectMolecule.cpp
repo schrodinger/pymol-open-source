@@ -6558,7 +6558,6 @@ int const* ObjectMolecule::getNeighborArray() const
 
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 static void copy_and_trim_repr(char* dest, PyObject* obj)
 {
   PyObject* repr = PyObject_Repr(obj);
@@ -7235,7 +7234,6 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
     PyErr_Print();
   return (cset);
 }
-#endif
 
 
 /*========================================================================*/
@@ -7243,9 +7241,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
                                               ObjectMolecule * I,
                                               PyObject * model, int frame, int discrete)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   CoordSet *cset = nullptr;
   auto atInfo = pymol::vla<AtomInfoType>(10);
   int ok = true;
@@ -7404,7 +7399,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     }
   }
   return (I);
-#endif
 }
 
 
@@ -7501,9 +7495,6 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, const char * name,
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
                                          PyObject * coords, int frame)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   CoordSet *cset = nullptr;
   int a, b, l;
   PyObject *v, *w;
@@ -7579,7 +7570,6 @@ ok_except1:
     delete cset;
   ErrMessage(G, "LoadCoords", "failed");
   return nullptr;
-#endif
 }
 
 
@@ -9202,10 +9192,8 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   CoordSet *cs;
   AtomInfoType *ai, *ai0;
   PyMOLGlobals *G = I->G;
-#ifndef _PYMOL_NOPY
   PyObject* expr_co = nullptr;
   int compileType = Py_single_input;
-#endif
 #ifdef _WEBGL
 #endif
   PRINTFD(G, FB_ObjectMolecule)
@@ -9219,24 +9207,16 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       if (op->i2 != cExecutiveLabelEvalOn){
 	break;
       }
-#ifndef _PYMOL_NOPY
       compileType = Py_eval_input;
-#endif
     case OMOP_ALTR:
     case OMOP_AlterState:
       // assume blocked interpreter
 
       if (op->s1 && op->s1[0]){
-#ifndef _PYMOL_NOPY
 	expr_co = Py_CompileString(op->s1, "", compileType);
 	if(expr_co == nullptr) {
 	  ok = ErrMessage(G, errstr, "failed to compile expression");
 	}
-#else
-#ifndef _WEBGL
-        ok = ErrMessage(G, errstr, "failed to compile expression");
-#endif
-#endif
       }
       /* PBlockAndUnlockAPI() is not safe.
        * what if "v" is invalidated by another thread? */
@@ -10118,7 +10098,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 			} else if (I->NCSet == 1){
 			  cs = I->CSet[0];
 			}
-#ifndef _PYMOL_NOPY
 			if(PLabelAtom(I->G, I, cs, expr_co, a)) {
 			  if (ai->label){
 			    op->i1++; /* only if the string has been set, report labelled */
@@ -10128,9 +10107,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 			} else {
 			  ok = false;
 			}
-#else
-			ok = false;
-#endif
 		      }
                       break;
                     case cExecutiveLabelEvalAlt:
@@ -10166,13 +10142,11 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 		  } else if (I->NCSet == 1){
 		    cs = I->CSet[0];
 		  }
-#ifndef _PYMOL_NOPY
                   if(PAlterAtom
                      (I->G, I, cs, expr_co, op->i2, a,
                       op->py_ob1))
                     op->i1++;
                   else
-#endif
 #ifdef _WEBGL
 #endif
                     ok = false;
@@ -10185,13 +10159,11 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     if(cs) {
                       a1 = cs->atmToIdx(a);
                       if(a1 >= 0) {
-#ifndef _PYMOL_NOPY
                         if(PAlterAtomState(I->G, expr_co, op->i3,
                                            I, cs, a, a1, op->i2, op->py_ob1)) {
                           op->i1++;
                           hit_flag = true;
                         } else
-#endif
 #ifdef _WEBGL
 #endif
                           ok = false;
@@ -10610,9 +10582,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
     case OMOP_ALTR:
     case OMOP_AlterState:
-#ifndef _PYMOL_NOPY
       Py_XDECREF(expr_co);
-#endif
       break;
     }
     /* */
@@ -10731,7 +10701,6 @@ void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T)
   }
 }
 
-#ifndef _PYMOL_NOPY
 static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals * G,
                                       CCoordSetUpdateThreadInfo * Thread, int n_thread,
                                       int n_total)
@@ -10757,7 +10726,6 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals * G,
     PAutoUnblock(G, blocked);
   }
 }
-#endif
 
 
 /*========================================================================*/
@@ -10801,7 +10769,6 @@ void ObjectMolecule::update()
 
     /* single and multithreaded coord set updates */
     {
-#ifndef _PYMOL_NOPY
       int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
       int multithread = SettingGetGlobal_i(G, cSetting_async_builds);
 
@@ -10833,7 +10800,6 @@ void ObjectMolecule::update()
         }
 
       } else
-#endif
       {                         /* single thread */
         for(a = start; a < stop; a++) {
           if((a<I->NCSet) && I->CSet[a] && (!G->Interrupt)) {

@@ -130,10 +130,8 @@ inline int PropertySet(PyMOLGlobals* G, T* x, const char* propname, V value)
 // Python
 // -------------------------------------------------------------
 
-#ifndef _PYMOL_NOPY
 // derive property type from Python type
 int PropertySet(PyMOLGlobals* G, int id, const char* propname, PyObject* value);
-#endif
 
 // handles auto and color
 template <typename T>

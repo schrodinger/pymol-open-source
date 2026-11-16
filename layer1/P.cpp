@@ -329,7 +329,6 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
   return (result);
 }
 
-#ifndef _PYMOL_NOPY
 
 
 /* all of the following Python objects must be invariant & global for the application */
@@ -2751,4 +2750,3 @@ GIL_Ensure::~GIL_Ensure()
 }
 } // namespace pymol
 
-#endif

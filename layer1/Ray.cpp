@@ -2865,7 +2865,6 @@ void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n
   }
 }
 
-#ifndef _PYMOL_NOPY
 static void RayHashSpawn(CRayHashThreadInfo * Thread, int n_thread, int n_total)
 {
   int blocked;
@@ -2896,9 +2895,7 @@ static void RayHashSpawn(CRayHashThreadInfo * Thread, int n_thread, int n_total)
   }
   PAutoUnblock(G, blocked);
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static void RayAntiSpawn(CRayAntiThreadInfo * Thread, int n_thread)
 {
   int blocked;
@@ -2920,7 +2917,6 @@ static void RayAntiSpawn(CRayAntiThreadInfo * Thread, int n_thread)
   Py_DECREF(info_list);
   PAutoUnblock(G, blocked);
 }
-#endif
 
 int RayHashThread(CRayHashThreadInfo * T)
 {
@@ -2941,7 +2937,6 @@ int RayHashThread(CRayHashThreadInfo * T)
   return 1;
 }
 
-#ifndef _PYMOL_NOPY
 static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
 {
   int blocked;
@@ -2964,7 +2959,6 @@ static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
   PAutoUnblock(G, blocked);
 
 }
-#endif
 
 static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
                      int threshold, int back)
@@ -5854,7 +5848,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     }
 
     OrthoBusyFast(I->G, 4, 20);
-#ifndef _PYMOL_NOPY
     if(shadows && (n_thread > 1)) {     /* parallel execution */
 
       CRayHashThreadInfo *thread_info = pymol::calloc<CRayHashThreadInfo>(I->NBasis);
@@ -5914,11 +5907,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
       FreeP(thread_info);
     } else
-#endif
     if (ok){ 
-#ifdef _PYMOL_NOPY
-      n_thread = 1;          /* serial execution */
-#endif
       int* vert2prim_ptr = I->Vert2Prim.empty() ? nullptr : I->Vert2Prim.data();
       ok &= BasisMakeMap(I->Basis + 1, vert2prim_ptr, I->Primitive, I->NPrimitive,
 			 I->Volume, perspective, front, I->PrimSize);
@@ -6092,11 +6081,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].bkrd_data = I->bkgrd_data ? I->bkgrd_data->bits() : nullptr;
       }
 
-#ifndef _PYMOL_NOPY
       if(n_thread > 1)
         RayTraceSpawn(rt, n_thread);
       else
-#endif
         RayTraceThread(rt);
 
       if(oversample_cutoff) {   /* perform edge oversampling, if requested */
@@ -6110,11 +6097,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
           rt[a].edging = edging;
         }
 
-#ifndef _PYMOL_NOPY
         if(n_thread > 1)
           RayTraceSpawn(rt, n_thread);
         else
-#endif
           RayTraceThread(rt);
 
         FreeP(edging);
@@ -6500,11 +6485,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       rt[a].ray = I;
     }
 
-#ifndef _PYMOL_NOPY
     if(n_thread > 1)
       RayAntiSpawn(rt, n_thread);
     else
-#endif
       RayAntiThread(rt);
     FreeP(rt);
     FreeP(image);

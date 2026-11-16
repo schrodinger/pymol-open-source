@@ -36,7 +36,6 @@ Z* -------------------------------------------------------------------
 ObjectCallback::~ObjectCallback()
 {
   auto I = this;
-#ifndef _PYMOL_NOPY
   PyMOLGlobals *G = I->G;
   int blocked = PAutoBlock(G);
   for(int a = 0; a < I->NState; a++) {
@@ -46,7 +45,6 @@ ObjectCallback::~ObjectCallback()
     }
   }
   PAutoUnblock(G, blocked);
-#endif
   VLAFreeP(I->State);
 }
 
@@ -63,7 +61,6 @@ void ObjectCallback::update()
 
 void ObjectCallback::render(RenderInfo * info)
 {
-#ifndef _PYMOL_NOPY
   auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
@@ -108,7 +105,6 @@ void ObjectCallback::render(RenderInfo * info)
     }
     PAutoUnblock(G, blocked);
   }
-#endif
 }
 
 
@@ -131,9 +127,6 @@ ObjectCallback::ObjectCallback(PyMOLGlobals * G) : pymol::CObject(G)
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
                                      PyObject * pobj, int state)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   ObjectCallback *I = nullptr;
 
   if(!obj) {
@@ -164,7 +157,6 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
   SceneChanged(G);
   SceneCountFrames(G);
   return (I);
-#endif
 }
 
 
@@ -174,7 +166,6 @@ void ObjectCallbackRecomputeExtent(ObjectCallback * I)
 {
   int extent_flag = false;
 
-#ifndef _PYMOL_NOPY
   float mx[3], mn[3];
   int a;
   PyObject *py_ext;
@@ -200,14 +191,12 @@ void ObjectCallbackRecomputeExtent(ObjectCallback * I)
         }
       }
     }
-#endif
   I->ExtentFlag = extent_flag;
 
 }
 
 /*========================================================================*/
 
-#ifndef _PYMOL_NOPY
 
 static int ObjectCallbackStateFromPyObject(PyMOLGlobals * G, ObjectCallbackState * I,
     PyObject * pobj)
@@ -330,4 +319,3 @@ ok_except1:
   return PConvAutoNone(result);
 }
 
-#endif

@@ -16,7 +16,6 @@ Z* -------------------------------------------------------------------
 */
 #include"os_python.h"
 
-#ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -868,4 +867,3 @@ void WizardSetWizards(PyMOLGlobals* G, const std::vector<unique_PyObject_ptr_aut
   OrthoDirty(G);
 }
 
-#endif

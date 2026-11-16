@@ -242,7 +242,6 @@ int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref)
   return ok;
 }
 
-#ifndef _PYMOL_NOPY
 int PConvPyStrToStrPtr(PyObject * obj, const char **ptr)
 {
   int ok = true;
@@ -255,7 +254,6 @@ int PConvPyStrToStrPtr(PyObject * obj, const char **ptr)
     *ptr = PyString_AsString(obj);
   return (ok);
 }
-#endif
 
 int PConvPyStrToStr(PyObject * obj, char *ptr, int size)
 {

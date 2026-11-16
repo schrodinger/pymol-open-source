@@ -231,9 +231,7 @@ void LabPosTypeCopy(const LabPosType * src, LabPosType * dst);
 void RefPosTypeCopy(const RefPosType * src, RefPosType * dst);
 
 
-#ifndef _PYMOL_NOPY
 int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id, PyObject *val);
-#endif
 int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id);
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id);
 int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *cs, int at);

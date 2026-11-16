@@ -1057,9 +1057,6 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMolecule *obj,
                                    const float *v, const float *ref, int index, const double *matrix)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   PyObject *atom = PYOBJECT_CALLMETHOD(P_chempy, "Atom", "");
   if(!atom)
     ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create atom");
@@ -1150,7 +1147,6 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMo
   if(PyErr_Occurred())
     PyErr_Print();
   return (atom);
-#endif
 }
 
 
@@ -1690,7 +1686,6 @@ void RefPosTypeCopy(const RefPosType * src, RefPosType * dst){
   dst->specified = src->specified;
 }
 
-#ifndef _PYMOL_NOPY
 int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id, PyObject *val){
   if (val == Py_None)
     val = nullptr;
@@ -1703,7 +1698,6 @@ int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int s
 
   return SettingUniqueSetPyObject(G, cs->atom_state_setting_id[at], setting_id, val);
 }
-#endif
 
 int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
   if (!cs->has_atom_state_settings(at)) {

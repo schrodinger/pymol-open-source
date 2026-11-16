@@ -390,9 +390,7 @@ int AtomInfoIsUniqueIDActive(PyMOLGlobals * G, int unique_id);
 int AtomInfoGetNewUniqueID(PyMOLGlobals * G);
 void AtomInfoCleanAtomName(char *name);
 
-#ifndef _PYMOL_NOPY
 int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setting_id, PyObject *val);
-#endif
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
 
 void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst);

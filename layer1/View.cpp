@@ -340,9 +340,6 @@ void ViewElemArrayPurge(PyMOLGlobals * G, CViewElem * view, int nFrame)
 
 PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   PyObject *result = nullptr;
 
   result = PyList_New(21);
@@ -425,7 +422,6 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
   }
 
   return PConvAutoNone(result);
-#endif
 }
 
 int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
@@ -553,9 +549,6 @@ int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_pt
 
 PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFrame)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
 
   PyObject *result = nullptr;
   int a;
@@ -564,7 +557,6 @@ PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFram
     PyList_SetItem(result, a, ViewElemAsPyList(G, vla + a));
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 CView *ViewNew(PyMOLGlobals * G)

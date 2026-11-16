@@ -664,9 +664,6 @@ static PropertyUniqueEntry* PropertyFindPropertyUniqueEntry(
 int PropertySetPropertyImpl(PyMOLGlobals* G, int prop_id, const char* propname,
     CPythonVal* value, PropertyType proptype)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int keylen = strlen(propname);
   if (keylen > 1024) {
     PRINTFB(G, FB_Property, FB_Errors)
@@ -695,7 +692,6 @@ int PropertySetPropertyImpl(PyMOLGlobals* G, int prop_id, const char* propname,
   }
 
   return PropertySet(G, prop_id, propname, value);
-#endif
 }
 
 /**
@@ -896,7 +892,6 @@ PyObject* PropertyAsPyList(PyMOLGlobals* G, int unique_id, int include_type)
   return retList;
 }
 
-#ifndef _PYMOL_NOPY
 /**
  * Derive property type from Python type
  */
@@ -931,4 +926,3 @@ int PropertySet(
 
   return true;
 }
-#endif

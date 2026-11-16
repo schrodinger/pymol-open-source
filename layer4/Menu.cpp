@@ -26,7 +26,6 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 #include "Ortho.h"
 
-#ifndef _PYMOL_NOPY
 /**
  * Shows a menu list. A GUI that has its own menus sets pymol.menu.popup
  * (the Qt window does) and gets the list; otherwise, or when that returns
@@ -49,12 +48,10 @@ static Block* MenuShow(PyMOLGlobals* G, int x, int y, int last_x, int last_y,
   return taken ? nullptr
                : PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
 }
-#endif
 
 void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
                   const char *name, const char *sele)
 {
-#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
@@ -67,14 +64,12 @@ void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int pa
     Py_DECREF(list);
   }
   PUnblock(G);
-#endif
 
 }
 
 void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
                      const char *name, const float *xyz)
 {
-#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
@@ -89,13 +84,11 @@ void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int
     Py_DECREF(list);
   }
   PUnblock(G);
-#endif
 }
 
 void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
                       const char *name, const char *sele1, const char *sele2)
 {
-#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
@@ -108,14 +101,12 @@ void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
     Py_DECREF(list);
   }
   PUnblock(G);
-#endif
 }
 
 Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
 			const char *name, const char *arg1)
 {
   Block *block = nullptr;
-#ifndef _PYMOL_NOPY
   PyObject *list;
   PBlock(G);
 
@@ -127,14 +118,12 @@ Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, 
     Py_DECREF(list);
   }
   PUnblock(G);
-#endif
   return block;
 }
 
 void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
                       const char *name)
 {
-#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
@@ -147,5 +136,4 @@ void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
     Py_DECREF(list);
   }
   PUnblock(G);
-#endif
 }

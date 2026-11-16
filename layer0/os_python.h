@@ -22,10 +22,6 @@ Z* -------------------------------------------------------------------
 
 #include <memory>
 
-#ifdef _PYMOL_NOPY
-typedef int PyObject;
-#undef _PYMOL_NUMPY
-#else
 
 // Python.h will redefine those, undef to avoid compiler warning
 #undef _POSIX_C_SOURCE
@@ -136,7 +132,6 @@ template <> struct default_delete<PyObject> {
  */
 using unique_PyObject_ptr = std::unique_ptr<PyObject, pymol::pyobject_delete>;
 
-#endif
 
 #define PYOBJECT_CALLMETHOD PyObject_CallMethod
 #define PYOBJECT_CALLFUNCTION PyObject_CallFunction

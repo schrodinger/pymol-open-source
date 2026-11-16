@@ -70,7 +70,6 @@ void AtomInfoCleanAtomName(char *name)
   *q = 0;
 }
 
-#ifndef _PYMOL_NOPY
 int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setting_id, PyObject * val){
   if (val == Py_None)
     val = nullptr;
@@ -85,7 +84,6 @@ int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setti
 
   return SettingUniqueSetPyObject(G, ai->unique_id, setting_id, val);
 }
-#endif
 
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int setting_id) {
   if(ai->has_setting) {

@@ -1548,7 +1548,6 @@ const char *SelectorGetNameFromIndex(PyMOLGlobals * G, SelectorID_t index)
   return nullptr;
 }
 
-#ifndef _PYMOL_NOPY
 static void SelectorDeleteIndex(PyMOLGlobals * G, SelectorID_t index)
 {
   auto I = G->SelectorMgr;
@@ -1558,7 +1557,6 @@ static void SelectorDeleteIndex(PyMOLGlobals * G, SelectorID_t index)
     SelectorDeleteSeleAtIter(G, it);
   }
 }
-#endif
 
 #define cSSMaxHBond 6
 
@@ -2689,9 +2687,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
 
 PyObject *SelectorColorectionGet(PyMOLGlobals * G, const char *prefix)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   auto I = G->Selector;
   auto IM = G->SelectorMgr;
   PyObject *result = nullptr;
@@ -2753,14 +2748,10 @@ PyObject *SelectorColorectionGet(PyMOLGlobals * G, const char *prefix)
   result = PConvIntVLAToPyList((int *) used);
   VLAFreeP(used);
   return (result);
-#endif
 }
 
 int SelectorColorectionApply(PyMOLGlobals * G, PyObject * list, const char *prefix)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   CSelector *I = G->Selector;
   int ok = true;
@@ -2807,15 +2798,11 @@ int SelectorColorectionApply(PyMOLGlobals * G, PyObject * list, const char *pref
   }
   VLAFreeP(used);
   return (ok);
-#endif
 }
 
 int SelectorColorectionSetName(PyMOLGlobals * G, PyObject * list, const char *prefix,
                                char *new_prefix)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   int ok = true;
   ColorectionRec *used = nullptr;
@@ -2841,15 +2828,11 @@ int SelectorColorectionSetName(PyMOLGlobals * G, PyObject * list, const char *pr
   }
   VLAFreeP(used);
   return (ok);
-#endif
 
 }
 
 int SelectorColorectionFree(PyMOLGlobals * G, PyObject * list, const char *prefix)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   int ok = true;
   ColorectionRec *used = nullptr;
@@ -2879,7 +2862,6 @@ int SelectorColorectionFree(PyMOLGlobals * G, PyObject * list, const char *prefi
   }
   VLAFreeP(used);
   return (ok);
-#endif
 
 }
 
@@ -5725,9 +5707,6 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
  */
 pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
 {
-#ifdef _PYMOL_NOPY
-  return pymol::make_error("Python unavailable.");
-#else
 
   double matrix[16];
   double *matrix_ptr = nullptr;
@@ -5831,7 +5810,6 @@ pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele
     copy3f(v_xyz, iter.getCoord());
   }
 
-#endif
   return {};
 }
 
@@ -11064,9 +11042,6 @@ int SelectorSetAtomPropertyForSelection(PyMOLGlobals* G, int sele,
     const char* propname, CPythonVal* value, const PropertyType& proptype,
     int state, int quiet)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   CSelector *I = G->Selector;
   int nAtom = 0;
@@ -11088,7 +11063,6 @@ int SelectorSetAtomPropertyForSelection(PyMOLGlobals* G, int sele,
     }
   }
   return nAtom;
-#endif
 }
 
 bool SelectorSelectionExists(PyMOLGlobals* G, pymol::zstring_view sname)

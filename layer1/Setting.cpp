@@ -267,11 +267,7 @@ PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
     case cSetting_float:
       return CPythonVal_New_Float(val_f);
     case cSetting_color:
-#ifdef _PYMOL_NOPY
-      return CPythonVal_New_Integer(val_i);
-#else
       return PYOBJECT_CALLFUNCTION(G->P_inst->colortype, "i", val_i);
-#endif
     case cSetting_float3:
       {
         PyObject *result = PyTuple_New(3);
@@ -431,7 +427,6 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
   return isset;
 }
 
-#ifndef _PYMOL_NOPY
 /**
  * @pre GIL
  */
@@ -487,7 +482,6 @@ ok_except1:
     " Setting-Error: type mismatch\n" ENDFB(G);
   return false;
 }
-#endif
 
 void SettingUniqueResetAll(PyMOLGlobals * G)
 {
@@ -1234,7 +1228,6 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
 }
 
 
-#ifndef _PYMOL_NOPY
 /*========================================================================*/
 /**
  * @pre GIL
@@ -1278,7 +1271,6 @@ int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tu
   }
   return (ok);
 }
-#endif
 
 /*========================================================================*/
 int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *type,
@@ -1393,7 +1385,6 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
 
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 /**
  * Warning: Returns colors as (fff) tuple instead of color index
  *
@@ -1474,7 +1465,6 @@ PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSettin
   }
   return result;
 }
-#endif
 
 
 /*========================================================================*/
@@ -3195,7 +3185,6 @@ bool CPyMOLInitSetting(OVLexicon * Lex, std::unordered_map<int, int>& Setting) {
   return true;
 }
 
-#ifndef _PYMOL_NOPY
 /**
  * Export the settings names to Python a as (name: index) dictionary.
  * Replacement for pymol.settings.SettingIndex
@@ -3240,7 +3229,6 @@ PyObject * SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id)
 
   return list;
 }
-#endif
 
 /*
  * Getters for templatted programming

@@ -92,7 +92,6 @@ CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list)
   return (I);
 }
 
-#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
 static void SymmetryDump44f(PyMOLGlobals * G, const float *m, const char *prefix)
 {
@@ -108,7 +107,6 @@ static void SymmetryDump44f(PyMOLGlobals * G, const float *m, const char *prefix
     PRINTF "%12.5f %12.5f %12.5f %12.5f\n", m[12], m[13], m[14], m[15] ENDF(G);
   }
 }
-#endif
 #endif
 
 /**
@@ -131,7 +129,6 @@ bool CSymmetry::updateSymMatVLA() const
   int ok = false;
 #ifdef SYM_TO_MAT_LIST_IN_C
 #else
-#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
   /* TAKEN OUT BB 2/2012  SpaceGroup can be blank, 
      sg_sym_to_mat_list has a blank entry with no operations
@@ -165,7 +162,6 @@ bool CSymmetry::updateSymMatVLA() const
     }
     PAutoUnblock(G, blocked);
   }
-#endif
 #endif
 #endif
 

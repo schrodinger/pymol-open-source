@@ -367,11 +367,7 @@ int CControl::release(int button, int x, int y, int mod)
       break;
     case 8:
       PLog(G, "cmd.full_screen()", cPLog_pym);
-#ifdef _PYMOL_NOPY
-      ExecutiveFullScreen(G, -1);
-#else
       PParse(G, "full_screen");
-#endif
       break;
     }
     OrthoDirty(G);

@@ -276,10 +276,6 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
   int n_entry;
 
   if(fname && fname[0]
-#ifdef _PYMOL_NOPY
-     /* if Python is absent, then use the hardcoded copy of BLOSUM62 */
-     && !(strcmp(fname, "BLOSUM62") == 0)
-#endif
     ) {
     try {
       buffer = pymol::file_get_contents(fname);

@@ -396,14 +396,12 @@ bool SceneRay(PyMOLGlobals * G,
                      I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, antialias);
         if(!(charVLA_ptr && headerVLA_ptr)) {   /* immediate mode */
           UtilNCopy(prefix, SettingGet_s(G, nullptr, nullptr, cSetting_batch_prefix), std::size(prefix));
-#ifndef _PYMOL_NOPY
           if(PPovrayRender(G, headerVLA, charVLA, prefix, ray_width,
                            ray_height, antialias)) {
             UtilNConcat(prefix, ".png", std::size(prefix));
             SceneLoadPNG(G, prefix, false, 0, false);
             I->DirtyFlag = false;
           }
-#endif
           VLAFreeP(charVLA);
           VLAFreeP(headerVLA);
         } else {                /* get_povray mode */

@@ -351,7 +351,6 @@ pymol::Result<MovieScene> MovieSceneStoreNoStore(PyMOLGlobals* G,
  */
 static void MovieSceneRecallMessage(PyMOLGlobals * G, const std::string &message)
 {
-#ifndef _PYMOL_NOPY
   // we can't just call python functions because we might be in the wrong
   // thread. Instead, pass a parsable python string to PParse.
   // To avoid syntax errors, replace all single quotes in *message*.
@@ -359,7 +358,6 @@ static void MovieSceneRecallMessage(PyMOLGlobals * G, const std::string &message
   std::string pystr = "/cmd.scene_recall_message(r'''" + message + "''')";
   std::replace(pystr.begin() + 30, pystr.end() - 4, '\'', '`');
   PParse(G, pystr.c_str());
-#endif
 }
 
 /**
@@ -415,12 +413,8 @@ static void MovieSceneRecallFrame(PyMOLGlobals * G, int frame)
       return;
   }
 
-#ifdef _PYMOL_NOPY
-  SceneSetFrame(G, mode, frame);
-#else
   // PBlock fails with SceneSetFrame. Workaround: call from Python
   PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->cmd, "set_frame", "ii", frame + 1, mode));
-#endif
 }
 
 /**

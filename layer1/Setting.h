@@ -144,9 +144,7 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 
 bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id);
 
-#ifndef _PYMOL_NOPY
 bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int setting_id, PyObject *value);
-#endif
 
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id);
 PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index);
@@ -211,13 +209,11 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
 int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *type,
                               int *value);
 
-#ifndef _PYMOL_NOPY
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple);
 PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index);
 PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index);       /* (type,(value,)) */
 PyObject *SettingGetSettingIndices();
 PyObject *SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id);
-#endif
 
 std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name="", int state=0);
 

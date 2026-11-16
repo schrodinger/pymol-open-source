@@ -57,9 +57,6 @@ int _gScaleFactor = 1;
 
 PyObject *MainAsPyList(PyMOLGlobals *G)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   PyObject *result = nullptr;
   int width, height;
   result = PyList_New(2);
@@ -71,14 +68,10 @@ PyObject *MainAsPyList(PyMOLGlobals *G)
   PyList_SetItem(result, 0, PyInt_FromLong(width));
   PyList_SetItem(result, 1, PyInt_FromLong(height));
   return (PConvAutoNone(result));
-#endif
 }
 
 int MainFromPyList(PyMOLGlobals *G, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   int ok = true;
   int win_x, win_y;
@@ -108,5 +101,4 @@ int MainFromPyList(PyMOLGlobals *G, PyObject * list)
     }
   }
   return (ok);
-#endif
 }

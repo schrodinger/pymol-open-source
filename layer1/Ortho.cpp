@@ -535,18 +535,14 @@ void OrthoBusySlow(PyMOLGlobals* G, int progress, int total)
   I->BusyStatus[1] = total;
   if (SettingGetGlobal_b(G, cSetting_show_progress) && (time_yet > 0.15F)) {
     if (PyMOL_GetBusy(G->PyMOL, false)) { /* harmless race condition */
-#ifndef _PYMOL_NOPY
       int blocked = PAutoBlock(G);
       if (PLockStatusAttempt(G)) {
-#endif
         PyMOL_SetProgress(G->PyMOL, PYMOL_PROGRESS_SLOW, progress, total);
         I->BusyLastUpdate = UtilGetSeconds(G);
 
-#ifndef _PYMOL_NOPY
         PUnlockStatus(G);
       }
       PAutoUnblock(G, blocked);
-#endif
     }
     OrthoBusyDraw(G, false);
   }
@@ -566,17 +562,13 @@ void OrthoBusyFast(PyMOLGlobals* G, int progress, int total)
       (SettingGetGlobal_b(G, cSetting_show_progress) && (time_yet > 0.15F))) {
     if (PyMOL_GetBusy(G->PyMOL, false) ||
         finished) { /* harmless race condition */
-#ifndef _PYMOL_NOPY
       int blocked = PAutoBlock(G);
       if (PLockStatusAttempt(G)) {
-#endif
         PyMOL_SetProgress(G->PyMOL, PYMOL_PROGRESS_FAST, progress, total);
         I->BusyLastUpdate = UtilGetSeconds(G);
-#ifndef _PYMOL_NOPY
         PUnlockStatus(G);
       }
       PAutoUnblock(G, blocked);
-#endif
     }
     OrthoBusyDraw(G, false);
   }
@@ -997,7 +989,6 @@ void OrthoKey(PyMOLGlobals* G, unsigned char k, int x, int y, int mod)
       }
       break;
     case 22: /* CTRL V -- paste */
-#ifndef _PYMOL_NOPY
       if (I->CurChar != I->PromptChar) { /* no text entered yet... */
         PBlockAndUnlockAPI(G);
         PRunStringInstance(G, "cmd.paste()");
@@ -1005,7 +996,6 @@ void OrthoKey(PyMOLGlobals* G, unsigned char k, int x, int y, int mod)
       } else {
         OrthoKeyControl(G, (unsigned char) (k + 64));
       }
-#endif
       break;
     default:
       OrthoKeyControl(G, (unsigned char) (k + 64));
@@ -1025,7 +1015,6 @@ void OrthoParseCurrentLine(PyMOLGlobals* G)
   curLine = I->CurLine & OrthoSaveLines;
   I->Line[curLine][I->CurChar] = 0;
   UtilNCopy(buffer, I->Line[curLine] + I->PromptChar, std::size(buffer));
-#ifndef _PYMOL_NOPY
   if (buffer[0]) {
     UtilNCopy(I->History[I->HistoryLine], buffer, std::size(I->History[I->HistoryLine]));
     I->HistoryLine = (I->HistoryLine + 1) & OrthoHistoryLines;
@@ -1039,7 +1028,6 @@ void OrthoParseCurrentLine(PyMOLGlobals* G)
     PParse(G, buffer);
     OrthoRestorePrompt(G);
   }
-#endif
   I->CursorChar = -1;
 }
 

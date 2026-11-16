@@ -562,10 +562,8 @@ pymol::CObject* ExecutiveGetLastObjectEdited(PyMOLGlobals* G);
 bool ExecutiveIsFullScreen(PyMOLGlobals* G);
 void ExecutiveFullScreen(PyMOLGlobals* G, int flag);
 
-#ifndef _PYMOL_NOPY
 PyObject* ExecutiveGetSettingOfType(
     PyMOLGlobals* G, int index, const char* object, int state, int type);
-#endif
 
 pymol::vla<ObjectMolecule*> ExecutiveGetObjectMoleculeVLA(
     PyMOLGlobals* G, const char* sele);

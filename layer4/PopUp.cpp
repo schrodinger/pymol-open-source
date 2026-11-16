@@ -86,7 +86,6 @@ int PopUpConvertY(CPopUp * I, int value, int mode);
  * @param a   : array index
  */
 static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
-#ifndef _PYMOL_NOPY
   PyObject *elem = Sub[a];
   ok_assert(1, elem);
 
@@ -106,7 +105,6 @@ static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
   return elem;
 
 ok_except1:
-#endif
   return nullptr;
 }
 
@@ -131,9 +129,6 @@ static Block *PopUpRecursiveFind(Block * block, int x, int y)
 Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                 int passive, PyObject * list, Block * parent)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   /* assumes blocked threads (calls the Python C API) */
 
   int mx, a, l, cl, cmx;
@@ -272,7 +267,6 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
 
   OrthoInvalidateDoDraw(G);  
   return I;
-#endif
 
 }
 
@@ -382,7 +376,6 @@ static void PopUpFree(Block * block)
   PyMOLGlobals *G = block->m_G;
   CPopUp *I = (CPopUp *) block->reference;
 
-#ifndef _PYMOL_NOPY
   {                             /* purge code */
     int a;
     int blocked = PAutoBlock(G);
@@ -392,7 +385,6 @@ static void PopUpFree(Block * block)
       }
     PAutoUnblock(G, blocked);
   }
-#endif
 
   OrthoDetach(G, I);
   FreeP(I->Sub);

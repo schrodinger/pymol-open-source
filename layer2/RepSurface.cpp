@@ -3129,7 +3129,6 @@ static void SurfaceJobPurgeResult(PyMOLGlobals* G, SurfaceJob* I)
   I->S.clear();
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject* SurfaceJobAtomInfoAsPyTuple(
     std::vector<SurfaceJobAtomInfo>& atom_info)
 {
@@ -3251,7 +3250,6 @@ static ov_status SurfaceJobResultFromTuple(
   }
   return status;
 }
-#endif
 
 static int SurfaceJobEliminateCloseDotsType3orMore(
     PyMOLGlobals* G, SurfaceJob* I, int* repeat_flag, int* dot_flag)
@@ -4231,7 +4229,6 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals* G, SurfaceJob* surf_job,
   return ok;
 }
 
-#ifndef _PYMOL_NOPY
 static void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals* G,
     SurfaceJob* surf_job, CoordSet* cs, ObjectMolecule* obj, PyObject** entry,
     PyObject** input, PyObject** output, int* found)
@@ -4259,7 +4256,6 @@ static void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals* G,
     PAutoUnblock(G, blocked);
   }
 }
-#endif
 
 static void RepSurfaceFindAllPresentAtoms(ObjectMolecule* obj, CoordSet* cs,
     int* present_vla, int inclH, int cullByFlag)
@@ -4557,7 +4553,6 @@ Rep* RepSurfaceNew(CoordSet* cs, int state)
 
         if (ok) {
           int found = false;
-#ifndef _PYMOL_NOPY
           PyObject* entry = nullptr;
           PyObject* output = nullptr;
           PyObject* input = nullptr;
@@ -4565,12 +4560,10 @@ Rep* RepSurfaceNew(CoordSet* cs, int state)
               G, cs->Setting.get(), obj->Setting.get(), cSetting_cache_mode);
           RepSurfaceConvertSurfaceJobToPyObject(
               G, surf_job, cs, obj, &entry, &input, &output, &found);
-#endif
           if (ok && !found) {
 
             ok &= SurfaceJobRun(G, surf_job);
 
-#ifndef _PYMOL_NOPY
             if (cache_mode > 1) {
               int blocked = PAutoBlock(G);
               output = SurfaceJobResultAsTuple(G, surf_job);
@@ -4583,9 +4576,7 @@ Rep* RepSurfaceNew(CoordSet* cs, int state)
               input = nullptr;
               PAutoUnblock(G, blocked);
             }
-#endif
           }
-#ifndef _PYMOL_NOPY
           if (entry || input || output) {
             int blocked = PAutoBlock(G);
             PXDecRef(entry);
@@ -4593,7 +4584,6 @@ Rep* RepSurfaceNew(CoordSet* cs, int state)
             PXDecRef(output);
             PAutoUnblock(G, blocked);
           }
-#endif
         }
         /* surf_job must be valid at this point */
         if (ok) {

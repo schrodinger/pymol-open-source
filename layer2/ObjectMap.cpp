@@ -1181,10 +1181,8 @@ int ObjectMapStateInterpolate(
   return (ok);
 }
 
-#ifndef _PYMOL_NOPY
 static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * I,
                                          PyObject * ary, int quiet);
-#endif
 
 void ObjectMapRegeneratePoints(ObjectMap * om){
   int i;
@@ -5584,7 +5582,6 @@ int ObjectMapSetBorder(ObjectMap * I, float level, int state)
 
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
                                          PyObject * ary, int quiet)
 {
@@ -5673,7 +5670,6 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
   }
   return (ok);
 }
-#endif
 
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
@@ -5684,9 +5680,6 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
   return nullptr;
 #endif
 
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
 
   int ok = true;
   int isNew = true;
@@ -5769,7 +5762,6 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
     }
   }
   return (I);
-#endif
 }
 
 
@@ -5777,9 +5769,6 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                   int state, int discrete, int quiet)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   int ok = true;
   int isNew = true;
   float *cobj;
@@ -5930,7 +5919,6 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
     }
   }
   return (I);
-#endif
 }
 
 void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)

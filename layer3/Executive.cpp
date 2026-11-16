@@ -108,9 +108,7 @@
 #include "Property.h"
 
 
-#ifndef _PYMOL_NOPY
 #include "ce_types.h"
-#endif
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -4405,13 +4403,11 @@ static pymol::Result<pymol::CObject*> ExecutiveProcessCif(PyMOLGlobals* G,
     } else if (auto mol =
                    ObjectMoleculeReadCifData(G, &datablock, discrete, quiet)) {
       obj = mol;
-#ifndef _PYMOL_NOPY
       // we only provide access from the Python API so far
       if (SettingGet<bool>(G, cSetting_cif_keepinmemory)) {
         mol->m_cifdata = &datablock;
         mol->m_ciffile = cif;
       }
-#endif
     }
     if (!obj) {
       PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
@@ -4545,9 +4541,6 @@ int* ExecutiveGetRepsForObject(PyMOLGlobals* G, const char* name)
 
 int ExecutiveSetVisFromPyDict(PyMOLGlobals* G, PyObject* dict)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   assert(PyGILState_Check());
 
   int ok = true;
@@ -4644,7 +4637,6 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals* G, PyObject* dict)
     mfree(recstack);
   }
   return ok;
-#endif
 }
 
 /**
@@ -4712,9 +4704,6 @@ pymol::Result<std::vector<float>> ExecutiveGetHistogram(PyMOLGlobals* G,
 PyObject* ExecutiveGetVolumeRamp(
     PyMOLGlobals* G, const char* objName, int state)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   PyObject* result = nullptr;
 
   PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD;
@@ -4727,7 +4716,6 @@ PyObject* ExecutiveGetVolumeRamp(
 
   return result;
 
-#endif
 }
 
 pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals* G, const char* objName,
@@ -5200,13 +5188,11 @@ static int ExecutiveSetNamedEntries(
           ok = ObjectVolumeNewFromPyList(
               G, el, (ObjectVolume**) (void*) &rec->obj);
           break;
-#ifndef _PYMOL_NOPY
         case cObjectCallback:
           // skip dummy entries from old sessions and failed-to-pickle sessions
           skip = !ObjectCallbackNewFromPyList(
               G, el, (ObjectCallback**) (void*) &rec->obj);
           break;
-#endif
         case cObjectCurve: {
           rec->obj = new ObjectCurve(G, el);
         } break;
@@ -5999,14 +5985,12 @@ int ExecutiveSetSession(
           !SettingGetGlobal_b(G, cSetting_suspend_updates) &&
           !partial_restore) {
         ok = MainFromPyList(G, tmp);
-#ifndef _PYMOL_NOPY
       } else if (!quiet) {
         int viewport[2];
         PConvPyListToIntArrayInPlace(tmp, viewport, 2);
         PRINTFB(G, FB_Executive, FB_Actions)
         " Session was saved with: viewport %d, %d\n", viewport[0],
             viewport[1] ENDFB(G);
-#endif
       }
     }
     if (tmp || (!(partial_restore |
@@ -7975,7 +7959,6 @@ float* ExecutiveGetVertexVLA(PyMOLGlobals* G, const char* s1, int state)
 }
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 /**
  * @pre GIL
  */
@@ -8048,7 +8031,6 @@ PyObject* ExecutiveGetSettingOfType(
   }
   return (result);
 }
-#endif
 
 /*========================================================================*/
 void ExecutiveSetLastObjectEdited(PyMOLGlobals* G, pymol::CObject* o)
@@ -10118,9 +10100,7 @@ pymol::Result<> ExecutiveLabel(PyMOLGlobals* G, const char* str1,
     op1.i1 = 0;
     op1.i2 = eval_mode;
 
-#ifndef _PYMOL_NOPY
     pymol::pautoblock gil(G);
-#endif
 
     if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
       return pymol::Error();
@@ -10332,9 +10312,6 @@ pymol::Result<int> ExecutiveSelectList(PyMOLGlobals* G, const char* sele_name,
 pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
     PyObject* list, int read_only, int quiet, PyObject* space)
 {
-#ifdef _PYMOL_NOPY
-  return pymol::make_error("Iterate List not available.");
-#else
   assert(PyGILState_Check());
 
   int ok = true;
@@ -10407,7 +10384,6 @@ pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
     return pymol::make_error("An error occurred.");
   else
     return n_eval;
-#endif
 }
 
 /*========================================================================*/
@@ -11737,9 +11713,6 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals* G, int index,
 PyObject* ExecutiveGetBondSetting(PyMOLGlobals* G, int index, char* s1,
     const char* s2, int state, int quiet, int updates)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   assert(PyGILState_Check());
 
   CExecutive* I = G->Executive;
@@ -11808,15 +11781,11 @@ PyObject* ExecutiveGetBondSetting(PyMOLGlobals* G, int index, char* s1,
     }
   }
   return result;
-#endif
 }
 /*========================================================================*/
 int ExecutiveSetBondSetting(PyMOLGlobals* G, int index, PyObject* tuple,
     const char* s1, const char* s2, int state, int quiet, int updates)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
 
   CExecutive* I = G->Executive;
   SpecRec* rec = nullptr;
@@ -11924,7 +11893,6 @@ int ExecutiveSetBondSetting(PyMOLGlobals* G, int index, PyObject* tuple,
 
   PAutoUnblock(G, unblock);
   return (ok);
-#endif
 }
 
 /*========================================================================*/
@@ -11996,9 +11964,6 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals* G, int index, const char* s1,
 pymol::Result<> ExecutiveSetSetting(PyMOLGlobals* G, int index, PyObject* tuple,
     pymol::zstring_view preSele, int state, int quiet, int updates)
 {
-#ifdef _PYMOL_NOPY
-  return pymol::make_error("Python not available.");
-#else
 
   CExecutive* I = G->Executive;
   SpecRec* rec = nullptr;
@@ -12238,7 +12203,6 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals* G, int index, PyObject* tuple,
     return pymol::make_error("Error");
   }
   return {};
-#endif
 }
 
 int ExecutiveGetSettingFromString(PyMOLGlobals* G, PyMOLreturn_value* result,
@@ -15967,7 +15931,6 @@ static void draw_button(int x2, int y2, int w, int h, const float* light,
   }
 }
 
-#ifndef _PYMOL_NOPY
 static void draw_button_char(
     PyMOLGlobals* G, int x2, int y2, char ch, CGO* orthoCGO)
 {
@@ -15975,7 +15938,6 @@ static void draw_button_char(
   TextSetPos2i(G, x2 + ExecToggleTextShift, y2);
   TextDrawChar(G, ch, orthoCGO);
 }
-#endif
 
 /**
  * Get the text color for the object name.
@@ -16049,10 +16011,8 @@ void CExecutive::draw(CGO* orthoCGO)
   float darkEdge[3] = {0.35F, 0.35F, 0.35F};
   float captionColor[3] = {0.3F, 0.9F, 0.3F};
 
-#ifndef _PYMOL_NOPY
   float activeColor[3] = {0.9F, 0.9F, 1.0F};
   float toggleColor3[3] = {0.6F, 0.6F, 0.8F};
-#endif
 
   SpecRec* rec = nullptr;
   CExecutive* I = G->Executive;
@@ -16146,11 +16106,7 @@ void CExecutive::draw(CGO* orthoCGO)
     x = rect.left + ExecLeftMargin;
     y = (rect.top - ExecLineHeight) - ExecTopMargin;
     /*    xx = rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+op_cnt); */
-#ifndef _PYMOL_NOPY
     xx = rect.right - ExecRightMargin - ExecToggleWidth * (op_cnt);
-#else
-    xx = rect.right - ExecRightMargin;
-#endif
 
     if (I->ScrollBarActive) {
       x += ExecScrollBarWidth + ExecScrollBarMargin;
@@ -16174,7 +16130,6 @@ void CExecutive::draw(CGO* orthoCGO)
           if ((x - ExecToggleMargin) - (xx - ExecToggleMargin) > -10) {
             x2 = x + 10;
           }
-#ifndef _PYMOL_NOPY
           /*
            * The ASHLC menus; these access Python so,
            * protect this block from non-python instances
@@ -16257,7 +16212,6 @@ void CExecutive::draw(CGO* orthoCGO)
             }
           }
           /* end ASHLC */
-#endif
 
           {
             int x3 = x;
@@ -16475,9 +16429,7 @@ pymol::Result<> ExecutiveReinitialize(
     PyMOLGlobals* G, int what, pymol::zstring_view inPattern)
 {
   CExecutive* I = G->Executive;
-#ifndef _PYMOL_NOPY
   int blocked = false;
-#endif
   /* reinitialize PyMOL */
   const char* pattern = inPattern.data();
   if (what == 2)
@@ -16499,13 +16451,11 @@ pymol::Result<> ExecutiveReinitialize(
       OrthoReshape(G, -1, -1, false);
       MovieScenesInit(G);
 
-#ifndef _PYMOL_NOPY
       blocked = PAutoBlock(G);
       PRunStringInstance(G, "cmd.view('*','clear')");
       PRunStringInstance(G, "cmd.config_mouse(\"three_button\")");
       WizardSet(G, nullptr, false);
       PAutoUnblock(G, blocked);
-#endif
 
       SculptCachePurge(G);
       SceneReinitialize(G);
@@ -16713,9 +16663,6 @@ printf("\n");
 PyObject* ExecutiveCEAlign(PyMOLGlobals* G, PyObject* listA, PyObject* listB,
     int lenA, int lenB, float d0, float d1, int windowSize, int gapMax)
 {
-#ifdef _PYMOL_NOPY
-  return nullptr;
-#else
   int i = 0;
   int smaller;
   double **dmA, **dmB, **S;
@@ -16770,7 +16717,6 @@ PyObject* ExecutiveCEAlign(PyMOLGlobals* G, PyObject* listA, PyObject* listB,
   free(S);
 
   return (PyObject*) result;
-#endif
 }
 
 char* ExecutiveGetObjectNames(

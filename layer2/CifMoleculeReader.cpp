@@ -3366,13 +3366,11 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, Object
       continue;
     }
 
-#ifndef _PYMOL_NOPY
     // we only provide access from the Python API so far
     if (SettingGetGlobal_b(G, cSetting_cif_keepinmemory)) {
       obj->m_cifdata = &datablock;
       obj->m_ciffile = cif;
     }
-#endif
 
     if (cif->datablocks().size() == 1 || multiplex == 0)
       return obj;
@@ -3399,7 +3397,6 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
   if (unknown_resn.count(key))
     return nullptr;
 
-#ifndef _PYMOL_NOPY
   if (try_download) {
     pymol::GIL_Ensure gil;
     bool downloaded = false;
@@ -3433,7 +3430,6 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
       return get(G, resn, false);
     }
   }
-#endif
 
   PRINTFB(G, FB_Executive, FB_Warnings)
     " ExecutiveLoad-Warning: No _chem_comp_bond data for residue '%s'\n", resn
@@ -3481,13 +3477,11 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadBCif(PyMOLGlobals* G,
       continue;
     }
 
-#ifndef _PYMOL_NOPY
     // we only provide access from the Python API so far
     if (SettingGet<bool>(G, cSetting_cif_keepinmemory)) {
       obj->m_cifdata = &datablock;
       obj->m_ciffile = cif;
     }
-#endif
 
     if (cif->datablocks().size() == 1 || multiplex == 0)
       return obj;

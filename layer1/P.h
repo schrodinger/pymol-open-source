@@ -64,63 +64,6 @@ int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var);
 int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const char *expr,
                   int index);
 
-#ifdef _PYMOL_NOPY
-
-#define PRunStringInstance(G,x)
-#define PRunStringModule(G,x)
-
-#define PAutoBlock(G) 1
-#define PAutoUnblock(G,a)
-
-#define PBlock(G)
-#define PUnblock(G)
-
-#define PLockAPIAsGlut(G,block_if_busy)
-#define PUnlockAPIAsGlut(G)
-#define PUnlockAPIAsGlutNoFlush(G)
-
-#define PLockAPI(G)
-#define PUnlockAPI(G)
-
-#define PLockStatus(G)
-#define PLockStatusAttempt()G 1
-#define PUnlockStatusG()
-
-#define PBlockAndUnlockAPI(G)
-#define PBlockAndUnlockAPI(G)
-#define PLockAPIAndUnblock(G)
-#define PTryLockAPIAndUnblock(G)
-#define PFlush(G)
-#define PFlushFast(G)
-#define PParse(G,s)
-#define PDo(G,s)
-
-#define PLog(G,a,b)
-#define PLogFlush(G)
-
-#define PIsGlutThread() 1
-#define PComplete(G,a,b) 0
-
-#define PPovrayRender(a,b,c,d,e,f,g) 0
-
-#define PTruthCallStr(a,b,c)
-
-#define PSleep(G,a)
-#define PSleepWhileBusy(G,a)
-#define PSleepUnlocked(G,a)
-
-#define PFree(G)
-#define PInit(G,a)
-#define PSetupEmbedded(G,a,b)
-#define PConvertOptions(a,b)
-#define PGetOptions(a)
-
-#define PAlterAtom(G,a,b,c,d,e,f,g,h) 0
-#define PLabelAtom(G,a,b,c,d,e,f) 0
-
-#define PAlterAtomState(G,a,b,c,d,e,f,g,h,i,j,k) 0
-
-#else
 
 ov_status PCacheSet(PyMOLGlobals * G, PyObject * entry, PyObject * output);
 ov_status PCacheGet(PyMOLGlobals * G,
@@ -332,5 +275,4 @@ extern PyObject *P_CmdException;    /* pymol.CmdException */
 extern PyObject *P_QuietException;  /* pymol.parsing.CmdException */
 extern PyObject *P_IncentiveOnlyException; /* pymol.IncentiveOnlyException */
 
-#endif
 #endif

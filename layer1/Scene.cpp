@@ -2576,7 +2576,6 @@ int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo
 #define SceneToggleSize DIP2PIXEL(16)
 #define SceneToggleTextShift DIP2PIXEL(4)
 #define SceneTextLeftMargin DIP2PIXEL(1)
-#ifndef _PYMOL_NOPY
 static void draw_button(int x2, int y2, int z, int w, int h, float *light, float *dark,
                         float *inside , CGO *orthoCGO)
 {
@@ -2660,7 +2659,6 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
     }
   }
 }
-#endif
 
 /**
  * Update the G->Scene->SceneVLA names array which is used for scene buttons
@@ -2684,7 +2682,6 @@ void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 /*========================================================================*/
 static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
 {
-#ifndef _PYMOL_NOPY
   PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   int x, y, xx, x2;
@@ -2859,7 +2856,6 @@ static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
     I->HowFarDown = y;
     I->ButtonsValid = true;
   }
-#endif
 }
 
 // TODO: Replace with ShaderMgr::drawPixelsTo
@@ -3810,7 +3806,6 @@ static
 bool call_raw_image_callback(PyMOLGlobals * G) {
   bool done = false;
 
-#ifndef _PYMOL_NOPY
   int blocked = PAutoBlock(G);
   auto raw_image_callback =
     PyObject_GetAttrString(G->P_inst->cmd, "raw_image_callback");
@@ -3837,7 +3832,6 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
 
   Py_XDECREF(raw_image_callback);
   PAutoUnblock(G, blocked);
-#endif
 
   return done;
 }
@@ -4381,7 +4375,6 @@ void SceneObjectUpdateThread(CObjectUpdateThreadInfo * T)
   }
 }
 
-#ifndef _PYMOL_NOPY
 static void SceneObjectUpdateSpawn(PyMOLGlobals * G, CObjectUpdateThreadInfo * Thread,
                                    int n_thread, int n_total)
 {
@@ -4406,7 +4399,6 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals * G, CObjectUpdateThreadInfo * T
     PAutoUnblock(G, blocked);
   }
 }
-#endif
 
 static void SceneStencilCheck(PyMOLGlobals *G) 
 {
@@ -4461,7 +4453,6 @@ void SceneUpdate(PyMOLGlobals * G, int force)
       }
 
       {
-#ifndef _PYMOL_NOPY
         int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
         int multithread = SettingGetGlobal_i(G, cSetting_async_builds);
         if(multithread && (n_thread > 1)) {
@@ -4518,7 +4509,6 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             }
           }
         } else
-#endif
           /* single-threaded update */
           for (auto& obj : I->Obj) {
             obj->update();

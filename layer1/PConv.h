@@ -113,9 +113,7 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr);
 #define PConvPyListToIntVLA(obj, f)     PConvPyListToIntArrayImpl(obj, f, true)
 
 int PConvPyStrToStr(PyObject * obj, char *ptr, int l);
-#ifndef _PYMOL_NOPY
 int PConvPyStrToStrPtr(PyObject * obj, const char **ptr);
-#endif
 int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref);
 int PConvPyFloatToFloat(PyObject * obj, float *ptr);
 int PConvPyFloatToDouble(PyObject * obj, double *ptr);
@@ -214,11 +212,7 @@ inline PyObject * PConvToPyObject(int v) {
 }
 
 inline PyObject * PConvToPyObject(std::size_t v) {
-#ifndef _PYMOL_NOPY
   return PyLong_FromSize_t(v);
-#else
-  return PyInt_FromLong(v);
-#endif
 }
 
 inline PyObject * PConvToPyObject(float v) {
@@ -234,11 +228,9 @@ inline PyObject * PConvToPyObject(const std::string &v) {
 }
 
 inline PyObject * PConvToPyObject(const char * v) {
-#ifndef _PYMOL_NOPY
   if (!v) {
     Py_RETURN_NONE;
   }
-#endif
   return PyString_FromString(v);
 }
 
@@ -320,11 +312,7 @@ struct Void;
 
 inline PyObject* PConvToPyObject(const pymol::Void&)
 {
-#ifndef _PYMOL_NOPY
   Py_RETURN_NONE;
-#else
-  return nullptr;
-#endif
 }
 
 /* ============================================================ */
@@ -352,17 +340,11 @@ inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Float& out)
 }
 
 inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, std::string &out) {
-#ifdef _PYMOL_NOPY
-  // this would also work with real Python but without error handling (could
-  // segfault if `obj` is not of type `str`)
-  out = PyString_AsSomeString(obj);
-#else
   const char* buffer = PyUnicode_AsUTF8(obj);
   if (!buffer) {
     return false;
   }
   out = buffer;
-#endif
   return true;
 }
 

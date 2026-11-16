@@ -1887,7 +1887,6 @@ pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 
 /*========================================================================*/
 
-#ifndef _PYMOL_NOPY
 /**
  * See ::MoleculeExporterGetPyBonds
  */
@@ -2125,6 +2124,5 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G,
 
   return exporter.m_model;
 }
-#endif
 
 // vi:sw=2

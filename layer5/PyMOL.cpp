@@ -82,9 +82,7 @@
 
 #include <unordered_map>
 
-#ifndef _PYMOL_NOPY
 PyMOLGlobals *SingletonPyMOLGlobals = nullptr;
-#endif
 
 #ifdef _PYMOL_LIB_HAS_PYTHON
 #define PYMOL_API_LOCK if(I->PythonInitStage && (!I->ModalDraw)) { PLockAPIAndUnblock(I->G); {
@@ -131,9 +129,7 @@ struct CPyMOL {
 
 
 /* Python stuff */
-#ifndef _PYMOL_NOPY
   int PythonInitStage{};
-#endif
   /* dynamically mapped string constants */
 
   OVLexicon *Lex = nullptr;
@@ -1771,21 +1767,9 @@ PyMOLreturn_status PyMOL_CmdSetFeedbackMask(CPyMOL * I, int action, int module, 
 
 static const CPyMOLOptions Defaults = {
   true,                         /* pmgui */
-#ifndef _PYMOL_NOPY
   true,                         /* internal_gui */
-#else
-  false,
-#endif
-#ifndef _PYMOL_NOPY
   true,                         /* show_splash */
-#else
-  false,
-#endif
-#ifndef _PYMOL_NOPY
   1,                            /* internal_feedback */
-#else
-  0,
-#endif
   true,                         /* security */
   false,                        /* game mode */
   0,                            /* force_stereo */
@@ -1990,7 +1974,6 @@ void PyMOL_ConfigureShadersGL(CPyMOL * I){
   PYMOL_API_UNLOCK
 }
 
-#ifndef _PYMOL_NOPY
 
 void PyMOL_StartWithPython(CPyMOL * I)
 {
@@ -2005,7 +1988,6 @@ void PyMOL_StartWithPython(CPyMOL * I)
   I->PythonInitStage = 1;
 }
 
-#endif
 
 void PyMOL_Stop(CPyMOL * I)
 {
@@ -2063,11 +2045,9 @@ void PyMOL_Free(CPyMOL * I)
     /* take PyMOL down gracefully */
     PyMOLOptions_Free(I->G->Option);
 
-#ifndef _PYMOL_NOPY
   FreeP(I->G->P_inst);
   if(I->G == SingletonPyMOLGlobals)
     SingletonPyMOLGlobals = nullptr;
-#endif
 
   FreeP(I->G);
   delete I; // allocated with new in PyMOL_NewWithOptions
@@ -2369,14 +2349,12 @@ void PyMOL_Special(CPyMOL * I, int k, int x, int y, int modifiers)
     break;
   }
 
-#ifndef _PYMOL_NOPY
   if(!grabbed) {
     snprintf(buffer, std::size(buffer), "_special %d,%d,%d,%d", k, x, y, modifiers);
     PLog(G, buffer, cPLog_pml);
     PParse(G, buffer);
     PFlush(G);
   }
-#endif
 
 PYMOL_API_UNLOCK}
 
@@ -2418,7 +2396,6 @@ int PyMOL_Idle(CPyMOL * I)
     SceneRovingUpdate(G);
     did_work = true;
   }
-#ifndef _PYMOL_NOPY
   if(PFlush(G)) {
     did_work = true;
   }
@@ -2445,7 +2422,6 @@ int PyMOL_Idle(CPyMOL * I)
       PFlush(G);
     }
   }
-#endif
 
   /* reset the interrupt flag if we're not doing anything */
 
@@ -2460,9 +2436,7 @@ void PyMOL_ExpireIfIdle(CPyMOL * I)
 {
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
   int final_init_done = true;
-#ifndef _PYMOL_NOPY
   final_init_done = (I->PythonInitStage == -1);
-#endif
 
   if(!G->HaveGUI) {
     if(final_init_done) {
