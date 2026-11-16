@@ -3,15 +3,18 @@ name = "pymolish"
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic=["version"]
-license = {file = "LICENSE"}
+license = "LicenseRef-Open-Source-PyMOL AND MIT"
+license-files = ["LICENSE", "LICENSE-MIT"]
 description = """
-PyMOL is a Python-enhanced molecular graphics tool.
-It excels at 3D visualization of proteins, small molecules, density,
-surfaces, and trajectories. It also includes molecular editing,
-ray tracing, and movies. Open Source PyMOL is free to everyone!
+pymolish-studio. Contains PyMOL(TM) source code. \
+A molecular viewer for proteins, small molecules, density, surfaces and \
+trajectories, with molecular editing, ray tracing and movies. \
+An independent fork of Open-Source PyMOL; not a Schrodinger product. \
+PyMOL is a trademark of Schrodinger, LLC.\
 """
 authors = [
   {name = "Schrodinger", email = "pymol-users@lists.sourceforge.net"},
+  {name = "Adrian Jasinski"},
 ]
 dependencies = [
   "numpy>=2.0",
@@ -24,7 +27,7 @@ backend-path = ["_custom_build"]
 requires = [
   "cmake>=3.13.3",
   "numpy>=2.0",
-  "setuptools>=69.2.0",
+  "setuptools>=77.0.3",
 ]
 
 [project.optional-dependencies]
@@ -40,8 +43,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://pymol.org"
-Documentation = "https://pymol.org/dokuwiki"
+Homepage = "https://github.com/adrian-jasinski/pymolish-studio"
+Documentation = "https://github.com/adrian-jasinski/pymolish-studio/blob/master/docs/features.md"
 Repository = "https://github.com/adrian-jasinski/pymolish-studio"
 "Bug Tracker" = "https://github.com/adrian-jasinski/pymolish-studio/issues"
 Changelog = "https://github.com/adrian-jasinski/pymolish-studio/blob/master/ChangeLog"

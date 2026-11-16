@@ -43,6 +43,11 @@ def fragments_sc():
     ])
 
 
+def object_palette_sc():
+    from . import palettes
+    return Shortcut(['default', *palettes.PALETTES])
+
+
 def vol_ramp_sc():
     from . import colorramping
     return Shortcut(colorramping.namedramps)
@@ -154,6 +159,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'order'          : aa_nam_s,
         'orient'         : aa_sel_e,
         'origin'         : aa_sel_e,
+        'palette'        : [ object_palette_sc               , 'palette'         , ', ' ],
         'pair_fit'       : aa_sel_c,
         'pbc_unwrap'     : aa_obj_e,
         'pbc_wrap'       : aa_obj_e,

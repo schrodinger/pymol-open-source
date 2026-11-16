@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 #include "pymol/zstring_view.h"
 
@@ -96,6 +97,7 @@ int ColorInit(PyMOLGlobals * G);
 void ColorFree(PyMOLGlobals * G);
 
 int ColorGetNext(PyMOLGlobals * G);
+void ColorSetAutoColors(std::vector<int> colors);
 int ColorGetCurrent(PyMOLGlobals * G);
 int ColorGetIndex(PyMOLGlobals * G, const char *name);
 int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index);

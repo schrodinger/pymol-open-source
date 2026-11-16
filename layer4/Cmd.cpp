@@ -5018,6 +5018,19 @@ static PyObject *CmdColorDef(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static PyObject* CmdSetAutoColors(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  PyObject* list;
+  std::vector<int> colors;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &list);
+  API_ASSERT(PConvFromPyObject(G, list, colors));
+  API_ASSERT(APIEnterNotModal(G));
+  ColorSetAutoColors(std::move(colors));
+  APIExit(G);
+  return APISuccess();
+}
+
 static PyObject *CmdDraw(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = nullptr;
@@ -6574,6 +6587,7 @@ static PyMethodDef Cmd_methods[] = {
   {"select", CmdSelect, METH_VARARGS},
   {"select_list", CmdSelectList, METH_VARARGS},
   {"set", CmdSet, METH_VARARGS},
+  {"set_auto_colors", CmdSetAutoColors, METH_VARARGS},
   {"set_bond", CmdSetBond, METH_VARARGS},
   {"get_bond", CmdGetBond, METH_VARARGS},
   {"scene", CmdScene, METH_VARARGS},

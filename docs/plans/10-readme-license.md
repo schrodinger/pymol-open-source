@@ -1,7 +1,7 @@
 # 10 — README and license files
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; files and license text
-were read, nothing was changed. Not legal advice.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · Done in 4.9.0, see
+[Status](#status). Not legal advice.
 
 **New README that says what this is: a fork of Open-Source PyMOL. PyMOL code
 stays under its license, word for word; new code is MIT. Text first (10a),
@@ -145,6 +145,61 @@ source: `PLAN-DONE.md` and `ChangeLog`). Steps 11 to 14 each add their section.
 - PR diff of `LICENSE` must show zero removed lines.
 
 Commit: `docs(license): new README, MIT for new code, PyMOL notice kept`.
+
+## Status
+
+Done 2026-11-14 in 4.9.0, 10a and 10b together. Checked:
+`testing/tests/system/license_docs.py`; `git diff LICENSE` shows 21 added
+lines and none removed; the wheel metadata lists both license files.
+
+Differences from the plan above:
+
+- **README shows the icon, not the logo.** `logo.png` has near-black text on
+  a transparent background and does not show on a dark page. The icon reads
+  on both. The logo also spells the name "PyMOLish": see the name question
+  under [Wording](#wording) before using it in public.
+- **`pyproject.toml`:** `license` is the SPDX expression
+  `LicenseRef-Open-Source-PyMOL AND MIT` with `license-files`; this needs
+  setuptools 77, so the build floor went from 69.2.0 to 77.0.3. Homepage and
+  Documentation point at this repository, not at pymol.org.
+- **Qt license text:** `packaging/licenses/` holds LGPL-3.0 and GPL-3.0
+  (copied from Debian's `/usr/share/common-licenses`); the spec puts them in
+  the bundle. PySide6 wheels do not carry the text.
+- **More rows in `docs/licenses.md`** than planned: TNT/JAMA, CE alignment,
+  US-align and the Gentium font were found in the tree.
+- **`setup.py`** installs `LICENSE-MIT` next to `LICENSE`.
+
+Open:
+
+- **License line for the icon and logo:** not delivered;
+  `docs/licenses.md` says so.
+- **Notices of native libraries in bundles:** GLEW, libpng, FreeType,
+  netCDF, HDF5, curl, zlib, zstd and Python are shipped in a bundle without
+  their license texts. `docs/licenses.md` lists them as "not included".
+  Collect them in the spec when bundles stop being previews.
+- **FreeType credit line** in `docs/licenses.md` uses the years of the
+  Ubuntu package (1996-2023); a bundle built from conda-forge may ship a
+  newer FreeType.
+- **Bundle and release notes** were not built here: first CI run.
+
+### Follow-up, 4.9.1
+
+Requested 2026-11-14: documents that a person can read without knowing the
+project. The legal lines above are unchanged and still tested.
+
+- README is shorter and starts from what the program does; it has a
+  three-step "Try it" and a table "I want to ... / Read ...".
+- New `docs/getting-started.md`: first structure, the window, the mouse,
+  looks, saving. Its commands were run headless on 4.9.0.
+- `docs/licenses.md` opens with a plain summary; `docs/features.md` says who
+  it is for.
+- `INSTALL` became `docs/install.md` with the commands that work today
+  (`pymolish`, `--config-settings`, pixi on Windows and macOS).
+- `DEVELOPERS` told contributors to transfer copyright to Schrodinger. It
+  moved unchanged to `docs/DEVELOPERS-upstream.txt`; the new
+  `CONTRIBUTING.md` says contributions are MIT.
+- Not touched: `PACKAGING` (its `python setup.py install` line is outdated;
+  the replacement was not tested), `docs/plugins.md`, `docs/baseline.md`.
 
 ## Skipped
 

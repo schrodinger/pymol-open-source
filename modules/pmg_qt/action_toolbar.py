@@ -1,11 +1,13 @@
 """
 Action toolbar above the viewport: what a click selects, undo/redo, the view
-actions, presets, and on the right the panels, the render popup and the UI
-scale. Every button has a line icon; undo and redo show only that. Replaces
-the grid of quick buttons that sat next to the log.
+actions, presets, the object color palette, and on the right the panels, the
+render popup and the UI scale. Every button has a line icon; undo and redo
+show only that. Replaces the grid of quick buttons that sat next to the log.
 """
 
+import pymol
 from pymol import menu as menus
+from pymol import palettes
 from pymol.Qt import QtCore, QtGui, QtWidgets
 
 from . import theme
@@ -15,6 +17,25 @@ from .object_panel import SELECTING, fill_menu
 Qt = QtCore.Qt
 Style = Qt.ToolButtonStyle
 Popup = QtWidgets.QToolButton.ToolButtonPopupMode
+
+
+def _strip(colors):
+    """Menu icon: the hex colors side by side, framed when checked (a menu
+    row with an icon shows no check mark)."""
+    side = 8 * len(colors)
+    icon = QtGui.QIcon()
+    for state in (QtGui.QIcon.State.Off, QtGui.QIcon.State.On):
+        pixmap = QtGui.QPixmap(side, side)
+        painter = QtGui.QPainter(pixmap)
+        for i, color in enumerate(colors):
+            painter.fillRect(8 * i, 0, 8, side, QtGui.QColor("#" + color))
+        if state == QtGui.QIcon.State.On:
+            frame = QtWidgets.QApplication.palette().highlight().color()
+            painter.setPen(QtGui.QPen(frame, side // 3))  # half is clipped
+            painter.drawRect(pixmap.rect())
+        painter.end()
+        icon.addPixmap(pixmap, QtGui.QIcon.Mode.Normal, state)
+    return icon
 
 
 class ActionToolbar(QtWidgets.QToolBar):
@@ -68,6 +89,37 @@ class ActionToolbar(QtWidgets.QToolBar):
 
         self.presets = self._menu_button("Presets", "Apply a preset to everything")
         self.presets.menu().aboutToShow.connect(self._fill_presets)
+
+        self.colors = self._menu_button(
+            "Palette", "Colors that new objects get", icon="color"
+        )
+        # with its text the bar does not fit the default window at 150 %
+        self.colors.setToolButtonStyle(Style.ToolButtonIconOnly)
+        menu = self.colors.menu()
+        group = QtGui.QActionGroup(self)
+        action = group.addAction(menu.addAction("PyMOL default"))
+        action.setData("default")
+        for name, (background, colors) in palettes.PALETTES.items():
+            action = group.addAction(
+                menu.addAction(
+                    _strip(colors[:6]),
+                    "%s (%s background)" % (name.capitalize(), background),
+                )
+            )
+            action.setData(name)
+        for action in group.actions():
+            action.setCheckable(True)
+            action.triggered.connect(
+                lambda _=False, n=action.data(): self._set_palette(n)
+            )
+        menu.addSeparator()
+        menu.addAction("Recolor objects now", lambda: cmd.palette(recolor=1))
+        menu.aboutToShow.connect(self._show_palette)  # "palette" can be typed
+        # Before pymolrc runs, so a "palette" line there wins. Not with -k,
+        # which means no user configuration.
+        saved = theme.object_palette()
+        if pymol.invocation.options.pymolrc is not None and saved in palettes.PALETTES:
+            cmd.palette(saved)
 
         spacer = QtWidgets.QWidget()
         spacer.setSizePolicy(
@@ -153,6 +205,14 @@ class ActionToolbar(QtWidgets.QToolBar):
         QtWidgets.QMessageBox.information(
             self, "UI Scale", "The new scale applies the next time pymolish starts."
         )
+
+    def _set_palette(self, name):
+        theme.set_object_palette(name)
+        self.cmd.palette(name, quiet=0)
+
+    def _show_palette(self):
+        for action in self.colors.menu().actions():
+            action.setChecked(action.data() == palettes.active)
 
     def _set_selecting(self, value):
         self.cmd.set("mouse_selection_mode", value, quiet=0)

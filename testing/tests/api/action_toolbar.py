@@ -1,6 +1,7 @@
 """
 Action toolbar: selection mode menu and label, rock state, zoom, presets
-menu, panel and More entries, an icon on every button, the UI scale menu.
+menu, panel and More entries, an icon on every button, the palette menu, the
+UI scale menu.
 Headless (offscreen QApplication).
 """
 
@@ -80,13 +81,54 @@ class TestActionToolbar(testing.PyMOLTestCase):
             for b in bar.findChildren(QtWidgets.QToolButton)
             if b.objectName() != "qt_toolbar_ext_button"  # Qt's overflow arrow
         ]
-        self.assertEqual(len(buttons), 12)
+        self.assertEqual(len(buttons), 13)
         self.assertEqual([b.text() for b in buttons if b.icon().isNull()], [])
         IconOnly = QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly
         self.assertEqual(
             sorted(b.toolTip() for b in buttons if b.toolButtonStyle() == IconOnly),
-            ["More view actions", "Redo", "Undo"],
+            ["Colors that new objects get", "More view actions", "Redo", "Undo"],
         )
+
+    def test_palette(self):
+        from unittest import mock
+        from pymol import palettes
+        from pmg_qt import action_toolbar, theme
+
+        # -k (how the tests run): the saved palette is not applied
+        with mock.patch.object(theme, "object_palette", return_value="deep"):
+            bar = action_toolbar.ActionToolbar(cmd, defaultdict(list))
+        self.assertEqual(palettes.active, "default")
+        menu = bar.colors.menu()
+        actions = {a.data(): a for a in menu.actions() if a.data()}
+        self.assertEqual(list(actions), ["default", *palettes.PALETTES])
+        self.assertEqual(actions["deep"].text(), "Deep (white background)")
+        self.assertFalse(actions["deep"].icon().isNull())
+        try:
+            with mock.patch.object(theme, "set_object_palette") as save:
+                actions["deep"].trigger()
+            save.assert_called_once_with("deep")
+            self.assertEqual(palettes.active, "deep")
+
+            cmd.palette("soft")  # typed: the menu follows when it opens
+            menu.aboutToShow.emit()
+            self.assertEqual([n for n, a in actions.items() if a.isChecked()], ["soft"])
+
+            cmd.fragment("ala")
+            menu.actions()[-1].trigger()  # Recolor objects now
+            self.assertEqual(cmd.count_atoms("elem C & color soft_01"), 3)
+
+            # without -k the saved palette is back at start
+            cmd.palette("default")
+            with (
+                mock.patch.object(theme, "object_palette", return_value="deep"),
+                mock.patch.object(
+                    action_toolbar.pymol.invocation.options, "pymolrc", []
+                ),
+            ):
+                action_toolbar.ActionToolbar(cmd, defaultdict(list))
+            self.assertEqual(palettes.active, "deep")
+        finally:
+            cmd.palette("default")
 
     def test_scale(self):
         from unittest import mock

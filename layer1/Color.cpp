@@ -32,7 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include "Feedback.h"
 
-static int AutoColor[] = {
+static const std::vector<int> DefaultAutoColor = {
   26,                           /* carbon */
   5,                            /* cyan */
   154,                          /* lightmagenta */
@@ -75,7 +75,18 @@ static int AutoColor[] = {
   51,                           /* brown */
 };
 
-static int nAutoColor = 40;
+// The order in which new objects get their color. Process-wide.
+static std::vector<int> AutoColor = DefaultAutoColor;
+
+/**
+ * Replace the colors that new objects cycle through.
+ * @param colors color indices; empty restores the PyMOL order
+ */
+void ColorSetAutoColors(std::vector<int> colors)
+{
+  AutoColor = colors.empty() ? DefaultAutoColor : std::move(colors);
+}
+
 static void lookup_color(CColor * I, const float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag)
@@ -141,9 +152,10 @@ int ColorGetNext(PyMOLGlobals * G)
 {
   int result;
   int next;
+  int const nAutoColor = AutoColor.size();
   next = SettingGetGlobal_i(G, cSetting_auto_color_next);
 
-  if(next >= nAutoColor)
+  if(next < 0 || next >= nAutoColor)
     next = 0;
   result = AutoColor[next];
   next++;
@@ -159,8 +171,8 @@ int ColorGetCurrent(PyMOLGlobals * G)
   int next;
   next = SettingGetGlobal_i(G, cSetting_auto_color_next);
   next--;
-  if(next < 0)
-    next = (nAutoColor - 1);
+  if(next < 0 || next >= (int) AutoColor.size())
+    next = AutoColor.size() - 1;
   result = AutoColor[next];
   return (result);
 }

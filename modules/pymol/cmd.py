@@ -47,6 +47,9 @@ def _deferred_init_pymol_internals(_pymol):
     if viewing.session_restore_scenes not in _pymol._session_restore_tasks:
         _pymol._session_restore_tasks.append(viewing.session_restore_scenes)
 
+    if palettes.session_restore not in _pymol._session_restore_tasks:
+        _pymol._session_restore_tasks.append(palettes.session_restore)
+
     if wizarding.session_restore_wizard not in _pymol._session_restore_tasks:
         _pymol._session_restore_tasks.append(wizarding.session_restore_wizard)
 

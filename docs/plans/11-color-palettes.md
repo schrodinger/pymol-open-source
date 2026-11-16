@@ -1,7 +1,7 @@
 # 11 — Color palettes
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; source was read,
-nothing was built or measured.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · Done in 4.10.0, see
+[Status](#status).
 
 **Five named palettes replace the order in which new objects get their color
 (today green, cyan, light magenta, ...). Picked in the toolbar, remembered,
@@ -96,3 +96,32 @@ Commit: `ui(color): five object color palettes in the toolbar`.
 - Per-chain palettes (`util.cbc`): objects only for now.
 - Switching palette automatically with `bg_rgb`.
 - The plugin's neon, earth, ocean, warm and cool lists: five is the request.
+
+## Status
+
+Done 2026-11-14 in 4.10.0. Checked: `testing/tests/api/palettes.py`, the
+palette case in `testing/tests/api/action_toolbar.py`, the Catch2 case in
+`layerCTest/Test_Color.cpp`; in the real window vivid and pastel on black,
+deep and soft on white, colorblind on both, sticks and cartoon, both themes,
+and a restart with and without `-k`.
+
+Sizes: vivid 21, deep 15, pastel 25, soft 22, colorblind 18. Lowest contrast
+against the own background: vivid 4.4, deep 3.3, pastel 13.7, soft 3.3.
+
+Differences from the plan above:
+
+- **`util._color_cycle` stays.** `util.cbc` uses it, and per-chain palettes
+  are on the Skipped list. `color_objs` no longer reads it.
+- **No getter for the table.** The color name `auto` already returns the
+  next entry, so `color_objs` and `recolor` use that.
+- **The palette is applied again after `reinitialize` and after a session
+  load.** Both rebuild the color list; without this the table pointed at
+  colors that were gone.
+- **The active row has a frame around its strip.** Qt shows no check mark on
+  a menu row that has an icon.
+- **colorblind has no contrast test.** A color cannot reach 3:1 against black
+  and white at once, and the values stay as published. Yellow is weak on
+  white, indigo on black.
+- **pastel is the plugin list unchanged.** After about twelve objects its
+  colors are hard to tell apart; the neighbor distance in the test (0.14) is
+  set by this list.

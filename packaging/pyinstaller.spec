@@ -15,7 +15,10 @@ hidden = (collect_submodules('pymol', filter=lambda n: not n.startswith('pymol.p
 a = Analysis(
     ['launcher.py'],
     datas=[('../data', 'pymol/pymol_path/data'),
-           ('../LICENSE', 'pymol/pymol_path')]
+           ('../LICENSE', 'pymol/pymol_path'),
+           ('../LICENSE-MIT', 'pymol/pymol_path'),
+           # Qt is LGPL: a bundle that ships it must ship the text
+           ('licenses', 'pymol/pymol_path/licenses')]
           + collect_data_files('pmg_qt') + collect_data_files('pymol'),
     hiddenimports=hidden,
     excludes=['tkinter', 'PySide6.QtWebEngineCore', 'PySide6.QtQml',

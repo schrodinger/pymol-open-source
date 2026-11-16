@@ -239,7 +239,13 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         tag=v$(sed -n 's/^#define _PyMOL_VERSION "\(.*\)"/\1/p' layer0/Version.h)
+        # wording: docs/plans/10-readme-license.md
+        notes=$(printf '%s\n\n' \
+          "pymolish-studio. Based on PyMOL(TM) technology." \
+          "Automated build of ${{ github.sha }}. Unsigned; see docs/plans/05-builds-binaries.md." \
+          "pymolish-studio is an independent fork. It is not a Schrodinger product and is not affiliated with or endorsed by Schrodinger, LLC." \
+          "PyMOL is a trademark of Schrodinger, LLC.")
         gh release view "$tag" >/dev/null 2>&1 \
-          || gh release create "$tag" --prerelease --title "pymolish-studio $tag" --notes "Automated build of ${{ github.sha }}. Unsigned; see docs/plans/05-builds-binaries.md."
+          || gh release create "$tag" --prerelease --title "pymolish-studio $tag" --notes "$notes"
         (cd dist && sha256sum pymolish-*.tar.gz pymolish-*.zip *.whl > SHA256SUMS)
         gh release upload "$tag" --clobber dist/pymolish-*.tar.gz dist/pymolish-*.zip dist/*.whl dist/SHA256SUMS

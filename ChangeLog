@@ -4,6 +4,63 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.10.0
+
+	* Object color palettes
+	  - New command "palette [name [, recolor]]" (cmd.palette): sets the
+	    colors that new objects cycle through. Names: default (the PyMOL
+	    order), vivid, deep, pastel, soft, colorblind. Without arguments
+	    it lists them. recolor=1 also colors the carbons of the loaded
+	    objects. The colors are named colors, <palette>_01 and up, and
+	    are saved in sessions. The palette stays after "reinitialize"
+	    and after a session is loaded.
+	  - Toolbar: palette button after Presets with the six choices and
+	    "Recolor objects now". The choice is remembered and applied at
+	    the next start, before pymolrc; not with -k and not with -c.
+	  - util.color_objs follows the active palette and leaves
+	    auto_color_next after the last object (it used a fixed list and
+	    did not touch the setting). util.cbc is unchanged.
+	  - New cmd.* API: cmd.palette. No other cmd.* change.
+
+
+2026-11-14 pymolish-studio
+
+	* 4.9.1
+
+	* Documentation
+	  - README.md is shorter: what the program does, three steps to try
+	    it, and a table that leads to each document.
+	  - New docs/getting-started.md (first structure, window, mouse,
+	    looks, saving, coming from PyMOL) and CONTRIBUTING.md.
+	  - docs/licenses.md starts with a plain summary of what is allowed.
+	  - INSTALL is now docs/install.md with current commands. The 2006
+	    DEVELOPERS notice moved to docs/DEVELOPERS-upstream.txt.
+	  - No cmd.* change.
+
+
+2026-11-14 pymolish-studio
+
+	* 4.9.0
+
+	* Documentation and licenses
+	  - New README.md: names the fork, says it is not a Schrodinger
+	    product, shows the icon and a screenshot, links the new
+	    docs/features.md and docs/licenses.md.
+	  - LICENSE has a header above the Open-Source PyMOL notice; the
+	    notice itself is unchanged. New LICENSE-MIT for the code added by
+	    pymolish-studio. docs/licenses.md lists all third-party parts.
+	  - The old README from 2003 moved to docs/README-upstream.txt.
+	  - Package metadata: license "LicenseRef-Open-Source-PyMOL AND MIT"
+	    with both license files, new description, fork maintainer added
+	    to the authors, Homepage is the repository. Building needs
+	    setuptools 77 or newer (was 69.2).
+	  - Bundles carry LICENSE-MIT and the LGPL-3.0 and GPL-3.0 texts for
+	    Qt. Release notes carry the fork line and the trademark footnote.
+	  - No cmd.* change.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.8.0
 
 	* GUI

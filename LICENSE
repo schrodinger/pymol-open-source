@@ -1,3 +1,24 @@
+pymolish-studio
+===============
+
+pymolish-studio is an independent fork of Open-Source PyMOL
+(https://github.com/schrodinger/pymol-open-source). It is not a Schrodinger
+product and is not affiliated with or endorsed by Schrodinger, LLC.
+
+This software is under two licenses. A distribution needs both files.
+
+  * Code from Open-Source PyMOL is under the Open-Source PyMOL license.
+    Its notice follows below, unchanged.
+
+  * Code added by pymolish-studio is under the MIT license: see the file
+    LICENSE-MIT. That covers new files and the changes made inside files
+    that came from Open-Source PyMOL. Those files still contain PyMOL
+    code, so the notice below applies to them as well.
+
+Third-party components and their licenses are listed in docs/licenses.md
+(https://github.com/adrian-jasinski/pymolish-studio/blob/master/docs/licenses.md).
+
+======================================================================
 
  Open-Source PyMOL Copyright Notice
  ==================================

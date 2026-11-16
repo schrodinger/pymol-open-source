@@ -64,6 +64,15 @@ def set_ui_scale(scale):
     _settings().setValue("ui/scale", float(scale))
 
 
+def object_palette():
+    """The palette picked in the toolbar: see pymol.palettes."""
+    return str(_settings().value("colors/palette", "default"))
+
+
+def set_object_palette(name):
+    _settings().setValue("colors/palette", name)
+
+
 def apply_ui_scale(environ=os.environ):
     """Call before QApplication exists: Qt reads the factor once, at startup.
     A factor the user exported wins over the saved one."""

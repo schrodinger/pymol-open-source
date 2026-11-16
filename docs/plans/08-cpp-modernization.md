@@ -179,3 +179,74 @@ save round trip. `layer1/` changes: real GUI.
   terminated or needs no terminator, though several rely on the destination
   struct having been zero-filled. Then the fixed buffer types themselves
   (`OrthoLineType`, `WordType`, ...).
+
+## Review 2026-11-14: is it finished, and what is next
+
+`grep` counts and CI configuration only; nothing was built or changed.
+
+**Not finished.** 8a is done, 8b is mostly done, 8c to 8g are not started.
+
+| Idiom | Left today | Slice |
+| --- | --- | --- |
+| `sprintf` / `strcpy` / `strcat` through a pointer | 31 / 44 / 5 | 8b, closes with 8c and 8e |
+| `Alloc` / `FreeP` / `malloc` / `free` | about 420 | 8c |
+| raw `new` / `delete` | about 500 / 110 | 8c |
+| VLA macros | about 700 | 8d |
+| `ok_assert` / `ok_raise` / `goto`, `CHECKOK` | about 190, 260 | 8e |
+| `ov/` users | about 110 | 8g |
+
+`NULL` is already gone (27 left against 4,000 `nullptr`).
+
+### Order from here: the safest work first
+
+The working version is the constraint, so the next slices are the ones the
+compiler or a byte comparison can prove neutral. Hand-written changes come
+after them.
+
+| Slice | Work | Proof that nothing changed |
+| --- | --- | --- |
+| 8h | Run the Catch2 tests in CI: add `pymolish --testing` to the Linux job. They are compiled today and never run. | It is a new check, not a change. |
+| 8i | Delete `#ifdef` branches for macros nothing defines. Neither `setup.py` nor any source defines `PURE_OPENGL_ES_2` (211 guards), `_PYMOL_NOPY` (145), `_WEBGL` (66), `_PYMOL_NO_RAY`, `_PYMOL_LIB`, `PYMOL_EVAL`, `WITH_UNUSED_FUNCTIONS`, `_PYMOL_EMBEDDED`, `PICKLETOOLS`, `_PYMOL_ACTIVEX`, `_PYMOL_INCENTIVE`, `_MACPYMOL_XCODE`. About 460 simple guards and at least 1,100 dead lines; compound conditions were not counted. One macro per PR, with `unifdef` (a tool on the development machine, not a dependency; not installed yet). | The compiler sees the same text: `g++ -E -P` output of every touched file is identical before and after, apart from `__LINE__` values. Then the suite. |
+| 8c to 8g | As planned above, file by file in profile order. | Suite, sanitizer job, `bench.py`, PSE round trip. |
+
+8i comes before 8c because it removes lines that 8c to 8e would otherwise
+modernize, and because it is the only slice with a mechanical proof.
+`os_gl_glut.h` and `os_gl_glut_pretend.h` (GLUT is gone since 4.3.1) go in the
+same slice if their constants have no other user.
+
+### New mechanisms and libraries, judged
+
+CI compilers: GCC 11 (Ubuntu 22.04), Apple Clang, MSVC. Cold build is 54 s
+([baseline](../baseline.md)).
+
+| Idea | Verdict |
+| --- | --- |
+| C++20 flag | **Later.** All three compilers have it. Today it would replace only `include/pymol/span.h` (58 lines, 21 uses). Turn it on when a slice needs `std::span` or designated initializers; it is one line in `CMakeLists.txt` and `setup.py`. |
+| `std::format` or the fmt library | **Skip.** GCC 11 has no `<format>`; fmt is a new dependency. `snprintf` is bounded since 8b. |
+| `std::expected` (C++23) | **Skip.** `pymol::Result` does the job at 419 sites; GCC 11 lacks it. |
+| pybind11 | **Skip**, decided above. |
+| Eigen | **Skip.** GLM is linked and used at 600 sites. `layer0/Vector.cpp` and `Matrix.cpp` (3,500 lines of hand-written math on `float*`) move to GLM only inside functions step 1 is optimizing anyway. |
+| Drop `include/tnt` (10,800 vendored lines) | **Candidate, not neutral.** Two files use it for a 3x3 eigen solve, SVD and LU (`Matrix.cpp`, `ccealignmodule.cpp`). A replacement changes results in the last digits, so it needs an RMSD tolerance test for `cealign` and `fit` first. After 8g. |
+| `std::from_chars` or fast_float for number parsing | **Only on a profile.** 315 `atof` / `sscanf` sites; float `from_chars` is recent in Apple's libc++. Belongs to step 1 if a loader profile shows parsing. |
+| TBB or a thread pool | **Skip.** OpenMP is there (14 pragmas), `Ray.cpp` has its own workers. |
+| `-Wall -Wextra` | **Cheap, once.** Add to the sanitizer job without `-Werror`, read the list once, fix what is a real defect (uninitialized values), ignore the rest. |
+| `clang-tidy` | **Still open**, as above: per file in 8f, never whole-tree. Not installed on the development machine. |
+| ccache, Ninja, unity build, precompiled headers | **Skip.** 54 s cold build is not a problem. |
+| Fonts as `.ttf` data files instead of `FontTTF.h` (16.8 MB of source) | **Skip.** Smaller repository, but the file must then be found at run time on three platforms: a packaging risk for no user-visible gain. |
+
+### Code structure
+
+- **The layers are not layers.** In about 120 cases a file includes a header from a higher
+  layer (`layer0` from `layer1`: 20 files; `layer2` from `layer5`: 26;
+  `layer1` from `layer5`: 16). The directory names describe history, not
+  dependencies.
+- **Do not move or rename directories anyway.** A move changes no behavior and
+  helps no user, makes every `git blame` and upstream comparison harder, and
+  the roadmap already rejected collapsing directories without evidence. The
+  repo map in `AGENTS.md` is the cheap fix for "where is what".
+- **What does improve structure without risk is deletion:** 8i (dead
+  branches), 8d (the VLA macro layer and `MemoryDebug`), 8g (`ov/`), then
+  `include/tnt`. Each ends with files gone.
+- **Splitting large files** (`Executive.cpp`, 17,700 lines) stays skipped
+  until a change inside is blocked by the size. A split is a pure move, so
+  when it is needed it gets its own PR with no other edit in it.

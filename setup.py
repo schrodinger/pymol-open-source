@@ -458,6 +458,7 @@ class install_pymol(install):
         self.mkpath(base_path)
         for name in [
             "LICENSE",
+            "LICENSE-MIT",
             "data",
             "test",
             "examples",

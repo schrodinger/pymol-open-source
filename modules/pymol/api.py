@@ -485,6 +485,9 @@ from .properties import \
 #--------------------------------------------------------------------
 # Modules which contain programs used explicity as "module.xxx"
 
+from . import palettes
+from .palettes import palette
+
 from . import util
 from . import movie
 from . import gui

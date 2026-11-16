@@ -305,6 +305,9 @@ USAGE
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
+        if not int(what):  # everything: the named colors are gone
+            from . import palettes
+            palettes.apply(_self)
         return r
 
     def sync(timeout=1.0,poll=0.05,_self=cmd):

@@ -233,6 +233,7 @@ def get_command_keywords(self_cmd=cmd):
         'rock'          : [ self_cmd.rock              , 0 , 0 , ''  , parsing.STRICT ],
         'rotate'        : [ self_cmd.rotate            , 0 , 0 , ''  , parsing.STRICT ],
         'run'           : [ self_cmd.run               , 0 , 0 , ',' , parsing.SECURE ], # insecure
+        'palette'       : [ self_cmd.palette           , 0 , 0 , ''  , parsing.STRICT ],
         'rms'           : [ self_cmd.rms               , 0 , 0 , ''  , parsing.STRICT ],
         'rms_cur'       : [ self_cmd.rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
         'save'          : [ self_cmd.save              , 0 , 0 , ''  , parsing.SECURE ],

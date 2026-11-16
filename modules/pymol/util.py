@@ -23,7 +23,7 @@ mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
 
-# should match the list in layer1/Color.c:
+# the default list in layer1/Color.cpp, here for cbc:
 _color_cycle = [
     26   , # /* carbon */
     5    , # /* cyan */
@@ -789,14 +789,14 @@ def color_objs(selection='all', quiet=1, _self=cmd):
     '''
     Color all objects a different color
     '''
-    c = 0
+    cmd.set('auto_color_next', 0)
     for a in cmd.get_names('public_nongroup_objects',selection=selection):
+        color = str(cmd.get_color_index('auto'))  # next of the active palette
         if (selection!='all') and (selection!='(all)'):
-            cmd.set_object_color(a, _color_cycle[c])
-            cmd.color(_color_cycle[c],"(?%s and (%s))"%(a,selection),quiet=quiet)
+            cmd.set_object_color(a, color)
+            cmd.color(color,"(?%s and (%s))"%(a,selection),quiet=quiet)
         else:
-            cmd.color(_color_cycle[c], a, quiet=quiet)
-        c = (c + 1) % _color_cycle_len
+            cmd.color(color, a, quiet=quiet)
 
 def color_deep(color, name='all', quiet=1, _self=cmd):
     '''
