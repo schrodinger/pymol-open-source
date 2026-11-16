@@ -4,6 +4,26 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.13.1
+
+	* Object color palettes
+	  - The palette button opens a list with a strip of the first ten
+	    colors of each palette, the PyMOL order included. A click or
+	    the arrow keys pick a palette and recolor the carbons of the
+	    loaded objects at once. "Recolor objects now" is gone.
+	  - util.cbc (C > by chain, the presets) colors chains in the
+	    order of the active palette. With "palette default" it colors
+	    as before.
+	  - pastel is new: 12 stronger colors that start with cyan, green,
+	    red, blue and yellow (was 25 near-white ones). A session keeps
+	    the colors it was saved with unless pastel is the active
+	    palette when it is loaded.
+	  - New palettes for a dark background: nord, dracula, catppuccin.
+	  - cmd.palette itself is unchanged: recolor is still 0 by default.
+
+
+2026-11-16 pymolish-studio
+
 	* 4.13.0
 
 	* Menus

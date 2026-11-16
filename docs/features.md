@@ -24,13 +24,14 @@ Numbers in brackets are pymolish-studio versions; the
 | Menus | The right-click menu opens at the pointer as a normal menu, with icons (4.5.18). |
 | Shorter menus | The A menu of an object has 10 rows instead of 19; the less used ones are under "more". Right click on a row of the Objects panel gives Show as, Color, rename, duplicate and delete at once (4.13.0). |
 | Name | Title, About box and icon say pymolish-studio (4.8.0). |
-| Object colors | The palette button in the toolbar picks the colors that new objects get. The choice is remembered (4.10.0). |
+| Object colors | The palette button in the toolbar shows the palettes as color strips. Picking one recolors the loaded objects, and new objects and "by chain" follow it. The choice is remembered (4.10.0, 4.13.1). |
 
 ### Object color palettes
 
-Each new object takes the next color of the palette for its carbons. Pick one
-in the toolbar or type `palette vivid`; `palette soft, 1` also recolors what is
-loaded. `palette default` is the PyMOL order.
+Each new object takes the next color of the palette for its carbons, and
+C > by chain gives each chain the next color. Picking a palette in the toolbar
+also recolors what is loaded; typed, `palette vivid` leaves it alone and
+`palette soft, 1` recolors. `palette default` is the PyMOL order.
 
 | Palette | Made for | Colors |
 | --- | --- | --- |
@@ -39,9 +40,14 @@ loaded. `palette default` is the PyMOL order.
 | `pastel` | dark background | ![pastel](img/palette-pastel.png) |
 | `soft` | white background | ![soft](img/palette-soft.png) |
 | `colorblind` | any background | ![colorblind](img/palette-colorblind.png) |
+| `nord` | dark background | ![nord](img/palette-nord.png) |
+| `dracula` | dark background | ![dracula](img/palette-dracula.png) |
+| `catppuccin` | dark background | ![catppuccin](img/palette-catppuccin.png) |
 
 `colorblind` is Okabe-Ito followed by Paul Tol's bright and muted sets, with
 the published values. Only the first seven colors are designed as one set.
+`nord`, `dracula` and `catppuccin` are the accent colors of the editor themes
+of those names (Nord frost and aurora, Dracula, Catppuccin Mocha).
 
 ## New commands and menu entries
 

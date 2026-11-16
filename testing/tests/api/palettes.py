@@ -45,7 +45,17 @@ class TestPalettes(testing.PyMOLTestCase):
 
     def test_data(self):
         self.assertEqual(
-            list(palettes.PALETTES), ["vivid", "deep", "pastel", "soft", "colorblind"]
+            list(palettes.PALETTES),
+            [
+                "vivid",
+                "deep",
+                "pastel",
+                "soft",
+                "colorblind",
+                "nord",
+                "dracula",
+                "catppuccin",
+            ],
         )
         for name, (background, colors) in palettes.PALETTES.items():
             with self.subTest(name):
@@ -53,7 +63,7 @@ class TestPalettes(testing.PyMOLTestCase):
                 self.assertEqual(len(set(colors)), len(colors))
                 values = [rgb(c) for c in colors]
                 for a, b in zip(values, values[1:] + values[:1]):
-                    self.assertGreater(math.dist(a, b), 0.14, (name, a, b))
+                    self.assertGreater(math.dist(a, b), 0.2, (name, a, b))
                 # colorblind: published sets for any background, not judged
                 for value in values if background in BACKGROUND else ():
                     self.assertGreaterEqual(contrast(value, BACKGROUND[background]), 3)
@@ -93,6 +103,23 @@ class TestPalettes(testing.PyMOLTestCase):
         self.assertEqual(
             cmd.count_atoms("gly & color %d" % soft), cmd.count_atoms("gly")
         )
+
+    def test_chains(self):
+        cmd.fab("AA", "m1", chain="A")
+        cmd.fab("GG", "m2", chain="B")
+        cmd.palette("vivid")
+        cmd.set("auto_color_next", 5)
+        cmd.util.cbc()
+        for chain, color in (("A", "vivid_01"), ("B", "vivid_02")):
+            self.assertEqual(
+                cmd.count_atoms("chain %s & color %s" % (chain, color)),
+                cmd.count_atoms("chain " + chain),
+            )
+        self.assertEqual(cmd.get_setting_int("auto_color_next"), 5)
+        cmd.palette("default")
+        cmd.util.cbc("elem C")
+        self.assertEqual(cmd.count_atoms("chain B & elem C & color cyan"), 4)
+        self.assertEqual(cmd.count_atoms("chain B & elem N & color vivid_02"), 2)
 
     def test_wraps_and_unknown(self):
         cmd.palette("deep")

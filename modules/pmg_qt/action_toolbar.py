@@ -7,7 +7,7 @@ show only that. Replaces the grid of quick buttons that sat next to the log.
 
 import pymol
 from pymol import menu as menus
-from pymol import palettes
+from pymol import palettes, util
 from pymol.Qt import QtCore, QtGui, QtWidgets
 
 from . import theme
@@ -20,21 +20,16 @@ Popup = QtWidgets.QToolButton.ToolButtonPopupMode
 
 
 def _strip(colors):
-    """Menu icon: the hex colors side by side, framed when checked (a menu
-    row with an icon shows no check mark)."""
-    side = 8 * len(colors)
-    icon = QtGui.QIcon()
-    for state in (QtGui.QIcon.State.Off, QtGui.QIcon.State.On):
-        pixmap = QtGui.QPixmap(side, side)
-        painter = QtGui.QPainter(pixmap)
-        for i, color in enumerate(colors):
-            painter.fillRect(8 * i, 0, 8, side, QtGui.QColor("#" + color))
-        if state == QtGui.QIcon.State.On:
-            frame = QtWidgets.QApplication.palette().highlight().color()
-            painter.setPen(QtGui.QPen(frame, side // 3))  # half is clipped
-            painter.drawRect(pixmap.rect())
-        painter.end()
-        icon.addPixmap(pixmap, QtGui.QIcon.Mode.Normal, state)
+    """List icon: up to ten QColors side by side. Always ten wide, so the
+    names line up."""
+    pixmap = QtGui.QPixmap(140, 16)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QtGui.QPainter(pixmap)
+    for i, color in enumerate(colors):
+        painter.fillRect(14 * i, 0, 13, 16, color)
+    painter.end()
+    icon = QtGui.QIcon(pixmap)
+    icon.addPixmap(pixmap, QtGui.QIcon.Mode.Selected)  # else Qt tints it
     return icon
 
 
@@ -91,30 +86,41 @@ class ActionToolbar(QtWidgets.QToolBar):
         self.presets.menu().aboutToShow.connect(self._fill_presets)
 
         self.colors = self._menu_button(
-            "Palette", "Colors that new objects get", icon="color"
+            "Palette", "Colors of objects and chains", icon="color"
         )
         # with its text the bar does not fit the default window at 150 %
         self.colors.setToolButtonStyle(Style.ToolButtonIconOnly)
-        menu = self.colors.menu()
-        group = QtGui.QActionGroup(self)
-        action = group.addAction(menu.addAction("PyMOL default"))
-        action.setData("default")
+        # A list in the menu, not menu rows: a menu icon is a 16 px square,
+        # too small to show the colors.
+        self.palettes = view = QtWidgets.QListWidget()
+        view.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        view.setIconSize(QtCore.QSize(140, 16))
+        rows = [("default", "PyMOL default", util._color_cycle)]
         for name, (background, colors) in palettes.PALETTES.items():
-            action = group.addAction(
-                menu.addAction(
-                    _strip(colors[:6]),
-                    "%s (%s background)" % (name.capitalize(), background),
-                )
-            )
-            action.setData(name)
-        for action in group.actions():
-            action.setCheckable(True)
-            action.triggered.connect(
-                lambda _=False, n=action.data(): self._set_palette(n)
-            )
-        menu.addSeparator()
-        menu.addAction("Recolor objects now", lambda: cmd.palette(recolor=1))
-        menu.aboutToShow.connect(self._show_palette)  # "palette" can be typed
+            label = "%s (%s background)" % (name.capitalize(), background)
+            rows.append((name, label, ["0x" + c for c in colors]))
+        for name, label, colors in rows:
+            strip = [
+                QtGui.QColor.fromRgbF(*cmd.get_color_tuple(c)) for c in colors[:10]
+            ]
+            item = QtWidgets.QListWidgetItem(_strip(strip), label, view)
+            item.setData(Qt.ItemDataRole.UserRole, name)
+        view.setSpacing(2)
+        view.setFixedSize(
+            view.sizeHintForColumn(0) + 4,
+            (view.sizeHintForRow(0) + 4) * view.count(),  # 4: the spacing
+        )
+        menu = self.colors.menu()
+        action = QtWidgets.QWidgetAction(menu)
+        action.setDefaultWidget(view)
+        menu.addAction(action)
+        # a click and the arrow keys pick; Enter closes like a click
+        view.currentItemChanged.connect(
+            lambda item: self._set_palette(item.data(Qt.ItemDataRole.UserRole))
+        )
+        view.itemClicked.connect(menu.close)
+        view.itemActivated.connect(menu.close)
+        menu.aboutToShow.connect(self._show_palette)
         # Before pymolrc runs, so a "palette" line there wins. Not with -k,
         # which means no user configuration.
         saved = theme.object_palette()
@@ -208,11 +214,14 @@ class ActionToolbar(QtWidgets.QToolBar):
 
     def _set_palette(self, name):
         theme.set_object_palette(name)
-        self.cmd.palette(name, quiet=0)
+        self.cmd.palette(name, recolor=1, quiet=0)
 
     def _show_palette(self):
-        for action in self.colors.menu().actions():
-            action.setChecked(action.data() == palettes.active)
+        with QtCore.QSignalBlocker(self.palettes):  # "palette" can be typed
+            self.palettes.setCurrentRow(
+                ["default", *palettes.PALETTES].index(palettes.active)
+            )
+        QtCore.QTimer.singleShot(0, self.palettes.setFocus)  # for the keys
 
     def _set_selecting(self, value):
         self.cmd.set("mouse_selection_mode", value, quiet=0)

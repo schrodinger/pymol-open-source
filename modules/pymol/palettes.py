@@ -1,10 +1,13 @@
 """
 Object color palettes: the order in which new objects get their carbon
-color. "palette" swaps the table the loaders walk (AutoColor in
-layer1/Color.cpp); the colors are named colors, <palette>_01 and up.
+color and util.cbc colors chains. "palette" swaps the table the loaders walk
+(AutoColor in layer1/Color.cpp); the colors are named colors, <palette>_01
+and up.
 """
 
 import pymol
+
+from . import util
 
 cmd = __import__("sys").modules["pymol.cmd"]
 from .cmd import _cmd  # noqa: E402
@@ -25,12 +28,12 @@ PALETTES = {
         "1565c0 c62828 2e7d32 6a1b9a e65100 00838f ad1457 283593 00695c 827717"
         " 4e342e d81b60 b8860b 37474f 8d6e63",
     ),
-    # PASTELS of the pymolish plugin
+    # cyan, green, red, blue, yellow, then purple, orange, mint, pink, lime,
+    # tan and steel
     "pastel": (
         "dark",
-        "ffcccc ccffcc ccccff ffffcc ffccff ccffff ffe6cc e6ccff ccffe6 ffcce6"
-        " e6e6cc cce6ff f2ccd9 d9f2d9 e6d9ff ffe6e6 ccf2f2 f2f2cc e6ccf2 d9ffd9"
-        " ffd9cc ccd9f2 f2ffcc d9ccff fff2d9",
+        "8fe3ef a5e6a0 ff9e9e 9dbcff fff09a c9a8ff ffc48a 8ff0cf ffa8d8 d2f08c"
+        " d9b99b b0bfd0",
     ),
     # 12 hues at half saturation and equal luminance, then 10 darker ones
     "soft": (
@@ -47,21 +50,39 @@ PALETTES = {
         "e69f00 56b4e9 009e73 f0e442 0072b2 d55e00 cc79a7 4477aa 228833 ccbb44"
         " ee6677 aa3377 332288 88ccee 44aa99 999933 ddcc77 882255",
     ),
+    # The accent colors of three editor themes, values as published, ordered
+    # so that neighbors differ; colors close to another entry are left out.
+    # Nord: frost and aurora
+    "nord": ("dark", "88c0d0 bf616a a3be8c ebcb8b 81a1c1 d08770 b48ead 5e81ac"),
+    "dracula": ("dark", "8be9fd 50fa7b ff79c6 f1fa8c bd93f9 ffb86c ff5555"),
+    # Catppuccin Mocha
+    "catppuccin": (
+        "dark",
+        "89b4fa a6e3a1 f38ba8 f9e2af cba6f7 fab387 94e2d5 f5c2e7 74c7ec b4befe f5e0dc",
+    ),
 }
 PALETTES = {name: (bg, colors.split()) for name, (bg, colors) in PALETTES.items()}
 
 active = "default"  # process-wide, like the table in Color.cpp
 
 
+def cycle():
+    """The colors of the active palette in order: names, or the color
+    indices of the PyMOL order."""
+    if active == "default":
+        return util._color_cycle
+    return ["%s_%02d" % (active, i + 1) for i in range(len(PALETTES[active][1]))]
+
+
 def apply(_self=cmd):
     """Register the colors of the active palette and hand them to the
     loaders. Also runs after reinitialize and a session load: both rebuild
     the color list, so the indices change."""
-    names = []
-    for i, color in enumerate(PALETTES.get(active, ("", ()))[1], 1):
-        names.append("%s_%02d" % (active, i))
-        _self.set_color(names[-1], [int(color[j : j + 2], 16) for j in (0, 2, 4)])
-    indices = [_self.get_color_index(name) for name in names]
+    indices = []
+    if active != "default":
+        for name, color in zip(cycle(), PALETTES[active][1]):
+            _self.set_color(name, [int(color[j : j + 2], 16) for j in (0, 2, 4)])
+            indices.append(_self.get_color_index(name))
     with _self.lockcm:
         _cmd.set_auto_colors(_self._COb, indices)  # empty: the PyMOL order
 
@@ -75,8 +96,9 @@ def palette(name="", recolor=0, quiet=1, *, _self=cmd):
     """
     DESCRIPTION
 
-        "palette" sets the colors that new objects cycle through. Without
-        arguments it lists the palettes and marks the active one.
+        "palette" sets the colors that new objects cycle through and that
+        util.cbc gives to chains. Without arguments it lists the palettes and
+        marks the active one.
 
     USAGE
 
@@ -84,8 +106,9 @@ def palette(name="", recolor=0, quiet=1, *, _self=cmd):
 
     ARGUMENTS
 
-        name = default, vivid, deep, pastel, soft or colorblind.
-        "default" is the PyMOL order (green, cyan, light magenta, ...).
+        name = default, vivid, deep, pastel, soft, colorblind, nord, dracula
+        or catppuccin. "default" is the PyMOL order (green, cyan, light
+        magenta, ...).
 
         recolor = 0/1: also color the carbons of the loaded objects, from the
         first palette color on {default: 0}
@@ -97,14 +120,14 @@ def palette(name="", recolor=0, quiet=1, *, _self=cmd):
 
     NOTES
 
-        vivid and pastel are made for a dark background, deep and soft for a
-        white one. The colors are named <palette>_01, <palette>_02, ... and can
+        deep and soft are made for a white background, colorblind for any,
+        the others for a dark one. The colors are named <palette>_01, <palette>_02, ... and can
         be used like any color. A "palette" line in pymolrc applies at every
         start.
 
     SEE ALSO
 
-        color, set_color, util.color_objs
+        color, set_color, util.color_objs, util.cbc
     """
     global active
     if name:
