@@ -719,6 +719,13 @@ def preset_ligand_sites(self_cmd, sele):
               [ 0, '', ''],
               _preset('mesh surface', 'ligand_sites_mesh', sele)]
 
+def cartoon_transparency(self_cmd, sele):
+    # the next preset resets it (preset._prepare)
+    return [[ 2, 'Cartoon Transparency:', '' ]] + [
+        [ 1, '%d%%' % (t * 100) if t else 'off',
+          'cmd.set("cartoon_transparency",%s,"%s")' % (t, sele) ]
+        for t in (0, 0.25, 0.5, 0.75) ]
+
 def presets(self_cmd, sele):
     from . import preset
     return [[ 2, 'Preset:'       ,''                        ],
@@ -739,6 +746,7 @@ def presets(self_cmd, sele):
               [ 1, 'ligand sites'   , preset_ligand_sites(self_cmd, sele)         ],
               _preset('protein interface', 'interface', sele),
               [ 0, '', '' ],
+              [ 1, 'cartoon transparency', cartoon_transparency(self_cmd, sele) ],
               [ 1, 'hide solvent' if preset.solvent else 'show solvent',
                 'preset.show_solvent(%d,"%s",_self=cmd)' % (not preset.solvent, sele) ],
               ]

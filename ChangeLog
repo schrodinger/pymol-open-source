@@ -4,6 +4,27 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.14.3
+
+	* Presets and looks
+	  - Behavior change: preset.technical, preset.ligands and the
+	    ligand sites presets draw the protein as cartoon, not ribbon.
+	    Only "simple" keeps the ribbon.
+	  - Behavior change: preset.ligands and the ligand sites presets
+	    draw the ligand as balls on thin dark sticks with grey
+	    carbons (stick_radius 0.07, sphere_scale 0.18), not as
+	    sticks colored by chain.
+	  - New menu row "cartoon transparency" (off, 25%, 50%, 75%) in
+	    the preset menu. Every preset now also restores
+	    cartoon_transparency, so the next preset makes the cartoon
+	    opaque again.
+	  - New looks comic (bright colors in four steps inside thick
+	    outlines, ray_trace_mode 3) and sketch (black outlines on
+	    white, ray_trace_mode 2). Like the other outlines they show
+	    in ray-traced images only.
+
+2026-11-16 pymolish-studio
+
 	* 4.14.2
 
 	* Core

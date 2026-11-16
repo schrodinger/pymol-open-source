@@ -214,7 +214,8 @@ class TestMenu(testing.PyMOLTestCase):
         self.assertEqual(labels, [
             'default', 'classified', 'simple', 'technical', 'ball and stick',
             'b factor putty', 'pretty', 'publication', 'glass', 'ligands',
-            'ligand sites', 'protein interface', 'show solvent'])
+            'ligand sites', 'protein interface', 'cartoon transparency',
+            'show solvent'])
         from pymol import preset
         self.addCleanup(setattr, preset, 'solvent', False)
         cmd.do(d['show solvent'], echo=0)
@@ -223,6 +224,11 @@ class TestMenu(testing.PyMOLTestCase):
         self.assertGreater(cmd.count_atoms('rep surface'), 0)
         cmd.do(self._to_dict(menu.looks(cmd))['flat'], echo=0)
         self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 3)
+        # cartoon transparency lasts until the next preset
+        cmd.do(self._to_dict(d['cartoon transparency'])['50%'], echo=0)
+        self.assertEqual(cmd.get_setting_float('cartoon_transparency', sele), 0.5)
+        cmd.do(d['pretty'], echo=0)
+        self.assertEqual(cmd.get_setting_float('cartoon_transparency', sele), 0)
 
     def testRampAction(self):
         sele = 'r1'

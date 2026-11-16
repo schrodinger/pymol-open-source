@@ -1,11 +1,12 @@
 # 15 — Presets and looks
 
 [Roadmap](../../PLAN.md) · Request 2026-11-16 · **15a done 2026-11-16 in
-4.14.0.** 15b and 15c are open and wait for the user.
+4.14.0, 15d in 4.14.3.** 15b, 15c and 15e are open and wait for the user.
 
-**The preset menu is ordered, has one solvent row instead of twin rows, and a
-glass preset. Below it the toolbar menu has five looks: light, background and
-outline for the whole scene.**
+**The preset menu is ordered, has one solvent row instead of twin rows, a
+glass preset and a cartoon transparency row. Every preset but "simple" draws
+the protein as cartoon. Below it the toolbar menu has seven looks: light,
+background and outline for the whole scene.**
 
 ## What existed
 
@@ -41,9 +42,28 @@ Every candidate was ray traced and captured from the real viewport on 1oky
 | Glass: more specular light, `ray_transparency_oblique_power` 3 and 8, `ray_transparency_contrast` 1.6 | No visible gain over the row above | Not set |
 | Glass: `transparency_mode` 3 | Grey rims in the viewport when combined with the oblique setting | Not set |
 
+Second round, request of 2026-11-16 (15d and 15e), same structure:
+
+| Tried | Result | Verdict |
+| --- | --- | --- |
+| The gist's `BallnStick` on the ligand: `stick_radius` 0.07, `sphere_scale` 0.18 (hydrogens 0.13), carbons `grey85` | Small balls on thin sticks; the ligand stands out from the protein's lines in every look | In **ligands** and **ligand sites** |
+| The gist's black sticks | Invisible on the default black background | `grey30` instead: visible on black and on white |
+| `cartoon_transparency` 0.25, 0.5, 0.75 | The ligand shows through the cartoon; viewport and ray-traced | Row **cartoon transparency** |
+| `ray_trace_mode` 3 with default light | Color steps, but dark | Not used |
+| `ray_trace_mode` 3, bright light (`ambient` 0.5, `direct` 0.6, `reflect` 0.3), no shadow, `antialias` 1 | Bright colors in four steps inside thick outlines; `antialias` 1 makes the lines thicker | Look **comic** |
+| `ray_trace_mode` 2 | Black outlines on white, a line drawing | Look **sketch** |
+| Gallery, Goodsell-like: `ray_trace_gain` 0, 0.03 | The outline looks the same as with the default 0.12 | Not set |
+| `ambient_occlusion_mode` 1 on a surface | Pockets get dark, more depth on an opaque surface; black blotches on the glass surface | 15e |
+| Fog on a white background (`depth_cue` 1, `fog_start` 0.45), after the gallery's Geis picture | The back of the molecule fades to white | 15e |
+| `cartoon_cylindrical_helices` 1 | Helices as cylinders, a schematic drawing | 15e |
+| Gallery, "Complex Stylized Protein": grey balls inside a rim-only surface (`ray_transparency_oblique_power` 20) | Works; reads only on small proteins | 15e |
+| `ray_texture` 2 (in the gist) on a surface | No visible difference | Not set |
+
 Outlines come from the ray tracer (`ray_trace_mode`). The viewport has no
 outline pass, so figure, soft and flat show their outline only in images made
-with Draw/Ray > Ray. That is 15b.
+with Draw/Ray > Ray. That is 15b. Comic and sketch depend on it most: in
+the viewport comic is a bright light on white, and sketch is the default
+light on white.
 
 ## Decisions
 
@@ -65,7 +85,17 @@ with Draw/Ray > Ray. That is 15b.
   `surface_color` and the global `ray_transparency_oblique`, as it already
   did for `two_sided_lighting`.
 
-## The menu after 15a
+- **Ribbon only in "simple".** `technical`, `ligands` and the ligand sites
+  presets draw the protein as cartoon (15d). "ligand sites > cartoon" is now
+  that preset without its surface.
+- **The ligand of the ligand presets is a ball-and-stick drawing** (15d).
+  `_prepare` already restored `sphere_scale`, `stick_radius` and
+  `stick_color`, so the next preset undoes it.
+- **Cartoon transparency is a submenu, not a switch:** off, 25%, 50%, 75%.
+  It sets `cartoon_transparency` on the objects of the menu; `_prepare`
+  restores it, so it lasts until the next preset.
+
+## The menu after 15d
 
 | Group | Rows |
 | --- | --- |
@@ -73,11 +103,11 @@ with Draw/Ray > Ray. That is 15b.
 | Plain | simple · technical · ball and stick · b factor putty |
 | Pictures | pretty · publication · glass |
 | Binding | ligands · ligand sites ▸ · protein interface |
-| Option | show solvent / hide solvent |
-| Look (toolbar only) | default · figure · soft · flat · x-ray |
+| Option | cartoon transparency ▸ · show solvent / hide solvent |
+| Look (toolbar only) | default · figure · soft · flat · comic · sketch · x-ray |
 
-13 preset rows instead of 14: three twin rows left, glass and the solvent row
-came.
+14 preset rows, as before step 15: three twin rows left; glass, the solvent
+row and cartoon transparency came.
 
 ## Slices
 
@@ -92,6 +122,18 @@ came.
   looks.
 - Commit: `ui(presets): ordered menu, one solvent row, glass preset, looks`.
 
+**15d, cartoon, ligand style, transparency, comic and sketch. Done in 4.14.3.**
+- `preset.py`: `_ball_and_stick_ligand`; `technical`, `ligands`,
+  `ligand_sites` show cartoon; `_prepare` restores `cartoon_transparency`;
+  looks `comic` and `sketch`.
+- `menu.py`: builder `cartoon_transparency`, one row in `presets`.
+- Checks: `testing/tests/api/preset.py` (`testTechnical`, `testLigands`,
+  `testLook`), `menu.py` (`testPresets`). Real window on WSLg: ligands on
+  black and on white, ligand sites, technical, 50 % cartoon, comic, sketch,
+  the menu. Ray-traced: the same, and every row of the table above.
+- Commit: `ui(presets): cartoon in every preset, ligand balls and sticks,
+  cartoon transparency, comic and sketch looks`.
+
 **15b, outline in the viewport. Open, the user decides.**
 - A screen-space edge pass over the depth buffer after the scene is drawn,
   in `data/shaders/` and the Scene draw path of `layer1/`. New shader code,
@@ -101,6 +143,17 @@ came.
 - One more entry in `palettes.PALETTES` (tan, sky blue, plum, light green,
   salmon, ...), the pattern of [step 11](11-color-palettes.md). One line and
   the docstring.
+
+**15e, more effects. Open, the user picks.** Each was tried (table above)
+except the first, which needs code.
+
+| Effect | What it takes |
+| --- | --- |
+| Color steps in the viewport, so comic looks like comic while working | One new setting and a few lines in `data/shaders/compute_color_for_light.fs` that round the light to steps. Together with 15b it makes the viewport match the ray-traced comic picture. |
+| Fog toward a white background, for depth in the white looks | Two settings in a look (`depth_cue` 1, `fog_start` 0.45), or a "depth" row. Works in the viewport too. |
+| Helices as cylinders, a schematic preset | One preset: `cartoon_cylindrical_helices` 1 on the publication preset; `_prepare` restores it. |
+| Ambient occlusion in the soft look | `ambient_occlusion_mode` 1 in the look; glass must switch it off for its own objects. To be timed on a large surface first. |
+| "Balls in glass" preset from the gallery | One preset; only for small proteins. |
 
 ## Skipped
 
@@ -112,6 +165,11 @@ came.
 - The Lighting plugin reading `LOOKS`, and its sliders following a look.
 - A new color for the sticks of "ball and stick". They are white, so on a
   white background they show only where a look draws shading or an outline.
+- The rest of the gist: Bondi radii, slate nitrogens, `valence_size`, its
+  dash style, the orbital and density commands.
+- A ball-and-stick ligand in "pretty", "publication" and "glass". They keep
+  sticks.
+- A mark on the active cartoon transparency.
 - A ChimeraX representation preset. "classified" already shows cartoon,
   ligand sticks and ion spheres.
 
@@ -121,6 +179,10 @@ came.
   `ray_trace_mode`.
 - ChimeraX, [lighting](https://rbvi.ucsf.edu/chimerax/docs/user/commands/lighting.html):
   what its presets soft, full and flat set.
+- bobbypaton, [pymol_style.py](https://gist.github.com/bobbypaton/1cdc4784f3fc8374467bae5eb410edef):
+  the `BallnStick` values.
+- PyMOLWiki, [Gallery](https://pymolwiki.org/Gallery): Goodsell-like,
+  Stylized Ball and Stick, Complex Stylized Protein, Tribute to Irving Geis.
 - Oxford Protein Informatics Group,
   [Making Pretty Pictures in PyMOL v2](https://www.blopig.com/blog/?p=12018):
   white background, `ray_trace_mode` 1, `antialias` 3.

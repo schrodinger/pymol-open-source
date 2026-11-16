@@ -58,6 +58,8 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
     cmd.set("two_sided_lighting",0) # global
     cmd.unset("ray_transparency_oblique") # global
     cmd.unset("transparency",s)
+    cmd.unset("cartoon_transparency",s)
+    cmd.unset("cartoon_transparency",selection)
     cmd.unset("surface_color", selection)
     cmd.unset("surface_quality", selection)
     cmd.unset("surface_type",selection)
@@ -93,6 +95,17 @@ def simple(selection="(all)",_self=cmd):
     cmd.show("lines","("+lig_and_solv_sele+" and ("+s+"))")
     cmd.delete(s)
 
+def _ball_and_stick_ligand(lig, _self=cmd):
+    # thin dark sticks and small balls, after BallnStick of bobbypaton's
+    # pymol_style.py gist
+    _self.show("sticks", lig)
+    _self.show("spheres", lig)
+    _self.set_bond("stick_radius", 0.07, lig, lig)
+    _self.set_bond("stick_color", "grey30", lig, lig)
+    _self.set("sphere_scale", 0.18, lig)
+    _self.set("sphere_scale", 0.13, lig + " & elem H")
+    _self.color("grey85", lig + " & elem C")
+
 def simple_no_solv(selection="(all)",_self=cmd):
     cmd=_self
     simple(selection,_self=_self)
@@ -117,9 +130,9 @@ def ligands(selection="(all)",_self=cmd):
         util.cbc(lig,_self=cmd)
         util.cbac("(("+s+") and not elem C)",_self=cmd)
         cmd.hide("everything",s)
-        cmd.show("ribbon",host)
+        cmd.show("cartoon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
-        cmd.show("sticks",lig)
+        _ball_and_stick_ligand(lig, _self=cmd)
         cmd.show("sticks",solvent+" and neighbor "+lig)
         cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
@@ -177,8 +190,6 @@ def ligand_cartoon(selection="(all)",_self=cmd):
     cmd=_self
     s, selection = ligand_sites(selection, _self)[:2]
     cmd.set("cartoon_side_chain_helper",1,selection)
-    cmd.show("cartoon","rep ribbon")
-    cmd.hide("ribbon")
     cmd.hide("surface")
     cmd.delete(s)
 
@@ -201,14 +212,14 @@ def ligand_sites(selection="(all)",_self=cmd):
         util.cbc(lig,_self=cmd)
         util.cbac("(("+s+") and not elem C)",_self=cmd)
         cmd.hide("everything",s)
-        cmd.show("ribbon",host)
+        cmd.show("cartoon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
         cmd.show("surface","("+s+" and ((rep lines expand 4) within 6 of "+lig+"))")
         cmd.set("two_sided_lighting",1) # global setting
         cmd.set("transparency",0,s)
         cmd.set("surface_quality",0, selection)
 
-        cmd.show("sticks",lig)
+        _ball_and_stick_ligand(lig, _self=cmd)
         cmd.show("sticks",solvent+" and neighbor "+lig)
         cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
@@ -291,7 +302,7 @@ def technical(selection="(all)",_self=cmd):
     cmd.show("nonbonded",s)
     cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
-    cmd.show("ribbon",s)
+    cmd.show("cartoon",s)
     cmd.dist(polar_contacts,s,s,mode=2,label=0,reset=1) # hbonds
     if polar_contacts in cmd.get_names():
         cmd.enable(polar_contacts)
@@ -464,6 +475,11 @@ LOOKS = {
     # unshaded colors, after David Goodsell's illustrations
     'flat': dict(_outline, ray_trace_mode=3, ambient=1, direct=0, reflect=0,
                  specular=0, ray_shadow=0),
+    # bright colors in four steps inside thick outlines, like a comic
+    'comic': dict(_outline, ray_trace_mode=3, antialias=1, ambient=0.5,
+                  direct=0.6, reflect=0.3, specular=0, ray_shadow=0),
+    # black outlines on white and nothing else, a line drawing
+    'sketch': dict(_outline, ray_trace_mode=2),
     # the X-Ray light of the Lighting plugin
     'x-ray': dict(ambient=1, direct=-0.6, reflect=-0.6, shininess=0,
                   specular=0),

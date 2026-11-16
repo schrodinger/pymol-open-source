@@ -24,7 +24,10 @@ class TestPreset(testing.PyMOLTestCase):
     def testTechnical(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
         preset.technical('all')
-        self._assertSimpleReps()
+        # cartoon, not ribbon: only "simple" keeps the ribbon
+        self.assertEqual(cmd.count_atoms('rep cartoon & guide'), cmd.count_atoms('guide'))
+        self.assertEqual(cmd.count_atoms('rep ribbon'), 0)
+        self.assertEqual(cmd.count_atoms('rep nonbonded & solvent'), cmd.count_atoms('solvent'))
         self.assertTrue('1oky_pol_conts' in cmd.get_names('all'))
 
     def testPublication(self):
@@ -44,15 +47,27 @@ class TestPreset(testing.PyMOLTestCase):
     def testLigands(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
         preset.ligands('all')
-        self.assertEqual(cmd.count_atoms('rep cartoon'), 0)
-        self.assertGreater(cmd.count_atoms('rep ribbon'), 0)
+        self.assertGreater(cmd.count_atoms('rep cartoon'), 0)
+        self.assertEqual(cmd.count_atoms('rep ribbon'), 0)
+        # the ligand as balls and thin sticks
         self.assertEqual(cmd.count_atoms('rep sticks & organic'), cmd.count_atoms('organic'))
+        self.assertEqual(cmd.count_atoms('rep spheres & organic'), cmd.count_atoms('organic'))
+        self.assertEqual(cmd.count_atoms('rep spheres'), cmd.count_atoms(preset.lig_sele))
+        stored.scales = set()
+        cmd.iterate('organic', 'stored.scales.add(round(s.sphere_scale, 2))')
+        self.assertEqual(stored.scales, {0.18})
         solvent_nb_count = cmd.count_atoms('rep nonbonded & solvent')
         self.assertGreater(solvent_nb_count, 0)
         self.assertLess(solvent_nb_count, cmd.count_atoms('solvent'))
         self.assertGreater(cmd.count_atoms('rep lines & polymer'), 0)
         self.assertEqual(cmd.count_atoms('(polymer be. 10 of hetatm) and rep lines'), 0)
         self.assertTrue('1oky_pol_conts' in cmd.get_names('all'))
+        # the next preset undoes the balls
+        preset.pretty('all')
+        self.assertEqual(cmd.count_atoms('rep spheres'), 0)
+        stored.scales = set()
+        cmd.iterate('organic', 'stored.scales.add(s.sphere_scale)')
+        self.assertEqual(stored.scales, {1.0})
 
     def testDefault(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
@@ -111,6 +126,11 @@ class TestPreset(testing.PyMOLTestCase):
         preset.look('figure')
         self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 1)
         self.assertEqual(cmd.get_color_tuple(cmd.get('bg_rgb')), (1.0, 1.0, 1.0))
+        preset.look('comic')
+        self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 3)
+        preset.look('sketch')
+        self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 2)
+        self.assertEqual(cmd.get_setting_int('antialias'), 2)
         preset.look('x-ray')  # a look replaces the one before it
         self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 0)
         self.assertEqual(cmd.get_color_tuple(cmd.get('bg_rgb')), (0.0, 0.0, 0.0))
