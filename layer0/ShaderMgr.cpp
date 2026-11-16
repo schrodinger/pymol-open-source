@@ -779,11 +779,7 @@ CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
   shaders_present = 0;
   stereo_flag = 0;
   stereo_blend = 0;
-#ifdef _PYMOL_LIB
-  print_warnings = 0;
-#else
   print_warnings = 1;
-#endif
 
   lightingTexture = 0;
   is_picking = 0;

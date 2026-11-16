@@ -307,11 +307,6 @@ bool ExecutiveIsObjectType(const SpecRec& rec, int cObjectType)
 
 static void ReportEnabledChange(PyMOLGlobals* G, SpecRec* rec)
 {
-#ifdef _PYMOL_LIB
-  if (G->CallbackObject && G->enabledCallback) {
-    G->enabledCallback(G->CallbackObject, rec->name, rec->visible);
-  }
-#endif
   OrthoInvalidateDoDraw(G);
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
 }
@@ -4507,37 +4502,6 @@ static int* getRepArrayFromBitmask(int visRep)
   return RepVis;
 }
 
-#ifdef _PYMOL_LIB
-/**
- * Returns a list (VLA) of enabled atom representations (AtomInfoType.visRep)
- * in selection (e.g. {cRepLine, cRepNonbonded})
- */
-int* ExecutiveGetRepsInSceneForObject(PyMOLGlobals* G, const char* name)
-{
-  int visRep = 0;
-
-  for (SeleAtomIterator iter(G, name); iter.next();) {
-    AtomInfoType* ai = iter.getAtomInfo();
-    visRep |= ai->visRep;
-  }
-
-  return getRepArrayFromBitmask(visRep);
-}
-
-/**
- * Returns a list (VLA) of enabled object representations (rec->obj->visRep)
- * (e.g. {cRepCell, cRepExtent})
- */
-int* ExecutiveGetRepsForObject(PyMOLGlobals* G, const char* name)
-{
-  SpecRec* rec = ExecutiveFindSpec(G, (char*) name);
-
-  if (rec)
-    return getRepArrayFromBitmask(rec->obj->visRep);
-
-  return nullptr;
-}
-#endif
 
 int ExecutiveSetVisFromPyDict(PyMOLGlobals* G, PyObject* dict)
 {

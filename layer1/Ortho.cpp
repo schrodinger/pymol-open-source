@@ -2645,10 +2645,8 @@ int OrthoInit(PyMOLGlobals* G, int showSplash)
     /*  OrthoFeedbackIn(G," "); */
     I->CurLine++;
 
-#ifndef _PYMOL_LIB
     /* prompt (and typing) should only be shown for PyMOL, not libpymol */
     UtilNCopy(I->Prompt, "PyMOL>", std::size(I->Prompt));
-#endif
     UtilNCopy(I->Line[I->CurLine], I->Prompt, std::size(I->Line[I->CurLine]));
     I->CurChar = (I->PromptChar = strlen(I->Prompt));
     I->InputFlag = 1;

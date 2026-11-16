@@ -183,10 +183,6 @@ struct PyMOLGlobals {
 
   int DragDirtyFlag;            /* do we need an extra callback to handle a mouse drag? */
 
-#ifdef _PYMOL_LIB
-  void *CallbackObject;
-  void (*enabledCallback)(void *, const char *, int );
-#endif
 
   // user defined scenes
   CMovieScenes * scenes;
