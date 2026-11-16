@@ -316,140 +316,99 @@ int MapSetupExpressXYVert(
 }
 
 int MapSetupExpressPerp(MapType* I, const float* vert, float front,
-    int nVertHint, int negative_start, const int* spanner)
+    int negative_start, const int* spanner)
 {
   PyMOLGlobals* G = I->G;
-  int a, b, c, i;
-
-  unsigned int mapSize;
-  int st;
-  int n_alloc = nVertHint * 15; /* emprical est. */
-  int ok = true;
-
-  int iMin0 = I->iMin[0];
-  int iMin1 = I->iMin[1];
-  int iMax0 = I->iMax[0];
-  int iMax1 = I->iMax[1];
-  float iDiv = I->recipDiv;
-  float min0 = I->Min[0] * iDiv;
-  float min1 = I->Min[1] * iDiv;
-  float base0, base1;
-  float perp_factor, premult;
-  int *emask, dim1, *link, *ptr1, *ptr2;
+  const int D1D2 = I->D1D2, D2 = I->Dim[2], dim1 = I->Dim[1];
+  const int mapSize = I->Dim[0] * I->Dim[1] * I->Dim[2];
+  const int iMin0 = I->iMin[0], iMax0 = I->iMax[0];
+  const int iMin1 = I->iMin[1], iMax1 = I->iMax[1];
+  const int iMin2 = I->iMin[2], iMax2 = I->iMax[2];
+  const float iDiv = I->recipDiv;
+  const float min0 = I->Min[0] * iDiv, min1 = I->Min[1] * iDiv;
+  const float premult = -front * iDiv;
+  const int* head = I->Head.data();
+  const int* link = I->Link.data();
+  /* starting threads costs more than building a small map */
+  const bool threads = I->Link.size() > 10000;
 
   PRINTFD(G, FB_Map)
   " MapSetupExpress-Debug: entered.\n" ENDFD;
 
-  mapSize = I->Dim[0] * I->Dim[1] * I->Dim[2];
+  /* points per square: all of them, and those of voxel-spanning primitives */
+  std::vector<int> count(mapSize, 0), count_span(spanner ? mapSize : 0, 0);
+  I->EMask.assign(I->Dim[0] * dim1, 0);
+  int* emask = I->EMask.data();
+  for (int x = 0; x < mapSize; x++)
+    for (int i = head[x]; i >= 0; i = link[i]) {
+      count[x]++;
+      if (spanner && spanner[i])
+        count_span[x]++;
+
+      /* "shadow" mask: the 3x3 squares around where the point projects */
+      const float* v0 = vert + 3 * i;
+      const float perp_factor = premult / v0[2];
+      const float base0 = v0[0] * perp_factor, base1 = v0[1] * perp_factor;
+      const int d = std::clamp((int) (base0 - min0) + MapBorder, iMin0, iMax0);
+      const int e = std::clamp((int) (base1 - min1) + MapBorder, iMin1, iMax1);
+      for (int dd = d - 1; dd <= d + 1; dd++)
+        for (int ee = e - 1; ee <= e + 1; ee++)
+          emask[dim1 * dd + ee] = true;
+    }
+  /* for non-voxel-spanners, only spread in the XY plane
+   * (memory use ~ 9X instead of 27X -- a big difference!) */
+  const int* above_below = spanner ? count_span.data() : count.data();
+
+  /* EHead: first the length of each square's list, then, in square order,
+     where the list starts in EList. Knowing every start up front lets the
+     lists be written in parallel. */
   I->EHead.assign(mapSize, 0);
-  if (ok) {
-    I->EList.reserve(n_alloc);
-  }
-  if (ok)
-    I->EMask.assign(I->Dim[0] * I->Dim[1], 0);
-
-  emask = I->EMask.data();
-  dim1 = I->Dim[1];
-  link = I->Link.data();
-  premult = -front * iDiv;
-
-  I->EList.push_back(0);
-  int n = 1;
-
-  for (a = (iMin0 - 1); ok && a <= (iMax0 + 1); a++)
-    for (b = (iMin1 - 1); ok && b <= (iMax1 + 1); b++)
-      for (c = (I->iMin[2] - 1); ok && c <= (I->iMax[2] + 1); c++) {
-
-        int d, e, f;
-
-        /* compute a "shadow" mask for all vertices */
-
-        i = *MapFirst(I, a, b, c);
-        while (i >= 0) {
-          const float* v0 = vert + 3 * i;
-          perp_factor = premult / v0[2];
-          base0 = v0[0] * perp_factor;
-          base1 = v0[1] * perp_factor;
-
-          d = (int) (base0 - min0);
-          e = (int) (base1 - min1);
-
-          d += MapBorder;
-          e += MapBorder;
-
-          if (d < iMin0) {
-            d = iMin0;
-          } else if (d > iMax0) {
-            d = iMax0;
+  int* ehead = I->EHead.data();
+#pragma omp parallel for if (threads)
+  for (int a = iMin0 - 1; a <= iMax0 + 1; a++)
+    for (int b = iMin1 - 1; b <= iMax1 + 1; b++)
+      for (int c = iMin2 - 1; c <= iMax2 + 1; c++) {
+        int any = 0, n = 0;
+        for (int d = a - 1; d <= a + 1; d++)
+          for (int e = b - 1; e <= b + 1; e++) {
+            const int x = d * D1D2 + e * D2 + c;
+            any += count[x - 1] + count[x] + count[x + 1];
+            n += above_below[x - 1] + count[x] + above_below[x + 1];
           }
-
-          if (e < iMin1) {
-            e = iMin1;
-          } else if (e > iMax1) {
-            e = iMax1;
-          }
-          i = link[i];
-          ptr2 = (ptr1 = emask + dim1 * (d - 1) + (e - 1));
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-          ptr2 = (ptr1 += dim1);
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-          ptr2 = (ptr1 += dim1);
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-          *(ptr2++) = true;
-        }
-
-        {
-          const int am1 = a - 1, ap1 = a + 1, bm1 = b - 1, bp1 = b + 1,
-                    cm1 = c - 1, cp1 = c + 1;
-          const int dim2 = I->Dim[2];
-          int flag = false;
-          int* hPtr1 = I->Head.data() + ((am1) *I->D1D2) + ((bm1) *dim2) + cm1;
-          st = n;
-          for (d = am1; ok && d <= ap1; d++) {
-            int* hPtr2 = hPtr1;
-            for (e = bm1; ok && e <= bp1; e++) {
-              int* hPtr3 = hPtr2;
-              for (f = cm1; ok && f <= cp1; f++) {
-                i = *(hPtr3++);
-                /*                i=*MapFirst(I,d,e,f); */
-                if (i >= 0) {
-                  flag = true;
-                  while (ok && i >= 0) {
-                    if ((!spanner) || (f == c) || spanner[i]) {
-                      /* for non-voxel-spanners, only spread in the XY plane
-                       * (memory use ~ 9X instead of 27X -- a big difference!)
-                       */
-                      I->EList.push_back(i);
-                      n++;
-                    }
-                    i = link[i];
-                  }
-                }
-              }
-              hPtr2 += dim2;
-            }
-            hPtr1 += I->D1D2;
-          }
-          if (ok && flag) {
-            *(MapEStart(I, a, b, c)) = negative_start ? -st : st;
-            I->EList.push_back(-1);
-            n++;
-          }
-        }
+        if (any)
+          ehead[a * D1D2 + b * D2 + c] = n + 1; /* and a -1 terminator */
       }
+  int n = 1; /* EList[0] is unused: a start of 0 means "no list" */
+  for (int x = 0; x < mapSize; x++)
+    if (ehead[x]) {
+      const int length = ehead[x];
+      ehead[x] = negative_start ? -n : n;
+      n += length;
+    }
+
+  std::vector<int> e_list(n);
+#pragma omp parallel for schedule(dynamic) if (threads)
+  for (int a = iMin0 - 1; a <= iMax0 + 1; a++)
+    for (int b = iMin1 - 1; b <= iMax1 + 1; b++)
+      for (int c = iMin2 - 1; c <= iMax2 + 1; c++) {
+        const int st = std::abs(ehead[a * D1D2 + b * D2 + c]);
+        if (!st)
+          continue;
+        int* p = e_list.data() + st;
+        for (int d = a - 1; d <= a + 1; d++)
+          for (int e = b - 1; e <= b + 1; e++)
+            for (int f = c - 1; f <= c + 1; f++)
+              for (int i = head[d * D1D2 + e * D2 + f]; i >= 0; i = link[i])
+                if (!spanner || f == c || spanner[i])
+                  *(p++) = i;
+        *p = -1;
+      }
+  I->EList = std::move(e_list);
   PRINTFB(G, FB_Map, FB_Blather)
   " MapSetupExpressPerp: %d rows in express table \n", n ENDFB(G);
-  if (ok) {
-    I->EList.shrink_to_fit();
-  }
   PRINTFD(G, FB_Map)
   " MapSetupExpress-Debug: leaving...n=%d\n", n ENDFD;
-  return ok;
+  return true;
 }
 
 int MapSetupExpress(MapType* I)

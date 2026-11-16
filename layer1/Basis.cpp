@@ -3286,7 +3286,7 @@ int BasisMakeMap(CBasis* I, int* vert2prim, CPrimitive* prim, int n_prim,
 	ok &= !I->G->Interrupt;
       }
       /* and do the optimized expansion */
-      ok &= MapSetupExpressPerp(I->Map, tempVertex, front, n, true, spanner);
+      ok &= MapSetupExpressPerp(I->Map, tempVertex, front, true, spanner);
       FreeP(spanner);
       FreeP(prm_spanner);
     } else if(n_voxel < (3 * n)) {
@@ -3518,7 +3518,7 @@ int BasisMakeMap(CBasis* I, int* vert2prim, CPrimitive* prim, int n_prim,
     CHECKOK(ok, I->Map);
     if (ok){
       if(perspective) {
-	ok &= MapSetupExpressPerp(I->Map, I->Vertex, front, I->NVertex, false, nullptr);
+	ok &= MapSetupExpressPerp(I->Map, I->Vertex, front, false, nullptr);
       } else {
 	ok &= MapSetupExpressXYVert(I->Map, I->Vertex, I->NVertex, false);
       }

@@ -229,6 +229,42 @@ Left: the two advancing-front passes of the triangulation (0.85 s and
 0.82 s), the point elimination passes (order-dependent, serial), the ray
 tracer's own voxel table (1.0 s per ray of this surface).
 
+### Ray tracer's voxel table (4.13.3)
+
+Where a ray of the finished 1aon surface goes (800x600, 32 threads, 905 126
+triangles; the ray tracer's own feedback plus temporary timers in
+`BasisMakeMap`): collecting primitives 0.3 s, voxel tables 0.9 s, tracing
+3.2 s. The two tables are built side by side, one thread each: the light's
+takes 0.3 s, the camera's 0.75 s, of which 0.68 s is `MapSetupExpressPerp`
+(62.5 million rows, pushed one by one into a vector that grows and is then
+shrunk). It now counts first and fills a vector of the exact size in
+parallel, the 4.7.9 pattern.
+
+| | 4.13.2 | 4.13.3 |
+| --- | --- | --- |
+| Camera table, flags of voxel-spanning triangles included | 0.68 s | 0.28 s |
+| ... with one OpenMP thread (`OMP_NUM_THREADS=1`) | 0.68 s | 0.38 s |
+| Voxel phase of the ray (both tables) | 0.9 to 1.1 s | 0.5 s |
+| ray 800x600 of the built surface, median of 5 (fastest) | 4.73 s (4.26 s) | 4.21 s (4.06 s) |
+
+Same output: old and new function ran side by side and their three arrays
+were compared on every call of the Python suite (209 calls) and of 10 rays
+(1aon surface, cartoon, spheres, sticks with lines and labels,
+`ray_trace_mode` 1, no shadows, a close-up; 1rx1 transparent surface, wide
+field of view; an isosurface): identical. Check: `layerCTest/Test_Map.cpp`.
+
+No table of `bench.py` this time: a second pymolish was running on the
+machine and single rows varied 4x between repeats (cartoon ray 4.3 to 17 s
+in one run). Cartoon ray and isosurface were timed alone instead, with
+OpenMP on and off: the quiet repeats are the same (3.7 to 4.5 s, 0.95 s).
+
+Left in the voxel phase: 0.17 s of the camera table's 0.28 s is the
+zero-fill of the 250 MB list before the parallel fill (`std::vector` cannot
+skip it; 115 users of `EList` make a type change a slice of its own), and
+the light's table (`MapSetupExpressXY`, 0.2 s) now sets the time of the
+phase. Tracing itself is 3.2 s of the 4.2 s: 28 s on one thread, so 32
+threads give 9x.
+
 ### GUI frame time (first measurement, 4.7.9)
 
 Command: `pymolish -qk $PWD/testing/bench_gui.py`. 1aon, viewport

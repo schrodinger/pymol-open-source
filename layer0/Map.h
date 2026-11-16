@@ -73,7 +73,7 @@ struct MapCacheType {
 
 int MapSetupExpress(MapType* I);
 int MapSetupExpressPerp(MapType* I, const float* vert, float front,
-    int nVertHint, int negative_start, const int* spanner);
+    int negative_start, const int* spanner);
 
 #define MapFree(I) delete (I)
 

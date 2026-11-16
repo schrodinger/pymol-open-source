@@ -20,6 +20,12 @@ Found while measuring, fixed in 4.7.10: atom labels were solid blocks in the GUI
 
 Next candidates: sticks on the GPU (11 ms per frame, p99 36 ms, 6 ms of it CPU), surface draw submission (7.6 ms CPU per frame), the two advancing-front passes of the triangulation (0.85 s and 0.82 s), the ray tracer's voxel table (1.0 s per ray of the 1aon surface; the 4.7.9 count-then-fill pattern may carry over to `MapSetupExpressXYVert`).
 
+## Status 2026-11-16
+
+1b change in 4.13.3, numbers in [docs/baseline.md](../baseline.md): the ray tracer's voxel table for the camera view (`MapSetupExpressPerp`) is counted first and filled in parallel, 0.68 s to 0.28 s for the 1aon surface; a ray of that surface 4.7 s to 4.2 s. Tracing is now 3.2 s of those 4.2 s (9x on 32 threads).
+
+Next candidates: sticks on the GPU and surface draw submission (GUI, wait for a quiet machine and the driver decision), the two advancing-front passes of the triangulation (0.85 s and 0.82 s), thread scaling of the trace loop (9x on 16 cores / 32 threads), the zero-fill of the voxel list (0.17 s).
+
 ## Evidence and corrections
 
 - Reuse [performance tests](../../testing/tests/performance), especially

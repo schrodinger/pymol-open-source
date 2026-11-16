@@ -4,6 +4,19 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.13.3
+
+	* Core
+	  - ray: the voxel table of the camera view (MapSetupExpressPerp)
+	    is sized first and then filled on all cores (OpenMP builds),
+	    like the neighbor table in 4.7.9. Same table as before. For the
+	    surface of 1aon (58870 atoms, 62.5 million rows) the table
+	    takes 0.28 s, was 0.68 s; a ray of that surface at 800x600
+	    4.2 s, was 4.7 s.
+	  - No cmd.* change.
+
+2026-11-16 pymolish-studio
+
 	* 4.13.2
 
 	* Load a folder
