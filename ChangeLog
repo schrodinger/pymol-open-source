@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.13.2
+
+	* Load a folder
+	  - Fix: on Windows load_files loaded "UP.PDB" after "a.pdb" and
+	    "b.pdb", on Linux and macOS before them: Windows paths compare
+	    without case. The order is now the same on every system
+	    (capitals first, as on Linux), so object order and colors match.
+	    This was the test that failed on the Windows CI runners.
+
+2026-11-16 pymolish-studio
+
 	* 4.13.1
 
 	* Object color palettes

@@ -19,11 +19,15 @@ def find_files(directory=".", format="pdb", pattern="*", recursive=0):
         raise pymol.CmdException("not a directory: %s" % directory)
     suffix = "." + format.lower().lstrip(".")
     return sorted(
-        path
-        for path in (root.rglob("*") if int(recursive) else root.iterdir())
-        if path.suffix.lower() == suffix
-        and fnmatch.fnmatch(path.stem, pattern)
-        and path.is_file()
+        (
+            path
+            for path in (root.rglob("*") if int(recursive) else root.iterdir())
+            if path.suffix.lower() == suffix
+            and fnmatch.fnmatch(path.stem, pattern)
+            and path.is_file()
+        ),
+        # Windows paths compare without case: same order on every system
+        key=lambda path: path.parts,
     )
 
 
