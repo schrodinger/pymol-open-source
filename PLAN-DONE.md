@@ -19,6 +19,7 @@ order numbers are the ones the roadmap used.
 | 11 | [Color palettes](docs/plans/11-color-palettes.md) | Five palettes replace the object color order; toolbar button; remembered in `QSettings`. |
 | 12 | [pymolish plugin commands, native](docs/plans/12-native-commands.md) | Command bodies ported, not the framework: 58 plugin commands became 18 (19 since 4.12.9, `fetch_uniprot_ligands`), in five files; two dialogs, five menu entries, no new top menu. rdkit is the optional extra `chem`. |
 | 13 | [Clean, fix and optimize structures](docs/plans/13-structure-cleanup.md) | Four layers, each shipped alone: remove water, ions and ligands; `clean` for ligands (rdkit); `fix_structure` (PDBFixer); `minimize` (OpenMM). PDBFixer and OpenMM are the optional extra `fix`. |
+| 14 | [Action and right-click menus](docs/plans/14-menus.md) | One builder for objects and groups, one for selections; the A menu of an object has 10 rows, the rest under "more"; right click on a row gives rename, duplicate and delete at once. `menu.py` 1,869 to 1,745 lines. |
 
 ## Finished work, in execution order
 
@@ -40,6 +41,7 @@ optimization and workspace increments) is still open and stays in the roadmap.
 | 11 | **11 — color palettes** | A palette picked in the toolbar colors new objects and is back after a restart. | Done 2026-11-14 (4.10.0): [docs/plans/11-color-palettes.md](docs/plans/11-color-palettes.md). `util.cbc` still uses the PyMOL order. |
 | 12 | **12a to 12e — native commands** | Kept plugin commands work without the plugin, from the command line and from File, Build and the group menu. | Done 2026-11-14 (4.11.0 to 4.11.4): [docs/commands.md](docs/commands.md). 12a groups, 12b folder load and export, 12c UniProt and predicted structures, 12d SMILES with rdkit, 12e sequence search and ligand clusters. The plugin in `~/.pymol/startup` still wins over the native names: remove it. |
 | 13 | **13a to 13d — cleanup** | Water and ions go in one click; `clean` works on ligands; a protein is repaired and relaxed into a new object. | Done 2026-11-14 (4.12.0 to 4.12.3): the A > clean submenu, `clean`, `fix_structure`, `minimize`. Not built: gaps in a chain (PDBFixer needs SEQRES records). `minimize` has no ligand parameters. |
+| 14 | **14a to 14c — menus** | Approved keep, merge, drop list applied; fewer rows and fewer lines in `menu.py`. | Done 2026-11-16 (4.13.0): [docs/plans/14-menus.md](docs/plans/14-menus.md). 14a in 4.10.1 (red trash icon on destructive rows), 14b on 2026-11-14 (audit, table of nine rows), 4.12.5 (zoom, orient, center, origin left the menus), 14c in 4.13.0 (all rows of the table). This was also slice 6 of step 3. |
 
 Sequencing used for orders 1 to 6: cleanup preceded speculative optimization;
 recording a baseline was preparation. UI work needed the binding decision and a
@@ -51,9 +53,21 @@ Decided on 2026-11-14 and applied: rdkit, PDBFixer and OpenMM are approved
 optional dependencies (`AGENTS.md` §2.2); the palette is remembered in
 `QSettings`; `LICENSE` got a header above the unchanged notice.
 
+Decided by the user on 2026-11-16 and applied:
+
+| Decision | Applied in |
+| --- | --- |
+| The product name stays, with the mark "PyMOL" in it; the risk is accepted. | No change; noted in plans 9 and 10. |
+| No more merges from upstream PyMOL. | `AGENTS.md` intro and §2.4; step 8 is not limited to files the fork already changed. |
+| Python 3.13 and 3.14 only. | 4.12.8: `requires-python = ">=3.13"`. |
+| `fetch_uniprot_ligands` comes back; the other dropped plugin commands stay dropped. | 4.12.9. |
+| Menu table of 14b: the choice was left open; all rows were applied. | 4.13.0, step 14 finished. |
+| Version rule: `X` bumps once per roadmap step, with its main user-visible change; everything else bumps `Y`. | `AGENTS.md` §5. |
+| Merges to `master` are done by the user. | Listed in the roadmap under "Waiting for the user". |
+
 ## Finished milestones of open steps
 
-Steps 1, 3, 8 and 14 stay in the roadmap. These parts of them have shipped.
+Steps 1, 3 and 8 stay in the roadmap. These parts of them have shipped.
 
 | Step | Milestone | Result |
 | --- | --- | --- |
@@ -63,9 +77,6 @@ Steps 1, 3, 8 and 14 stay in the roadmap. These parts of them have shipped.
 | 3 | Slice 5, partly | 4.5.2 dark theme. 4.5.7 UI Scale and the dark-theme color audit. 4.5.13 no fixed point sizes in rich text. Open: spacing of the remaining dialogs. |
 | 8 | 8a — safety net | Done 2026-11-13 (4.7.2): CI job with ASan and UBSan, three bugs fixed, coverage measured (about half of the core). Catch2 is compiled in CI and not run: that is 8h. |
 | 8 | 8b — strings, mostly | 4.7.3 to 4.7.6: 408 of 475 `sprintf`, `strcpy` and `strcat` calls are bounded; three real defects fixed with a test. About 80 calls through a pointer close with 8c and 8e. |
-| 14 | 14a — red squares | Done in 4.10.1: destructive rows show a red trash icon. |
-| 14 | 14b — audit | Done 2026-11-14: keep, merge, drop table of nine rows in the plan. |
-| 14 | Part of 14c | 4.12.5: zoom, orient, center and origin left the A and right-click menus (the user's decision, 2026-11-14). `menu.py` 1,869 to 1,809 lines. |
 
 ## Validation of the original draft, closed rows
 

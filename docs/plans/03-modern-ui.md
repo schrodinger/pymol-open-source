@@ -1,6 +1,6 @@
 # 3 — Modern workspace and metadata panel
 
-[Roadmap](../../PLAN.md) · Slices 1 to 4 shipped, 5 partly; slice 6 (menus) is [step 14](14-menus.md)
+[Roadmap](../../PLAN.md) · Slices 1 to 4 shipped, 5 partly; slice 6 (menus) was done as [step 14](14-menus.md) in 4.13.0
 
 **Evolve the existing main window into a clear molecular workspace.** Deliver
 movable, resizable panels and a useful metadata table before replacing every

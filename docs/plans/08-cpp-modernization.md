@@ -79,9 +79,8 @@ first.
   headless. Slices that touch `layer1/` need the real GUI check, and 8a's
   coverage list decides where a test comes first.
 - **Upstream merges.** Every modernized file stops taking upstream patches
-  cleanly. No upstream remote is configured today; if merges from
-  `schrodinger/pymol-open-source` are still wanted, restrict the work to files
-  this fork already changed heavily.
+  cleanly. Decided 2026-11-16: upstream is no longer merged, so the work is
+  not limited to files this fork already changed.
 - **Size.** This is not one step finished in a week. Each slice is many PRs.
   No date or line-count target is promised.
 

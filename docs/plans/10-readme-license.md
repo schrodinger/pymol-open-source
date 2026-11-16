@@ -70,7 +70,7 @@ shows the two are different products. It does not grant the right to a
 product name that contains "PyMOL": the license says every other use of the
 mark needs "specific, written prior permission" from Schrodinger. Options,
 user's call: keep the name and accept the risk, ask Schrodinger in writing,
-or rename. This plan keeps the name and changes nothing else.
+or rename. Decided 2026-11-16: keep the name and accept the risk.
 
 Places that need the lines and are easy to miss:
 

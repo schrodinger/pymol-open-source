@@ -34,8 +34,9 @@ from calling itself PyMOL.**
 | Derivative software "must be plainly distinguished from any and all PyMOL products distributed by Schrodinger" | The license asks for this change. The PyMOL logo, the title `PyMOL` and the Schrodinger sales address are what break it today. |
 | Only four slogans may use the mark without written permission | About box uses "Based on PyMOL(TM) technology.", the not-affiliated line and the footnote "PyMOL is a trademark of Schrodinger, LLC."; exact texts in [step 10, Wording](10-readme-license.md#wording). |
 
-Open risk, user's call: the product name "pymolish" contains the mark. The
-license does not cover product names. This plan does not rename anything.
+Risk: the product name "pymolish" contains the mark. The license does not
+cover product names. Decided by the user on 2026-11-16: the name stays and
+the risk is accepted.
 
 ## Needed from the user
 
