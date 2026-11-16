@@ -97,7 +97,6 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 
   ok &= CGOResetNormal(I->shaderCGO, true);
 
-#ifndef PURE_OPENGL_ES_2
   int lighting =
     SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
   if(!lighting) {
@@ -105,7 +104,6 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
       CGODisable(I->shaderCGO, GL_LIGHTING);
     }
   }
-#endif
   if (ok){
     switch (I->mesh_type) {
     case cIsomeshMode::isomesh:
@@ -197,12 +195,8 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
     }
     break;
   case cIsomeshMode::isodot:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glPointSize(SettingGet_f
 		(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
-#endif
     if(ok && n) {
       if(I->oneColorFlag) {
 	while(ok && *n) {
@@ -393,7 +387,6 @@ static void RepMeshRenderImmediate(
     CGOFree(I->shaderCGO);
     I->shaderCGO = nullptr;
   }
-#ifndef PURE_OPENGL_ES_2
   int lighting = SettingGet_i(
       G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
   if (!lighting && !info->line_lighting) {
@@ -480,7 +473,6 @@ static void RepMeshRenderImmediate(
   if (!lighting) {
     glEnable(GL_LIGHTING);
   }
-#endif
 }
 
 void RepMeshRasterRender(RepMesh* I, RenderInfo* info)

@@ -636,7 +636,6 @@ void OrthoBusyDraw(PyMOLGlobals* G, int force)
               OrthoDrawBuffer(G, GL_FRONT); /* draw into the front buffer */
             }
 
-#ifndef PURE_OPENGL_ES_2
             glColor3f(0.f, 0.f, 0.f); // black
             glBegin(GL_TRIANGLE_STRIP);
             glVertex2i(0, I->Height);
@@ -645,7 +644,6 @@ void OrthoBusyDraw(PyMOLGlobals* G, int force)
             glVertex2i(cBusyWidth, I->Height - cBusyHeight);
             glEnd();
             glColor3fv(white);
-#endif
             y = I->Height - cBusyMargin;
             c = I->BusyMessage;
             if (*c) {
@@ -1506,7 +1504,6 @@ static void OrthoDrawInternalFeedbackBG(PyMOLGlobals* G, CGO* orthoCGO,
       CGOVertex(orthoCGO, 0.f, height - 1, 0.f);
       CGOVertex(orthoCGO, 0.f, 0.f, 0.f);
       CGOEnd(orthoCGO);
-#ifndef PURE_OPENGL_ES_2
     } else {
       glColor3f(0.0, 0.0, 0.0);
       glBegin(GL_POLYGON);
@@ -1515,7 +1512,6 @@ static void OrthoDrawInternalFeedbackBG(PyMOLGlobals* G, CGO* orthoCGO,
       glVertex2i(0, 0);
       glVertex2i(0, height - 1);
       glEnd();
-#endif
     }
     /* deliberate fall-through */
   case InternalGUIMode::BG:
@@ -1527,14 +1523,12 @@ static void OrthoDrawInternalFeedbackBG(PyMOLGlobals* G, CGO* orthoCGO,
       CGOVertex(orthoCGO, -1, height, 0.f);
       CGOVertex(orthoCGO, -1, height - 1, 0.f);
       CGOEnd(orthoCGO);
-#ifndef PURE_OPENGL_ES_2
     } else {
       glColor3f(0.3, 0.3, 0.3);
       glBegin(GL_LINES);
       glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
       glVertex2i(-1, height - 1);
       glEnd();
-#endif
     }
     break;
   }
@@ -1560,14 +1554,12 @@ static void OrthoDrawInternalGUIBG(
       CGOVertex(orthoCGO, I->Width - internal_gui_width, I->Height, 0.f);
       CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, I->Height, 0.f);
       CGOEnd(orthoCGO);
-#ifndef PURE_OPENGL_ES_2
     } else {
       glColor3f(0.3, 0.3, 0.3);
       glBegin(GL_LINES);
       glVertex2i(I->Width - internal_gui_width, 0);
       glVertex2i(I->Width - internal_gui_width, I->Height);
       glEnd();
-#endif
     }
   }
 }
@@ -1634,10 +1626,8 @@ static void OrthoDrawText(PyMOLGlobals* G, CGO* orthoCGO, bool draw_text,
 
   if (orthoCGO)
     CGOColorv(orthoCGO, I->TextColor);
-#ifndef PURE_OPENGL_ES_2
   else
     glColor3fv(I->TextColor);
-#endif
   while (l >= 0) {
     lcount++;
     if (lcount > showLines)
@@ -1718,7 +1708,6 @@ static void OrthoDrawLoop(PyMOLGlobals* G, CGO* orthoCGO)
     CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 1.f);
     CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 1.f);
     CGOEnd(orthoCGO);*/
-#ifndef PURE_OPENGL_ES_2
   } else {
     glColor3f(vc[0], vc[1], vc[2]);
     glBegin(GL_LINE_LOOP);
@@ -1728,7 +1717,6 @@ static void OrthoDrawLoop(PyMOLGlobals* G, CGO* orthoCGO)
     glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
     glVertex2i(I->LoopRect.left, I->LoopRect.top);
     glEnd();
-#endif
   }
 }
 
@@ -1871,14 +1859,9 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
     auto numOverlayLines = OrthoGetNumberOverlayLines(G);
     auto text = SettingGet<bool>(G, cSetting_text);
 
-#ifdef PURE_OPENGL_ES_2
-    // Workaround for now
-    shouldRenderScene = true;
-#else
     if (numOverlayLines || (!text) || drawInfo.renderMode == OrthoRenderMode::VR)
       if (!SceneRenderCached(G))
         shouldRenderScene = true;
-#endif
 
     for (const auto& backbuffer : backbuffers) {
       G->ShaderMgr->setDrawBuffer(backbuffer);
@@ -2753,10 +2736,8 @@ void OrthoPushMatrix(PyMOLGlobals* G)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
 
-#ifndef PURE_OPENGL_ES_2
     glShadeModel(
         SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
-#endif
     if (G->Option->multisample)
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     I->Pushed++;

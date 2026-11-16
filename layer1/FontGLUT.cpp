@@ -259,10 +259,8 @@ const char* CFontGLUT::RenderOpenGL(const RenderInfo* info, const char* st,
           if(ch) {
             if(!textured) {
 
-#ifndef PURE_OPENGL_ES_2
               glBitmap(ch->width, ch->height,
                        ch->xorig, ch->yorig, ch->advance, 0, ch->bitmap);
-#endif
               TextAdvance(G, ch->advance);
             } else {
               CharFngrprnt fprnt;

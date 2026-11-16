@@ -82,7 +82,6 @@ OIT_PostProcess::OIT_PostProcess(int width, int height, RenderbufferGL* rbo)
 
 void OIT_PostProcess::bindRT(std::size_t idx, bool clear)
 {
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
   if (TM3_IS_ONEBUF) {
     auto& rt = m_renderTargets[idx - 1];
     if (rt)
@@ -103,7 +102,6 @@ void OIT_PostProcess::bindRT(std::size_t idx, bool clear)
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-#endif
 }
 
 void OIT_PostProcess::activateRTAsTexture(std::size_t idx, GLuint textureUnit)

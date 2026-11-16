@@ -550,17 +550,13 @@ void CControl::draw(CGO* orthoCGO)
 
     if (orthoCGO)
       CGOColorv(orthoCGO, BackColor);
-#ifndef PURE_OPENGL_ES_2
     else
       glColor3fv(BackColor);
-#endif
     fill(orthoCGO);
     if (orthoCGO)
       CGOColorv(orthoCGO, TextColor);
-#ifndef PURE_OPENGL_ES_2
     else
       glColor3fv(TextColor);
-#endif
     {
       int top, left, bottom, right;
 
@@ -657,10 +653,8 @@ void CControl::draw(CGO* orthoCGO)
 
 	if (orthoCGO)
 	  CGOColorv(orthoCGO, TextColor);
-#ifndef PURE_OPENGL_ES_2
 	else
 	  glColor3fv(TextColor);
-#endif
         switch (but_num) {
         case 0:
 	  if (orthoCGO){

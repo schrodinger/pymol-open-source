@@ -1734,22 +1734,18 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
       I->Image = std::make_shared<pymol::Image>(I->Width, I->Height, save_stereo);
       image = I->Image.get();
 
-#ifndef PURE_OPENGL_ES_2
       if(SceneMustDrawBoth(G) || save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
         glReadBuffer(G->ShaderMgr->defaultBackbuffer.drawBuffer); // GL_BACK
       }
-#endif
       PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
                       GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits()));
-#ifndef PURE_OPENGL_ES_2
       if(save_stereo) {
         glReadBuffer(GL_BACK_RIGHT);
         PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
                         GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits() + image->getSizeInBytes()));
       }
-#endif
       I->Image->m_needs_alpha_reset = true;
     }
   } else if(I->Image) {
@@ -2870,9 +2866,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
 static void RendererWritePixelsTo(
     PyMOLGlobals* G, const Rect2D& rect, unsigned char* buffer)
 {
-#ifndef PURE_OPENGL_ES_2
   glRasterPos3i(rect.offset.x, rect.offset.y, -10);
-#endif
   PyMOLDrawPixels(rect.extent.width, rect.extent.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 }
 
@@ -3209,7 +3203,6 @@ int SceneDrawImageOverlay(PyMOLGlobals* G, int override, CGO* orthoCGO)
   int height = I->Image->getHeight();
   unsigned char* data = I->Image->bits();
 
-#ifndef PURE_OPENGL_ES_2
   if (I->Image->isStereo()) {
     int buffer;
     glGetIntegerv(GL_DRAW_BUFFER, (GLint*) &buffer);
@@ -3228,7 +3221,6 @@ int SceneDrawImageOverlay(PyMOLGlobals* G, int override, CGO* orthoCGO)
       }
     }
   }
-#endif
 
   if ((height > I->Height) || (width > I->Width)) { /* image is oversize */
     drawn = SceneOverlayOversize(G, data, orthoCGO);
@@ -3364,25 +3356,19 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
 float ScenePushRasterMatrix(PyMOLGlobals * G, float *v)
 {
   float scale = SceneGetExactScreenVertexScale(G, v);
-#ifndef PURE_OPENGL_ES_2
   CScene *I = G->Scene;
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glTranslatef(v[0], v[1], v[2]);       /* go to this position */
   glMultMatrixf(I->InvMatrix);
   glScalef(scale, scale, scale);
-#endif
   return scale;
 }
 
 void ScenePopRasterMatrix(PyMOLGlobals * G)
 {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
-#endif
 }
 
 /**
@@ -3963,9 +3949,7 @@ int CScene::release(int button, int x, int y, int mod) // Originally SceneDeferR
 void SceneFree(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
   CGOFree(I->offscreenCGO);
-#endif
 
   CGOFree(I->AlphaCGO);
   CGOFree(I->offscreenCGO);
@@ -4135,15 +4119,11 @@ void SceneResetNormalToViewVector(PyMOLGlobals * G, short use_shader)
 {
   auto modMatrix = SceneGetModelViewMatrixPtr(G);
   if(G->HaveGUI && G->ValidContext) {
-#if defined(PURE_OPENGL_ES_2)
-    glVertexAttrib3f(VERTEX_NORMAL, modMatrix[2], modMatrix[6], modMatrix[10]);
-#else
     if (use_shader){
       glVertexAttrib3f(VERTEX_NORMAL, modMatrix[2], modMatrix[6], modMatrix[10]);
     } else {
       glNormal3f(modMatrix[2], modMatrix[6], modMatrix[10]);
     }
-#endif
   }
 }
 
@@ -4151,12 +4131,6 @@ void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader)
 {
   CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    if(lines)
-      glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
-    else
-      glVertexAttrib3fv(VERTEX_NORMAL, I->ViewNormal);
-#else
     if (use_shader){
       if(lines)
 	glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
@@ -4168,7 +4142,6 @@ void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader)
       else
 	glNormal3fv(I->ViewNormal);
     }
-#endif
   }
 }
 
@@ -4176,14 +4149,6 @@ void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_s
 {
   CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    if (attr < 0)
-      return;
-    if(lines)
-      glVertexAttrib3fv(attr, I->LinesNormal);
-    else
-      glVertexAttrib3fv(attr, I->ViewNormal);
-#else
     if (use_shader){
       if(lines)
 	glVertexAttrib3fv(attr, I->LinesNormal);
@@ -4195,7 +4160,6 @@ void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_s
       else
 	glNormal3fv(I->ViewNormal);
     }
-#endif
   }
 }
 
@@ -4849,7 +4813,6 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
 
   white4f(diff, SettingGetGlobal_f(G, cSetting_ambient));
 
-#ifndef PURE_OPENGL_ES_2
   if (!shaderPrg) {
     glEnable(GL_LIGHTING);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, diff);
@@ -4866,7 +4829,6 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
       glLightfv(GL_LIGHT0, GL_SPECULAR, zero);
     }
   } else
-#endif
   {
     shaderPrg->Set4fv("g_LightModel.ambient", diff);
     white4f(diff, (direct > R_SMALL4) ? direct : 0.f);
@@ -4885,7 +4847,6 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
     normalize3f(vv);
     invert3f(vv);
 
-#ifndef PURE_OPENGL_ES_2
     if (!shaderPrg) {
       glEnable(GL_LIGHT0 + i);
       glLightfv(GL_LIGHT0 + i, GL_POSITION, vv);
@@ -4893,14 +4854,12 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
       glLightfv(GL_LIGHT0 + i, GL_AMBIENT, zero);
       glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, diff);
     } else
-#endif
     {
       shaderPrg->Set4fv(lightsource_position_names[i], vv);
       shaderPrg->Set4fv(lightsource_diffuse_names[i], diff);
     }
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (!shaderPrg) {
     // TODO: this was depending on two_sided_lighting, surface_cavity_mode
     // and transparency_mode
@@ -4916,7 +4875,6 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
     glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
     glMaterialf(GL_FRONT, GL_SHININESS, glm::clamp(shine, 0.F, 128.F));
   }
-#endif
 }
 
 /**
@@ -4938,7 +4896,6 @@ int SceneSetFog(PyMOLGlobals *G){
     fog_active = true;
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(!SettingGetGlobal_b(G, cSetting_use_shaders))) {
   const float *bg_rgb = ColorGet(G, SettingGetGlobal_color(G, cSetting_bg_rgb));
   float fog[4] = {bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0};
@@ -4953,7 +4910,6 @@ int SceneSetFog(PyMOLGlobals *G){
   else
     glDisable(GL_FOG);
   }
-#endif
 
   return fog_active;
 }
@@ -5052,11 +5008,9 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
     }
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(!SettingGetGlobal_b(G, cSetting_use_shaders))) {
     glLoadMatrixf(SceneGetModelViewMatrixPtr(G));
   }
-#endif
 }
 
 
@@ -5218,12 +5172,10 @@ void ScenePopModelViewMatrix(PyMOLGlobals * G, bool immediate) {
   I->modelViewMatrix = stack.back();
   stack.pop_back();
 
-#ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(immediate)) {
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(SceneGetModelViewMatrixPtr(G));
   }
-#endif
 }
 
 glm::mat4& SceneGetModelViewMatrix(PyMOLGlobals* G) {

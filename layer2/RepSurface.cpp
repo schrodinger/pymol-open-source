@@ -155,7 +155,6 @@ static void SolventDotFree(SolventDot* I)
   DeleteP(I);
 }
 
-#ifndef PURE_OPENGL_ES_2
 static void immediate_draw_masked_vertices(const float* vc, // colors
     const float* vn,                                        // normals
     const float* v,                                         // vertices
@@ -207,7 +206,6 @@ static void immediate_draw_indexed_vertices_alpha(const float* vc, // colors
     glVertex3fv(v + i3);
   }
 }
-#endif
 
 static bool visibility_test(bool proximityFlag,
     const int* vi, // visibility array
@@ -1833,12 +1831,10 @@ void RepSurface::render(RenderInfo* info)
       }
     } else {
 
-#ifndef PURE_OPENGL_ES_2
       bool use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) &&
                         SettingGetGlobal_b(G, cSetting_use_shaders);
 
       if (use_shader && !info->alpha_cgo)
-#endif
       {
         bool dot_as_spheres = SettingGet_b(
             G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_as_spheres);
@@ -1861,7 +1857,6 @@ void RepSurface::render(RenderInfo* info)
 
       setShaderCGO(I, nullptr);
 
-#ifndef PURE_OPENGL_ES_2
       bool two_sided_lighting =
           SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
               cSetting_two_sided_lighting) > 0;
@@ -2316,7 +2311,6 @@ void RepSurface::render(RenderInfo* info)
       if (two_sided_lighting) {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       }
-#endif
     }
   }
   if (!ok) {

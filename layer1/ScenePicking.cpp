@@ -128,11 +128,9 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
       }
     }
 
-#ifndef PURE_OPENGL_ES_2
     if (!hasFrameBufferBinding()) {
       glReadBuffer(gl_buffer);
     }
-#endif
 
     // assume glReadPixels does not overrun the buffer - previous version of
     // PyMOL allocated a larger buffer to account for "buggy glReadPixels"
@@ -216,14 +214,12 @@ static void SceneRenderPickingSinglePick(PyMOLGlobals* G,
     pick->context.object = nullptr;
   }
 
-#ifndef PURE_OPENGL_ES_2
   /* Picking changes the Shading model to GL_FLAT,
      we need to change it back to GL_SMOOTH. This is because
      bg_grad() might be called in OrthoDoDraw() before GL 
      settings are set in SceneRender() */
   //      glEnable(GL_COLOR_MATERIAL);
   glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
-#endif
 }
 
 /**
@@ -254,14 +250,12 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
       }
     }
   }
-#ifndef PURE_OPENGL_ES_2
   /* Picking changes the Shading model to GL_FLAT,
      we need to change it back to GL_SMOOTH. This is because
      bg_grad() might be called in OrthoDoDraw() before GL 
      settings are set in SceneRender() */
   //      glEnable(GL_COLOR_MATERIAL);
   glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
-#endif
 }
 
 void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
@@ -288,9 +282,7 @@ void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
       break;
     }
   }
-#ifndef PURE_OPENGL_ES_2
   glPushMatrix();           /* 1 */
-#endif
 
   switch (stereo_mode) {
   case cStereo_crosseye:
@@ -309,9 +301,7 @@ void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
     SceneRenderPickingMultiPick(G, context, smp, render_buffer);
   }
   G->ShaderMgr->SetIsPicking(false);
-#ifndef PURE_OPENGL_ES_2
   glPopMatrix();            /* 1 */
-#endif
 }
 
 /*========================================================================*/

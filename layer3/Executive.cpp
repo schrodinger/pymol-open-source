@@ -8292,7 +8292,6 @@ static void ExecutiveRenderIndicatorCGOGLRaster(
 static void ExecutiveSetupIndicatorPassMultipassImmediate(
     PyMOLGlobals* G, SpecRec* rec, int pass, int width, CGO* cgo)
 {
-#ifndef PURE_OPENGL_ES_2
   switch (pass) {
   case 0:
     if (rec->sele_color < 0)
@@ -8339,7 +8338,6 @@ static void ExecutiveSetupIndicatorPassMultipassImmediate(
     }
     break;
   }
-#endif
 }
 
 /*========================================================================*/
@@ -8541,7 +8539,6 @@ public:
       , m_no_depth{no_depth}
       , m_fog{fog}
   {
-#ifndef PURE_OPENGL_ES_2
     // All of this state should probably be restored at the end.
     if (m_round_points) {
       glGetIntegerv(GL_ALPHA_TEST_FUNC, &alpha_func_before);
@@ -8555,26 +8552,19 @@ public:
       glDisable(GL_ALPHA_TEST);
       glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
     }
-#endif
     if (no_depth)
       glDisable(GL_DEPTH_TEST);
-#ifndef PURE_OPENGL_ES_2
     glDisable(GL_FOG);
-#endif
   }
   ~ExecutiveRenderSelectionSetTopLevelGLPipeline()
   {
-#ifndef PURE_OPENGL_ES_2
     if (m_fog)
       glEnable(GL_FOG);
-#endif
     if (m_no_depth)
       glEnable(GL_DEPTH_TEST);
-#ifndef PURE_OPENGL_ES_2
     if (m_round_points) {
       glAlphaFunc(alpha_func_before, alpha_ref_before);
     }
-#endif
   }
 
 private:
@@ -16139,10 +16129,8 @@ void CExecutive::draw(CGO* orthoCGO)
         InternalGUIMode::Default) {
       if (orthoCGO)
         CGOColorv(orthoCGO, BackColor);
-#ifndef PURE_OPENGL_ES_2
       else
         glColor3fv(BackColor);
-#endif
       fill(orthoCGO);
       drawLeftEdge(orthoCGO);
     }

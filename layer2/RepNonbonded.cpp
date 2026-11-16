@@ -53,7 +53,6 @@ RepNonbonded::~RepNonbonded()
 
 void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
-#ifndef PURE_OPENGL_ES_2
   PyMOLGlobals *G = cs->G;
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
@@ -113,7 +112,6 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     if(!active)
       cs->Active[cRepNonbonded] = false;
   }
-#endif
 }
 
 static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)

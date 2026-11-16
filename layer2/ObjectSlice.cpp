@@ -802,7 +802,6 @@ static int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float 
   return 0;
 }
 
-#ifndef PURE_OPENGL_ES_2
 static
 void ObjectSliceDrawSlice(CGO *cgo, float *points, int n_points, float *zaxis)
 {
@@ -910,7 +909,6 @@ void GenerateOutlineOfSlice(PyMOLGlobals *G, ObjectSliceState *oss, CGO *cgo){
   }
   ObjectSliceDrawSlice(cgo, points, n_points/3, zaxis);
 }
-#endif // PURE_OPENGL_ES_2
 #endif // 0
 
 static float GetObjectSliceAlpha(PyMOLGlobals* G, ObjectSlice* I)
@@ -988,7 +986,6 @@ void ObjectSliceStateRenderRay(ObjectSlice* I, ObjectSliceState* oss, RenderInfo
 void ObjectSliceRenderRasterImmediate(
     ObjectSlice* I, ObjectSliceState* oss, RenderInfo* info, int state)
 {
-#ifndef PURE_OPENGL_ES_2
   auto* G = I->G;
   auto* pick = info->pick;
   Picking p;
@@ -1053,7 +1050,6 @@ void ObjectSliceRenderRasterImmediate(
       glEnd();
     }
   }
-#endif
 }
 
 /**

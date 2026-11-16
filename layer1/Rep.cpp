@@ -147,9 +147,6 @@ cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G)
 void Rep::render(RenderInfo* info)
 {
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_LINE_LOOP);
     glVertex3f(-0.5F, -0.5F, -0.5F);
     glVertex3f(-0.5F, -0.5F, 0.5F);
@@ -173,7 +170,6 @@ void Rep::render(RenderInfo* info)
     glVertex3i(0, 0, 3);
 
     glEnd();
-#endif
   }
 
 }

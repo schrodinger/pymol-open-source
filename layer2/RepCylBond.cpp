@@ -909,7 +909,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   return (Rep *) I;
 }
 
-#ifndef PURE_OPENGL_ES_2
 static void RepCylinderImmediate(const float *v1arg, const float *v2arg, int nEdge,
                                  int frontCapArg, int endCapArg,
                                  float overlap, float nub, float radius, float **dir)
@@ -1062,11 +1061,9 @@ static void RepCylinderImmediate(const float *v1arg, const float *v2arg, int nEd
     glEnd();
   }
 }
-#endif
 
 void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
-#ifndef PURE_OPENGL_ES_2
   /* performance optimized, so it does not support the following:
 
      - anything other than opengl
@@ -1167,5 +1164,4 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     if(!active)
       cs->Active[cRepCyl] = false;
   }
-#endif
 }

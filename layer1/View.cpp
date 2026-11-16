@@ -614,29 +614,17 @@ int ViewIterate(CView * I, CViewIterator * iter, CRay * ray, int at_least_once)
 
       if(elem->pre_flag) {
         /* move the camera to the location we are looking at */
-#ifdef PURE_OPENGL_ES_2
-        /* TODO */
-#else
         glTranslated(elem->pre[0], elem->pre[1], elem->pre[2]);
-#endif	
       }
 
       if(elem->matrix_flag) {
         /* rotate about the origin (the the center of rotation) */
-#ifdef PURE_OPENGL_ES_2
-        /* TODO */
-#else
         glMultMatrixd(elem->matrix);
-#endif
       }
 
       if(elem->post_flag) {
         /* move the origin to the center of rotation */
-#ifdef PURE_OPENGL_ES_2
-        /* TODO */
-#else
 	glTranslated(elem->post[0], elem->post[1], elem->post[2]);
-#endif
       }
 
     }

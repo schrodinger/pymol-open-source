@@ -1783,7 +1783,6 @@ void ObjectMap::render(RenderInfo * info)
           ray->sausage3fv(corner + 3 * 5, corner + 3 * 7, radius, vc, vc);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
-#ifndef PURE_OPENGL_ES_2
           } else if (!info->use_shaders) {
             // immediate
             ObjectUseColor(I);
@@ -1828,7 +1827,6 @@ void ObjectMap::render(RenderInfo * info)
             glEnd();
             glEnable(GL_LIGHTING);
           } else {
-#endif
             // shader
             if (!ms->shaderCGO) {
               ms->shaderCGO.reset(ObjectMapCGOGenerate(G, corner));

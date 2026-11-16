@@ -18,10 +18,6 @@
 #define VERTEX_NORMAL_SIZE 3
 #define VAR_FOR_NORMAL_CNT_PLUS
 
-#ifdef PURE_OPENGL_ES_2
-#define glVertexAttrib4ubv(loc, data) glVertexAttrib4f(loc, \
-    (data)[0] / 255.f, (data)[1] / 255.f, (data)[2] / 255.f, (data)[3] / 255.f);
-#endif
 
 constexpr unsigned VERTEX_PICKCOLOR_RGBA_SIZE = 1;  // 4 unsigned bytes
 constexpr unsigned VERTEX_PICKCOLOR_INDEX_SIZE = 2; // index + bond
@@ -60,69 +56,54 @@ static int CGOConvertDebugMode(int debug, int modeArg)
 
 static void CGO_gl_begin(CCGORenderer* I, CGO_op_data pc)
 {
-#ifndef PURE_OPENGL_ES_2
   if (I->use_shader) {
-#endif
     if (!CGO_gl_begin_WARNING_CALLED) {
       PRINTFB(I->G, FB_CGO, FB_Warnings)
       " CGO_gl_begin() is called but not implemented in OpenGLES\n" ENDFB(I->G);
       CGO_gl_begin_WARNING_CALLED = true;
     }
-#ifndef PURE_OPENGL_ES_2
   } else {
     int mode = CGO_get_int(*pc);
     if (I->debug)
       mode = CGOConvertDebugMode(I->debug, mode);
     glBegin(mode);
   }
-#endif
 }
 static void CGO_gl_end(CCGORenderer* I, CGO_op_data)
 {
-#ifndef PURE_OPENGL_ES_2
   if (I->use_shader) {
-#endif
     if (!CGO_gl_end_WARNING_CALLED) {
       PRINTFB(I->G, FB_CGO, FB_Warnings)
       " CGO_gl_end() is called but not implemented in OpenGLES\n" ENDFB(I->G);
       CGO_gl_end_WARNING_CALLED = true;
     }
-#ifndef PURE_OPENGL_ES_2
   } else {
     glEnd();
   }
-#endif
 }
 static void CGO_gl_vertex(CCGORenderer* I, CGO_op_data v)
 {
-#ifndef PURE_OPENGL_ES_2
   if (I->use_shader) {
-#endif
     if (!CGO_gl_vertex_WARNING_CALLED) {
       PRINTFB(I->G, FB_CGO, FB_Warnings)
       " CGO_gl_vertex() is called but not implemented in OpenGLES\n" ENDFB(
           I->G);
       CGO_gl_vertex_WARNING_CALLED = true;
     }
-#ifndef PURE_OPENGL_ES_2
   } else {
     glVertex3fv(*v);
   }
-#endif
 }
 
 static void CGO_gl_vertex_cross(CCGORenderer* I, CGO_op_data v)
 {
-#ifndef PURE_OPENGL_ES_2
   if (I->use_shader) {
-#endif
     if (!CGO_gl_vertex_WARNING_CALLED) {
       PRINTFB(I->G, FB_CGO, FB_Warnings)
       " CGO_gl_vertex() is called but not implemented in OpenGLES\n" ENDFB(
           I->G);
       CGO_gl_vertex_WARNING_CALLED = true;
     }
-#ifndef PURE_OPENGL_ES_2
   } else {
     CSetting *set1 = nullptr, *set2 = nullptr;
     if (I->rep && I->rep->cs)
@@ -148,23 +129,19 @@ static void CGO_gl_vertex_cross(CCGORenderer* I, CGO_op_data v)
     pt[2] += 2 * nonbonded_size;
     glVertex3fv(pt);
   }
-#endif
 }
 
 static void CGO_gl_line(CCGORenderer* I, CGO_op_data v)
 {
-#ifndef PURE_OPENGL_ES_2
   if (!I->use_shader) {
     auto line = reinterpret_cast<const cgo::draw::line*>(*v);
     glVertex3fv(line->vertex1);
     glVertex3fv(line->vertex2);
   }
-#endif
 }
 
 static void CGO_gl_splitline(CCGORenderer* I, CGO_op_data v)
 {
-#ifndef PURE_OPENGL_ES_2
   if (!I->use_shader) {
     auto splitline = reinterpret_cast<const cgo::draw::splitline*>(*v);
     bool interpolation = splitline->flags & cgo::draw::splitline::interpolation;
@@ -205,22 +182,13 @@ static void CGO_gl_splitline(CCGORenderer* I, CGO_op_data v)
       glVertex3fv(splitline->vertex2);
     }
   }
-#endif
 }
 
 static void CGO_gl_normal(CCGORenderer* I, CGO_op_data varg)
 {
   const float* v = *varg;
-#ifdef PURE_OPENGL_ES_2
-  if (I->use_shader) {
-    glVertexAttrib3fv(VERTEX_NORMAL, v);
-  } else {
-#else
   {
-#endif
-#ifndef PURE_OPENGL_ES_2
     glNormal3f(v[0], v[1], v[2]);
-#endif
   }
 }
 
@@ -231,9 +199,7 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
       nverts = sp->nverts;
   const float* data = sp->floatdata;
   (void) narrays;
-#ifndef PURE_OPENGL_ES_2
   if (I->use_shader) {
-#endif
 
 #ifdef _WEBGL
     uint buffers[3] = {0, 0, 0};
@@ -334,7 +300,6 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
     glDeleteBuffers(3, buffers);
 #endif
 
-#ifndef PURE_OPENGL_ES_2
   } else {
     int pl, pla, plc;
     const float* vertexVals = nullptr;
@@ -398,7 +363,6 @@ static void CGO_gl_draw_arrays(CCGORenderer* I, CGO_op_data pc)
     }
     glEnd();
   }
-#endif
 }
 
 /* TransparentInfoSortIX - This function sorts all n_tri triangle
@@ -417,11 +381,7 @@ void TransparentInfoSortIX(PyMOLGlobals* G, float* sum, float* z_value, int* ix,
   float matrix[16];
   int idx;
 
-#ifdef PURE_OPENGL_ES_2
-  copy44f(SceneGetModelViewMatrixPtr(G), matrix);
-#else
   glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-#endif
   zv = z_value;
   sv = sum;
 
@@ -706,11 +666,7 @@ static void CGO_gl_draw_sphere_buffers(CCGORenderer* I, CGO_op_data pc)
   }
 
   vbo->bind(shaderPrg->id);
-#if defined(PURE_OPENGL_ES_2)
-  glDrawArrays(GL_TRIANGLES, 0, num_spheres * VerticesPerSphere());
-#else
   glDrawArrays(GL_QUADS, 0, num_spheres * 4);
-#endif
 
   vbo->unbind();
 }
@@ -1112,13 +1068,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
     } else {
       ps = SettingGet_f(I->G, csSetting, objSetting, cSetting_dot_width);
     }
-#ifdef PURE_OPENGL_ES_2
-    if (I->G->ShaderMgr->current_shader) {
-      shaderPrg->Set1f("g_pointSize", ps);
-    }
-#else
     glPointSize(ps);
-#endif
     break;
   }
   case CYLINDERWIDTH_DYNAMIC_MESH: {
@@ -1348,7 +1298,6 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
  */
 static void CGO_gl_special_with_arg(CCGORenderer* I, CGO_op_data pc)
 {
-#ifndef PURE_OPENGL_ES_2
   int mode = CGO_get_int(*pc);
   float argval = *((*pc) + 1);
   bool use_shaders = SettingGetGlobal_b(I->G, cSetting_use_shaders);
@@ -1417,14 +1366,11 @@ static void CGO_gl_special_with_arg(CCGORenderer* I, CGO_op_data pc)
     }
   }
   }
-#endif
 }
 
 static void CGO_gl_dotwidth(CCGORenderer* I, CGO_op_data pc)
 {
-#ifndef PURE_OPENGL_ES_2
   glPointSize(**pc);
-#endif
 }
 
 static void CGO_gl_enable(CCGORenderer* I, CGO_op_data pc)
@@ -1572,13 +1518,11 @@ static void CGO_gl_enable(CCGORenderer* I, CGO_op_data pc)
       }
     }
   } else {
-#ifndef PURE_OPENGL_ES_2
     if (!I->isPicking) {
       if (mode == CGO_GL_LIGHTING) {
         glEnable(GL_LIGHTING);
       }
     }
-#endif
   }
 }
 
@@ -1639,13 +1583,11 @@ static void CGO_gl_disable(CCGORenderer* I, CGO_op_data pc)
         shaderPrg->Set1i("two_sided_lighting_enabled", 0);
       }
     } break;
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
     case GL_OIT_SHADER:
     case GL_SMAA1_SHADER:
     case GL_SMAA2_SHADER:
       I->G->ShaderMgr->setDrawBuffer(I->G->ShaderMgr->topLevelConfig);
       break;
-#endif
     case GL_BACK_FACE_CULLING:
       glDisable(GL_CULL_FACE);
       break;
@@ -1659,7 +1601,6 @@ static void CGO_gl_disable(CCGORenderer* I, CGO_op_data pc)
         glDisable(GL_DEPTH_TEST);
     } break;
     }
-#ifndef PURE_OPENGL_ES_2
   } else {
     if (mode != CGO_GL_LIGHTING || !I->isPicking) {
       if (mode == CGO_GL_LIGHTING)
@@ -1667,9 +1608,6 @@ static void CGO_gl_disable(CCGORenderer* I, CGO_op_data pc)
       glDisable(mode);
     }
   }
-#else
-  }
-#endif
 }
 
 static void CGO_gl_alpha(CCGORenderer* I, CGO_op_data pc)
@@ -1701,9 +1639,7 @@ static void CGO_gl_color(CCGORenderer* I, CGO_op_data varg)
       glVertexAttrib4f(attr_a_Color, v[0], v[1], v[2], I->alpha);
     }
   } else {
-#ifndef PURE_OPENGL_ES_2
     glColor4f(v[0], v[1], v[2], I->alpha);
-#endif
   }
 }
 
@@ -1916,11 +1852,9 @@ void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
         unsigned char col[4];
         AssignNewPickColor(I, pick, col, context, CGO_get_uint(pc),
             pickable ? CGO_get_int(pc + 1) : cPickableNoPick);
-#ifndef PURE_OPENGL_ES_2
         if (!I->use_shader) {
           glColor4ubv(col);
         }
-#endif
       } else {
         PRINTFB(G, FB_CGO, FB_Warnings)
         " %s: unexpected CGO_PICK_COLOR with !reset_colors\n",
@@ -2189,21 +2123,17 @@ void CGORenderGL(CGO* I, const float* color, CSetting* set1, CSetting* set2,
         shaderPrg->SetAttrib4fLocation(
             "a_Color", color[0], color[1], color[2], R->alpha);
       }
-#ifndef PURE_OPENGL_ES_2
       else {
         glColor4f(color[0], color[1], color[2], R->alpha);
       }
-#endif
     }
 
-#ifndef PURE_OPENGL_ES_2
     const float width_scale =
         (info && info->width_scale_flag) ? info->width_scale : 1.f;
     glLineWidth(
         SettingGet_f(G, set1, set2, cSetting_cgo_line_width) * width_scale);
     glPointSize(
         SettingGet_f(G, set1, set2, cSetting_cgo_dot_width) * width_scale);
-#endif
 
     if (!(info && info->alpha_cgo)) {
       // Regular CGO dispatch table rendering
@@ -2468,11 +2398,9 @@ void CGORenderGLAlpha(CGO* I, RenderInfo* info, bool calcDepth)
     if (I->debug) {
       mode = CGOConvertDebugMode(I->debug, GL_TRIANGLES);
     }
-#ifndef PURE_OPENGL_ES_2
     // not sure why shader is set, but disable it for now,
     // since we are doing immediate mode rendering for global transparency
     G->ShaderMgr->Disable_Current_Shader();
-#endif
     /* 1. transform and measure range (if not already known)
        2. bin into linked lists based on Z-centers
        3. render by layer */
@@ -2526,7 +2454,6 @@ void CGORenderGLAlpha(CGO* I, RenderInfo* info, bool calcDepth)
         }
 
         /* now render by bin */
-#ifndef PURE_OPENGL_ES_2
         glBegin(mode);
         for (int i = 0; i < i_size; i++) {
           int ii = *start;
@@ -2547,10 +2474,8 @@ void CGORenderGLAlpha(CGO* I, RenderInfo* info, bool calcDepth)
           }
         }
         glEnd();
-#endif
       }
     } else {
-#ifndef PURE_OPENGL_ES_2
       glBegin(mode);
       for (auto it = I->begin(); !it.is_stop(); ++it) {
         if (it.op_code() == CGO_ALPHA_TRIANGLE) {
@@ -2567,7 +2492,6 @@ void CGORenderGLAlpha(CGO* I, RenderInfo* info, bool calcDepth)
         }
       }
       glEnd();
-#endif
     }
   }
 }

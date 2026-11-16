@@ -200,13 +200,8 @@ std::size_t GetSizeOfVertexFormat(VertexFormat format)
 /***********************************************************************
  * RENDERBUFFER
  ***********************************************************************/
-#ifdef PURE_OPENGL_ES_2
-const static int rbo_lut[rbo::storage::COUNT] = { GL_DEPTH_COMPONENT16,
-                                                  GL_DEPTH_COMPONENT16 };
-#else
 const static int rbo_lut[rbo::storage::COUNT] = { GL_DEPTH_COMPONENT16,
                                                   GL_DEPTH_COMPONENT24 };
-#endif
 void rbo::unbind() { glBindRenderbuffer(GL_RENDERBUFFER, 0); }
 
 void RenderbufferGL::genBuffer() {
@@ -228,15 +223,9 @@ void RenderbufferGL::unbind() const { glBindRenderbuffer(GL_RENDERBUFFER, 0); }
  * TEXTURE
  ***********************************************************************/
 const static int tex_lut[tex::max_params] = {
-#ifdef PURE_OPENGL_ES_2
-  GL_TEXTURE_2D,             GL_TEXTURE_2D,
-  GL_TEXTURE_2D,             GL_RGBA,
-  GL_RGBA,                   GL_RGB,
-#else
   GL_TEXTURE_1D,             GL_TEXTURE_2D,
   GL_TEXTURE_3D,             GL_RED,
   GL_RG,                     GL_RGB,
-#endif
   GL_RGBA,                   GL_UNSIGNED_BYTE,
   GL_FLOAT,                  GL_FLOAT,
   GL_NEAREST,                GL_LINEAR,
@@ -245,17 +234,9 @@ const static int tex_lut[tex::max_params] = {
   GL_REPEAT,
   GL_CLAMP,
   GL_REPEAT, // GL_MIRROR_REPEAT,
-#ifdef PURE_OPENGL_ES_2
-  GL_CLAMP_TO_EDGE,          GL_CLAMP_TO_EDGE,
-#else
   GL_CLAMP_TO_EDGE,          GL_CLAMP_TO_BORDER,
-#endif
   GL_CLAMP_TO_EDGE, // GL_MIRROR_CLAMP_TO_EDGE
-#ifdef PURE_OPENGL_ES_2
-  GL_REPLACE,       GL_REPLACE
-#else
   GL_TEXTURE_ENV_MODE,       GL_REPLACE
-#endif
 };
 
 #ifndef GL_R8
@@ -359,12 +340,7 @@ static int tex_format_internal_byte(tex::format f) {
 template <typename T> static int tex_tab(T val) { return tex_lut[(int)val]; }
 
 void tex::env(tex::env_name name, tex::env_param param) {
-#ifdef PURE_OPENGL_ES_2
-  fprintf(stderr,
-          "No Support for Texture Env\n");
-#else
   glTexEnvf(GL_TEXTURE_ENV, tex_tab(name), tex_tab(param));
-#endif
 }
 
 void TextureGL::genBuffer() {
@@ -376,10 +352,8 @@ void TextureGL::genBuffer() {
   glTexParameteri(dim, GL_TEXTURE_WRAP_S, tex_tab(_sampling[2]));
   if (_sampling[3])
     glTexParameteri(dim, GL_TEXTURE_WRAP_T, tex_tab(_sampling[3]));
-#ifndef PURE_OPENGL_ES_2
   if (_sampling[4])
     glTexParameteri(dim, GL_TEXTURE_WRAP_R, tex_tab(_sampling[4]));
-#endif
 
   CheckGLErrorOK(nullptr, "GLTextureBuffer::genBuffer failed");
 }
@@ -387,10 +361,6 @@ void TextureGL::genBuffer() {
 void TextureGL::freeBuffer() { glDeleteTextures(1, &_id); }
 
 void TextureGL::texture_data_1D(int width, const void *data) {
-#ifdef PURE_OPENGL_ES_2
-  fprintf(stderr,
-          "No support for 1D textures\n");
-#else
   using namespace tex;
   _width = width;
   bind();
@@ -411,7 +381,6 @@ void TextureGL::texture_data_1D(int width, const void *data) {
     break;
   };
   CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_data_1D failed");
-#endif
 }
 
 void TextureGL::texture_data_2D(int width, int height, const void *data) {
@@ -459,10 +428,6 @@ void TextureGL::texture_subdata_2D(
 
 void TextureGL::texture_data_3D(int width, int height, int depth,
                                       const void *data) {
-#ifdef PURE_OPENGL_ES_2
-  fprintf(stderr,
-          "No support for 3D textures\n");
-#else
   _width = width;
   _height = height;
   _depth = depth;
@@ -483,7 +448,6 @@ void TextureGL::texture_data_3D(int width, int height, int depth,
   default:
     break;
   }
-#endif
 
   CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_data_3D failed");
 }
@@ -502,15 +466,9 @@ void TextureGL::unbind() const { glBindTexture(tex_tab(_dim), 0); }
  ***********************************************************************/
 const static int fbo_lut[fbo::attachment::COUNT] = {
   GL_COLOR_ATTACHMENT0,
-#if defined(PURE_OPENGL_ES_2) && !defined(_WEBGL)
-  GL_COLOR_ATTACHMENT0,
-  GL_COLOR_ATTACHMENT0,
-  GL_COLOR_ATTACHMENT0,
-#else
   GL_COLOR_ATTACHMENT1,
   GL_COLOR_ATTACHMENT2,
   GL_COLOR_ATTACHMENT3,
-#endif
   GL_DEPTH_ATTACHMENT
 };
 
@@ -552,11 +510,9 @@ void FramebufferGL::checkStatus() {
   case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
     printf("Incomplete attachment\n");
     break;
-#ifndef PURE_OPENGL_ES_2
   case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
     printf("Incomplete dimensions\n");
     break;
-#endif
   case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
     printf("Incomplete missing attachment\n");
     break;

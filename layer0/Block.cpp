@@ -82,7 +82,6 @@ void Block::drawLeftEdge(CGO *orthoCGO)
 /*========================================================================*/
 void Block::drawTopEdge()
 {
-#ifndef PURE_OPENGL_ES_2
   if(m_G->HaveGUI && m_G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
     glBegin(GL_LINES);
@@ -90,7 +89,6 @@ void Block::drawTopEdge()
     glVertex2i(rect.left, rect.top);
     glEnd();
   }
-#endif
 }
 
 

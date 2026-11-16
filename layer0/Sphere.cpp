@@ -666,7 +666,6 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
 #endif
 
 void SphereRender(PyMOLGlobals * G, int level, const float *centroid, const float *color, float alpha, float radius){
-#ifndef PURE_OPENGL_ES_2
   SphereRec *sp = G->Sphere->Sphere[level];
   int a, cc;
   int *q = sp->Sequence;
@@ -685,7 +684,6 @@ void SphereRender(PyMOLGlobals * G, int level, const float *centroid, const floa
     }
     glEnd();
   }
-#endif
 }
 
 SphereRec* GetSpheroidSphereRec(PyMOLGlobals* G)

@@ -257,7 +257,6 @@ void RepDihedral::render(RenderInfo * info)
 	  return;
 	}
       }
-#ifndef PURE_OPENGL_ES_2
       if (!generate_shader_cgo) {
 	if(info->width_scale_flag) {
 	  glLineWidth(line_width * info->width_scale);
@@ -295,7 +294,6 @@ void RepDihedral::render(RenderInfo * info)
         if (dash_transparency_enabled && !t_mode_3)
           glEnable(GL_DEPTH_TEST);	
       }
-#endif
       if (use_shader) {
 	
 	if (ok) {

@@ -4108,11 +4108,7 @@ static OptimizeSphereData GetOptimizeSphereData(
 {
   OptimizeSphereData sphereData;
   const int tot = VerticesPerSphere() * 4 * num_total_spheres;
-#if defined(PURE_OPENGL_ES_2)
-  int rightup_flags[6] = {0, 1, 3, 3, 2, 0};
-#else
   int rightup_flags[4] = {0, 1, 3, 2};
-#endif
 
   auto cgo_shader_ub_flags =
       SettingGet<bool>(cgo->G, cSetting_cgo_shader_ub_flags);
@@ -9644,7 +9640,6 @@ CGO* CGOConvertToLinesShader(const CGO* I, CGO* addTo, bool add_color)
     // need to add a_interpolate attribute
     attrDesc.push_back({"a_interpolate", VertexFormat::UByte, interpOps});
   }
-#ifndef PURE_OPENGL_ES_2
   {
     attrDesc.push_back({"a_line_position", VertexFormat::UByte});
     AttribDesc* lpdesc = &attrDesc[attrDesc.size() - 1];
@@ -9652,7 +9647,6 @@ CGO* CGOConvertToLinesShader(const CGO* I, CGO* addTo, bool add_color)
     static unsigned char flip_bits[] = {0, 1};
     lpdesc->repeat_value = flip_bits;
   }
-#endif
   if (!add_color) {
     attrDesc.erase(attrDesc.begin() + 1); // a_Color
   }
@@ -9883,7 +9877,6 @@ CGO* CGOConvertCrossesToLinesShader(
     // need to add a_interpolate attribute
     attrDesc.push_back({"a_interpolate", VertexFormat::UByte, interpOps});
   }
-#ifndef PURE_OPENGL_ES_2
   {
     attrDesc.push_back({"a_line_position", VertexFormat::UByte});
     AttribDesc* lpdesc = &attrDesc[attrDesc.size() - 1];
@@ -9891,7 +9884,6 @@ CGO* CGOConvertCrossesToLinesShader(
     static unsigned char flip_bits[] = {0, 1};
     lpdesc->repeat_value = flip_bits;
   }
-#endif
   return CGOConvertToShader(
       I, attrDesc, pickDesc, GL_LINES, VertexBufferLayout::Interleaved);
 }

@@ -266,7 +266,6 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
           }
           two_sided_lighting &= cgo_lighting; // only set two_sided_lighting if
                                               // cgo_lighting is set
-#ifndef PURE_OPENGL_ES_2
           if (cgo_lighting) {
             glEnable(GL_LIGHTING);
           } else {
@@ -281,7 +280,6 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
               glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
             glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
           }
-#endif
           if (backface_cull) {
             glCullFace(GL_BACK);
             glEnable(GL_CULL_FACE);
@@ -307,7 +305,6 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
           if (backface_cull) {
             glDisable(GL_CULL_FACE);
           }
-#ifndef PURE_OPENGL_ES_2
           if (two_sided_lighting) {
             if (use_shader)
               glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
@@ -316,7 +313,6 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
           if (!cgo_lighting) {
             glEnable(GL_LIGHTING);
           }
-#endif
         }
       }
     }

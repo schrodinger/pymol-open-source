@@ -156,7 +156,6 @@ static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
 static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color, 
                                     short dash_transparency_enabled, float dash_transparency)
 {
-#ifndef PURE_OPENGL_ES_2
   PyMOLGlobals *G = I->G;
   const float* v = I->V.data();
   int c = I->N;
@@ -196,7 +195,6 @@ static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color,
   glEnable(GL_LIGHTING);
   if (dash_transparency_enabled && !t_mode_3)
     glEnable(GL_DEPTH_TEST);	
-#endif
 }
 
 void RepAngle::render(RenderInfo* info)

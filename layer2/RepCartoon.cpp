@@ -1564,9 +1564,7 @@ void GenerateRepCartoonDrawDebugLineAlongPath(CGO *cgo, int nAt, float *pv){
   float t0[3], t1[3];
   int a;
   CGOColor(cgo, 1.0, 1.0, 1.0);
-#ifndef PURE_OPENGL_ES_2
   CGODisable(cgo, GL_LIGHTING);
-#endif
   v1 = nullptr;
   v2 = nullptr;
   v3 = nullptr;
@@ -1604,10 +1602,8 @@ int GenerateRepCartoonDrawDebugNormals(CGO *cgo, CExtrude *ex, int n_p){
   ok = CGOColor(cgo, 0.0, 1.0, 0.0);
   v = ex->p;
   vn = ex->n + 3;
-#ifndef PURE_OPENGL_ES_2
   if (ok)
     ok &= CGODisable(cgo, GL_LIGHTING);
-#endif
   if (ok)
     ok &= CGOBegin(cgo, GL_LINES);
   for(b = 0; ok && b < n_p; b++) {
@@ -1620,10 +1616,8 @@ int GenerateRepCartoonDrawDebugNormals(CGO *cgo, CExtrude *ex, int n_p){
   }
   if (ok)
     ok &= CGOEnd(cgo);
-#ifndef PURE_OPENGL_ES_2
   if (ok)
     ok &= CGOEnable(cgo, GL_LIGHTING);
-#endif
   return ok;
 }
 
@@ -1633,9 +1627,7 @@ int GenerateRepCartoonDrawDebugOrient(CGO *cgo, int nAt, float *pv, float *pvo, 
   float *v1, *v2, *v3;
   float t0[3];
   ok = CGOColor(cgo, 1.0, 1.0, 1.0);
-#ifndef PURE_OPENGL_ES_2
   ok &= CGODisable(cgo, GL_LIGHTING);
-#endif
   if (ok)
     ok &= CGOBegin(cgo, GL_LINES);
   v1 = pv;
@@ -1662,10 +1654,8 @@ int GenerateRepCartoonDrawDebugOrient(CGO *cgo, int nAt, float *pv, float *pvo, 
   }
   if (ok)
     ok &= CGOEnd(cgo);
-#ifndef PURE_OPENGL_ES_2
   if (ok)
     ok &= CGOEnable(cgo, GL_LIGHTING);
-#endif
   return ok;
 }
 

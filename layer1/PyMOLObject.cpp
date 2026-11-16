@@ -1039,11 +1039,9 @@ void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info)
         MatrixMultiplyC44f(gl, mvm);
         MatrixTranslateC44f(mvm, ttt[12], ttt[13], ttt[14]);
 
-#ifndef PURE_OPENGL_ES_2
         if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
           glLoadMatrixf(mvm);
         }
-#endif
       }
     }
   }
@@ -1169,9 +1167,6 @@ void ObjectUseColorCGO(CGO *cgo, pymol::CObject * I)
 void pymol::CObject::render(RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_LINE_LOOP);
     glVertex3i(-1, -1, -1);
     glVertex3i(-1, -1, 1);
@@ -1195,7 +1190,6 @@ void pymol::CObject::render(RenderInfo * info)
     glVertex3i(0, 0, 9);
 
     glEnd();
-#endif
   }
 }
 
@@ -1357,11 +1351,9 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       auto mvm = SceneGetModelViewMatrixPtr(G);
       MatrixMultiplyC44f(matrix, mvm);
 
-#ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
         glLoadMatrixf(mvm);
       }
-#endif
 
       result = true;
     }

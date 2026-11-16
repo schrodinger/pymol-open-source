@@ -1208,11 +1208,7 @@ void AssignNewPickColor(CGO* cgo, PickColorManager*, unsigned char* color,
     const PickContext* context, unsigned int index, int bond);
 
 constexpr int VerticesPerSphere() {
-#if defined(PURE_OPENGL_ES_2)
-  return 6;
-#else
   return 4;
-#endif
 }
 
 constexpr int NumVerticesPerCylinder() {

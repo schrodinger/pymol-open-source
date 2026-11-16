@@ -715,10 +715,8 @@ void CWizard::draw(CGO* orthoCGO)
     if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) == InternalGUIMode::Default) {
     if (orthoCGO)
       CGOColorv(orthoCGO, BackColor);
-#ifndef PURE_OPENGL_ES_2
     else
       glColor3fv(BackColor);
-#endif
       fill(orthoCGO);
       drawLeftEdge(orthoCGO);
     } else {
@@ -733,10 +731,8 @@ void CWizard::draw(CGO* orthoCGO)
 
     if (orthoCGO)
       CGOColorv(orthoCGO, TextColor);
-#ifndef PURE_OPENGL_ES_2
     else
       glColor3fv(TextColor);
-#endif
     x = rect.left + cWizardLeftMargin;
     y = (rect.top - LineHeight) - cWizardTopMargin;
 

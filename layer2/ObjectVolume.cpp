@@ -647,27 +647,23 @@ static void ColorsAdjustAlpha(float* colors, int count, float factor)
  */
 static void ExtentRender(float* corner)
 {
-#ifndef PURE_OPENGL_ES_2
   int i, ci[] = {0, 3, 3, 9, 9, 6, 6, 0, 12, 15, 15, 21, 21, 18, 18, 12, 0, 12,
              3, 15, 9, 21, 6, 18};
   glBegin(GL_LINES);
   for (i = 0; i < 8 * 3; i++)
     glVertex3fv(corner + ci[i]);
   glEnd();
-#endif
 }
 
 static size_t createColorTexture(
     PyMOLGlobals* G, const float* colors, const int count)
 {
   size_t texname = 0;
-#ifndef PURE_OPENGL_ES_2
   auto tex = G->ShaderMgr->newGPUBuffer<TextureGL>(tex::format::RGBA,
       tex::data_type::FLOAT, tex::filter::LINEAR, tex::filter::LINEAR,
       tex::wrap::CLAMP);
   tex->texture_data_1D(count, colors);
   texname = tex->get_hash_id();
-#endif
   return texname;
 }
 
@@ -733,7 +729,6 @@ static size_t createPreintegrationTexture(
 
 void ObjectVolume::render(RenderInfo* info)
 {
-#ifndef PURE_OPENGL_ES_2
   auto I = this;
   int state = info->state;
   const RenderPass pass = info->pass;
@@ -1005,7 +1000,6 @@ void ObjectVolume::render(RenderInfo* info)
 
     glEnable(GL_LIGHTING);
   }
-#endif
 }
 
 void ObjectVolumeDrawSlice(

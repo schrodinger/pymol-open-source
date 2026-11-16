@@ -593,7 +593,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
 void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
-#ifndef PURE_OPENGL_ES_2
   /* performance optimized to provide a simple C-alpha trace -- no smoothing */
 
   PyMOLGlobals *G = cs->G;
@@ -688,5 +687,4 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     if(!active)
       cs->Active[cRepRibbon] = false;
   }
-#endif
 }

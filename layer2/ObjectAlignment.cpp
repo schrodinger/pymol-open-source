@@ -1080,10 +1080,8 @@ void ObjectAlignment::render(RenderInfo * info)
 	if(ray) {
 	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, nullptr, I->Setting.get(), nullptr);
 	} else if(G->HaveGUI && G->ValidContext) {
-#ifndef PURE_OPENGL_ES_2
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
-#endif
 	  SceneResetNormal(G, true);
           bool use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
 
@@ -1137,9 +1135,7 @@ void ObjectAlignment::render(RenderInfo * info)
             CGORender(cgo, color, I->Setting.get(), nullptr, info, nullptr);
           }
 
-#ifndef PURE_OPENGL_ES_2
 	  glEnable(GL_LIGHTING);
-#endif
 	}
       }
     }

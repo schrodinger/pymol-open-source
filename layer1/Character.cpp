@@ -268,7 +268,6 @@ short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, s
 	    CGODrawTexture(shaderCGO, worldPos, v0, v1, rec->extent);
 	  }
       } else {
-#ifndef PURE_OPENGL_ES_2
 	  glBegin(GL_QUADS);
         if (TextGetIsPicking(G)){
           unsigned char *cptr = TextGetColorUChar4uv(G);
@@ -289,7 +288,6 @@ short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, s
 	  glVertex3f(v1[0], v0[1], v0[2]);
 	  glEnd();
         }
-#endif
       }
     }
      TextAdvance(G, rec->Advance / sampling);

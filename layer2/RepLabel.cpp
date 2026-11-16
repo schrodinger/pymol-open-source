@@ -226,7 +226,6 @@ static void RayDrawLineAsGeometryWithOffsets(CRay* ray, float* pt1, float* pt2,
   ray->setLastToNoLighting(noLighting);
 }
 
-#ifndef PURE_OPENGL_ES_2
 static void drawLine2DCross(
     float cw, float x1, float y1, float x2, float y2, float* cross)
 {
@@ -737,7 +736,6 @@ static void RepLabelRenderBackgroundInImmediate(PyMOLGlobals* G, RepLabel* I,
   glDisable(GL_POLYGON_OFFSET_FILL);
   ScenePopRasterMatrix(G);
 }
-#endif
 
 static int lineSegIntersection(
     float* p1, float* p2, float* p3, float* p4, float* po)
@@ -1411,11 +1409,9 @@ void RepLabelRenderImmediate(RepLabel* I, RenderInfo* info)
     glDisable(GL_DEPTH_TEST);
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (!info->line_lighting) {
     glDisable(GL_LIGHTING);
   }
-#endif
   TextSetOutlineColor(G, I->OutlineColor);
   auto* PmvMatrix = SceneGetPmvMatrix(G);
   int screenwidth, screenheight;
@@ -1468,15 +1464,11 @@ void RepLabelRenderImmediate(RepLabel* I, RenderInfo* info)
                                      // screen stabilized, adjust z
         TextSetLabelPos(G, I->labelV[c].screen_point);
         TextSetLabelPosIsSet(G, 2);
-#ifndef PURE_OPENGL_ES_2
         glDisable(GL_FOG);
-#endif
       } else {
         TextSetLabelPosIsSet(G, 0);
       }
-#ifndef PURE_OPENGL_ES_2
       glPushMatrix();
-#endif
       if (!TextRenderOpenGL(G, info, font_id, st, font_size,
               I->labelV[c].position, (draw_var ? 1 : 0),
               I->labelV[c].getRelativeMode(), false, I->shaderCGO)) {
@@ -1492,19 +1484,11 @@ void RepLabelRenderImmediate(RepLabel* I, RenderInfo* info)
         float* indentFactor = TextGetIndentFactor(G);
         auto* RotMatrix = SceneGetMatrix(G);
 
-#ifndef PURE_OPENGL_ES_2
         RepLabelRenderBackgroundInImmediate(G, I, I->labelV[c].color,
             draw_var, tCenterPt, relativeMode, xn, yn, PmvMatrix, RotMatrix,
             screenwidth, screenheight, screenWorldOffset, indentFactor,
             text_width, text_height, font_size);
-#endif
       }
-#ifdef PURE_OPENGL_ES_2
-      if (float_text && draw_var) {
-        TextRenderOpenGL(G, info, font_id, st, font_size, I->labelV[c].position,
-            1, I->labelV[c].getRelativeMode(), 1, I->shaderCGO);
-      }
-#else
       glPopMatrix();
       {
         // for now, render text twice in immediate mode, some cards
@@ -1515,12 +1499,9 @@ void RepLabelRenderImmediate(RepLabel* I, RenderInfo* info)
             1, I->labelV[c].getRelativeMode(), 1, I->shaderCGO);
         glPopMatrix();
       }
-#endif
       if (relativeMode & 6) { // label_relative_mode 1 or 2, i.e., screen
                               // stabilized, adjust z
-#ifndef PURE_OPENGL_ES_2
         glEnable(GL_FOG);
-#endif
       }
     }
   }
@@ -1532,9 +1513,7 @@ void RepLabelRenderImmediate(RepLabel* I, RenderInfo* info)
     CGOStop(connectorCGO);
   }
 
-#ifndef PURE_OPENGL_ES_2
   glEnable(GL_LIGHTING);
-#endif
   glEnable(GL_BLEND);
   if (float_text) {
     glEnable(GL_DEPTH_TEST);
@@ -1550,10 +1529,6 @@ static void RepLabelGenerateShaderCGO(RepLabel* I, RenderInfo* info)
       G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_label_font_id);
   auto font_size = SettingGet<float>(
       G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_label_size);
-#ifdef PURE_OPENGL_ES_2
-  auto float_text = SettingGet<bool>(
-      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_float_labels);
-#endif
 
   I->shaderCGO = CGONew(G);
   I->shaderCGO->use_shader = true;
@@ -1621,12 +1596,6 @@ static void RepLabelGenerateShaderCGO(RepLabel* I, RenderInfo* info)
             I->labelV[c].connector_width);
         has_connector = 1;
       }
-#ifdef PURE_OPENGL_ES_2
-      if (float_text && draw_var) {
-        TextRenderOpenGL(G, info, font_id, st, font_size, I->labelV[c].position,
-            1, I->labelV[c].getRelativeMode(), 1, I->shaderCGO);
-      }
-#endif
     }
   }
   if (!has_connector) {
@@ -1659,9 +1628,7 @@ static void RepLabelGenerateShaderCGO(RepLabel* I, RenderInfo* info)
     totalCGO = CGONew(G);
     CGOEnable(totalCGO, GL_LABEL_FLOAT_TEXT);
     CGOEnable(totalCGO, GL_CONNECTOR_SHADER);
-#ifndef PURE_OPENGL_ES_2
     CGODisable(totalCGO, GL_LIGHTING);
-#endif
     CGOAppendNoStop(totalCGO, connectorCGO);
     CGOFreeWithoutVBOs(connectorCGO);
     CGODisable(totalCGO, GL_CONNECTOR_SHADER);

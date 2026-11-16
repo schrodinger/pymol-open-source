@@ -126,7 +126,6 @@ bool CShaderPrg::reload(){
     id = glCreateProgram();
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (geomParams && SettingGet<bool>(G, cSetting_use_geometry_shaders)) {
     if (!geomParams->id) {
       geomParams->id = glCreateShader(GL_GEOMETRY_SHADER);
@@ -219,7 +218,6 @@ bool CShaderPrg::reload(){
       return false;
     }
   }
-#endif // PURE_OPENGL_ES2
 
   // vertex shader
   {
@@ -469,9 +467,7 @@ void CShaderMgr::Reload_Shader_Variables() {
   SetPreprocVar("depth_cue", SettingGetGlobal_b(G, cSetting_depth_cue)
       && SettingGetGlobal_b(G, cSetting_fog) != 0.0F);
 
-#ifndef PURE_OPENGL_ES_2
   SetPreprocVar("use_geometry_shaders", SettingGetGlobal_b(G, cSetting_use_geometry_shaders));
-#endif
 
   SetPreprocVar("line_smooth", SettingGetGlobal_b(G, cSetting_line_smooth));
 
@@ -559,7 +555,6 @@ void CShaderMgr::Config() {
 
   glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, line_width_range);
 
-#ifndef PURE_OPENGL_ES_2
   GLenum err = glewInit();
 
 #ifdef GLEW_ERROR_NO_GLX_DISPLAY
@@ -591,20 +586,13 @@ void CShaderMgr::Config() {
     fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
     return;
   }
-#endif
 
   // static preprocessor values
   m_shaderPreprocessor.setVar("GLEW_VERSION_3_0", GLEW_VERSION_3_0 ? true : false);
   if (TM3_IS_ONEBUF){
     m_shaderPreprocessor.setVar("ONE_DRAW_BUFFER", true);
   }
-#ifdef PURE_OPENGL_ES_2
-  m_shaderPreprocessor.setVar("PURE_OPENGL_ES_2", true);
-  m_shaderPreprocessor.setVar("PYMOL_WEBGL", true);
-  m_shaderPreprocessor.setVar("PYMOL_WEBGL_IOS", true);
-#else
   m_shaderPreprocessor.setVar("gl_VertexID_enabled", GLEW_EXT_gpu_shader4);
-#endif
 
   // shaders
 #define make_program(name, ...) programs[name] = new CShaderPrg(G, name, __VA_ARGS__)
@@ -613,9 +601,7 @@ void CShaderMgr::Config() {
   make_program("indicator", "indicator.vs", "indicator.fs");
   make_program("label", "label.vs", "label.fs");
 
-#ifndef PURE_OPENGL_ES_2
   make_program("volume", "volume.vs", "volume.fs");
-#endif
 
   make_program("default", "default.vs", "default.fs");
   make_program("surface", "surface.vs", "surface.fs");
@@ -660,7 +646,6 @@ void CShaderMgr::Config() {
   // shaders availability test
   ok_assert(1, programs["default"]->reload());
 
-#ifndef PURE_OPENGL_ES_2
   // geometry shaders availability test
   if (const auto geomIt = programs.find("connector");
       geomIt != programs.end()) {
@@ -687,10 +672,6 @@ void CShaderMgr::Config() {
   } else {
     disableTessellationShaders(G);
   }
-#else
-  SettingSetGlobal_b(G, cSetting_use_geometry_shaders, 0);
-  SettingSet<bool>(G, cSetting_use_tessellation_shaders, 0);
-#endif
 
 #define check_program(name, setting, value) {   \
     if (!programs[name]->reload()) {            \
@@ -714,7 +695,6 @@ void CShaderMgr::Config() {
   // make transparency_mode_3 shader derivatives
   MakeDerivatives("_t", "NO_ORDER_TRANSP");
 
-#ifndef PURE_OPENGL_ES_2
   /* report GLSL version */
   if (G && G->Option && !G->Option->quiet) {
     char buf[50];
@@ -723,7 +703,6 @@ void CShaderMgr::Config() {
     snprintf(buf, std::size(buf), " Detected GLSL version %d.%d.\n", major, minor);
     G->Feedback->add(buf);
   }
-#endif
   shaders_present |= 0x1;
   SettingSetGlobal_b(G, cSetting_use_shaders, true);
 
@@ -761,7 +740,6 @@ void getGLVersion(PyMOLGlobals * G, int *major, int* minor) {
  * major, rval for major
  * minor, rval for minor
  */
-#ifndef PURE_OPENGL_ES_2
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
   int gl_major, gl_minor;
   *major = *minor = 0;
@@ -791,7 +769,6 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
     }
   }
 }
-#endif
 
 
 
@@ -1143,9 +1120,7 @@ CShaderPrg *CShaderMgr::Enable_OITShader() {
       GL_ONE,         GL_ONE_MINUS_SRC_ALPHA);
 
   glDisable(GL_DEPTH_TEST);
-#ifndef PURE_OPENGL_ES_2
   glDisable(GL_ALPHA_TEST);
-#endif
   return shaderPrg;
 }
 
@@ -1165,9 +1140,7 @@ CShaderPrg *CShaderMgr::Enable_OITCopyShader() {
     glDisable(GL_BLEND);
   }
   glDisable(GL_DEPTH_TEST);
-#ifndef PURE_OPENGL_ES_2
   glDisable(GL_ALPHA_TEST);
-#endif
   return shaderPrg;
 }
 
@@ -1266,10 +1239,6 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
     shaderPrg->Set1i("textureMap", 3);
     shaderPrg->uniform_set |= 8;
   }
-#ifdef PURE_OPENGL_ES_2
-  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrixPtr(G));
-  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
-#endif
 
   return (shaderPrg);
 }
@@ -1379,12 +1348,7 @@ void CShaderMgr::Generate_LightingTexture() {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-#ifndef PURE_OPENGL_ES_2
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-#else
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#endif
 
   float normal[3];
   const float vz = LIGHTINGTEXTUREWIDTH / 2;
@@ -1811,9 +1775,7 @@ void CShaderMgr::setDrawBuffer(GLenum mode)
   if (!hasFrameBufferBinding() &&
       (mode != G->ShaderMgr->currentFBConfig.drawBuffer) && G->HaveGUI &&
       G->ValidContext) {
-#ifndef PURE_OPENGL_ES_2
     glDrawBuffer(mode);
-#endif
     G->ShaderMgr->currentFBConfig.drawBuffer = mode;
   }
 }

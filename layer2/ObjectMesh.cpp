@@ -1004,9 +1004,6 @@ static void ObjectMeshRenderImmediate(
 
   SceneResetNormal(I->G, false);
 
-#ifdef PURE_OPENGL_ES_2
-  /* TODO */
-#else
   if (info && !info->line_lighting) {
     glDisable(GL_LIGHTING);
   }
@@ -1043,7 +1040,6 @@ static void ObjectMeshRenderImmediate(
   if (info && !info->line_lighting) {
     glEnable(GL_LIGHTING);
   }
-#endif
 
   // Render Unit Cell Immediately
   if (ms->UnitCellCGO) {

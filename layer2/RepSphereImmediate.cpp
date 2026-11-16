@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include "CoordSet.h"
 #include "ObjectMolecule.h"
 
-#ifndef PURE_OPENGL_ES_2
 
 static void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs,
                                                  ObjectMolecule *obj,
@@ -187,10 +186,8 @@ void RenderImmediate_DoPreGL(PyMOLGlobals *G, int sphere_mode,
       break;
   }
 }
-#endif
 
 void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info) {
-#ifndef PURE_OPENGL_ES_2
   PyMOLGlobals *G = cs->G;
   if (info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
@@ -227,5 +224,4 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info) {
                        representation next time around */
       cs->Active[cRepSphere] = false;
   }
-#endif
 }

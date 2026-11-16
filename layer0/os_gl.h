@@ -19,13 +19,9 @@
 #define GLEW_NO_GLU
 #endif
 
-#ifndef PURE_OPENGL_ES_2
 #include <GL/glew.h>
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-#include "os_gl_es.h"
-#elif defined(_PYMOL_OSX)
+#if   defined(_PYMOL_OSX)
 #import <OpenGL/gl.h>
 #import <OpenGL/glext.h>
 #else
@@ -60,7 +56,6 @@ int PyMOLCheckOpenGLErr(const char *pos);
 
 #define hasFrameBufferBinding() false
 
-#ifndef PURE_OPENGL_ES_2
 #define GL_DEBUG_PUSH(title) \
   GLEW_KHR_debug ? glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, title) : (void)0
 
@@ -83,8 +78,5 @@ public:
   glDebugBlock glDebugBlockVariable(__FUNCTION__)
 
 #endif /* __cplusplus */
-#else
-#define GL_DEBUG_FUN()
-#endif
 
 #endif

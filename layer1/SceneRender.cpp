@@ -176,13 +176,11 @@ void SceneProjectionMatrix(PyMOLGlobals* G, float front, float back, float aspRa
         glm::ortho(-width, width, -height, height, front, back);
   }
 
-#ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(SceneGetProjectionMatrixPtr(G));
     glMatrixMode(GL_MODELVIEW);
   }
-#endif
 }
 
 /*========================================================================*/
@@ -344,7 +342,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
     glEnable(GL_DEPTH_TEST);
 
     /* get matrixes for unit objects */
-#ifndef PURE_OPENGL_ES_2
     if (SettingGet<bool>(G, cSetting_line_smooth)) {
       if (!(renderInfo.pick || renderInfo.sceneMultipick)) {
         glEnable(GL_LINE_SMOOTH);
@@ -363,7 +360,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       /* must be done with identity MODELVIEW */
       SceneProgramLighting(G);
     }
-#endif
     auto scene_extent = SceneGetExtent(G);
     auto context = ScenePrepareUnitContext(scene_extent);
     /* do standard 3D objects */
@@ -433,7 +429,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
       glEnable(GL_DITHER);
 
-#ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
         glEnable(GL_COLOR_MATERIAL);
@@ -454,7 +449,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         glColor4ub(255, 255, 255, 255);
         glNormal3fv(normal);
       }
-#endif
 
       auto fog_active = SceneSetFog(G);
 
@@ -503,7 +497,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         /* BEGIN rendering the selection markers, should we put all of this into
            a function, so it can be called above as well? */
 
-#ifndef PURE_OPENGL_ES_2
         if (!must_render_stereo || postprocessOnce) {
           SceneSetPrepareViewPortForStereo(G,
               PrepareViewPortForMonoInitializeViewPort, times,
@@ -512,7 +505,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
           targetImage = G->ShaderMgr->topLevelConfig;
           SceneRenderPostProcessStack(G, targetImage);
         }
-#endif
         bool renderToTexture{false};
         onlySelections = true;
         SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
@@ -521,7 +513,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
             fog_active, onlySelections, postprocessOnce, renderInfo.excludeSelections);
       }
 
-#ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
         glDisable(GL_FOG);
         glDisable(GL_LIGHTING);
@@ -530,10 +521,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         glDisable(GL_COLOR_MATERIAL);
         glDisable(GL_DITHER);
       }
-#endif
     }
 
-#ifndef PURE_OPENGL_ES_2
     if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
       glLineWidth(1.0);
       glDisable(GL_LINE_SMOOTH);
@@ -544,7 +533,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       if (G->Option->multisample)
         glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     }
-#endif
     SceneSetViewport(G, view_save);
 
     if (Feedback(G, FB_OpenGL, FB_Debugging))
@@ -682,7 +670,6 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
           glm::ortho(context->unit_left, context->unit_right, context->unit_top,
               context->unit_bottom, context->unit_front, context->unit_back);
 
-#ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
         glPushAttrib(GL_LIGHTING_BIT);
 
@@ -699,14 +686,12 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
 
         glNormal3f(0.0F, 0.0F, 1.0F);
       }
-#endif
 
       info->state = ObjectGetCurrentState(obj, false);
       obj->render(info);
 
       I->projectionMatrix = projSave;
 
-#ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
         glMatrixMode(GL_PROJECTION);
         glLoadMatrixf(SceneGetProjectionMatrixPtr(G));
@@ -716,17 +701,14 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
 
         glPopAttrib();
       }
-#endif
     }
     break;
   case pymol::RenderContext::Camera: /* context/grid 0 is all slots */
   default:
     ScenePushModelViewMatrix(G);
 
-#ifndef PURE_OPENGL_ES_2
     if (normal && Feedback(G, FB_OpenGL, FB_Debugging))
       glNormal3fv(normal);
-#endif
 
     if (!grid->active ||
         grid->mode == GridMode::NoGrid ||
@@ -927,7 +909,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
   GLint currentDrawFramebuffer;
   GLint currentReadFramebuffer;
 
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
   if (t_mode_3) {
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &currentDrawFramebuffer);
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &currentReadFramebuffer);
@@ -944,7 +925,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
     }
     glEnable(GL_DEPTH_TEST);
   }
-#endif
   if (grid->active) { // && !offscreen)
     grid->cur_view = SceneGetViewport(G);
   }
@@ -958,7 +938,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
       if (!cont) {
         break;
       }
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
       if (t_mode_3 && pass == RenderPass::Transparent) {
         G->ShaderMgr->Disable_Current_Shader();
         int drawbuf = 1;
@@ -975,7 +954,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           SceneInitializeViewport(G, true);
         }
       }
-#endif
       for (slot = 0; slot <= grid->last_slot; slot++) {
         if (grid->active) {
           GridSetViewport(G, grid, slot);
@@ -985,12 +963,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         }
         /* render picked atoms */
         /* render the debugging CGO */
-#ifdef PURE_OPENGL_ES_2
-        if (!onlySelections) {
-          EditorRender(G, curState);
-          CGORender(G->DebugCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
-        }
-#else
         if (!use_shaders)
           glPushMatrix(); /* 2 */
         if (!onlySelections && !t_mode_3)
@@ -1008,10 +980,8 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           glPopMatrix();  /* 1 */
           glPushMatrix(); /* 2 */
         }
-#endif
         /* render all objects */
         if (!onlySelections) {
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
           if (t_mode_3) {
             if (pass == RenderPass::Opaque) {
               EditorRender(G, curState);
@@ -1025,9 +995,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
             SceneRenderAll(G, context, normal, NULL, pass, false, width_scale,
                 grid, times, nonGadgetsFilter, SceneRenderOrder::GadgetsLast); // opaque
           } else {
-#else
-          {
-#endif
             // transparency-mode != 3 render all objects for each pass
             for (const auto pass2 :
                 passes) { /* render opaque, then antialiased, then
@@ -1055,16 +1022,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
               false, width_scale, grid, times, gadgetsFilter, SceneRenderOrder::GadgetsLast);
           glDisable(GL_BLEND);
         }
-#ifdef PURE_OPENGL_ES_2
-        if (!excludeSelections) {
-          if (!grid->active ||
-              slot > 0) { /* slot 0 is the full screen in grid mode, so don't
-                             render selections */
-            int s = grid->active && grid->mode == GridMode::ByObject ? slot : 0;
-            ExecutiveRenderSelections(G, curState, s, grid);
-          }
-        }
-#else
         if (!use_shaders) {
           glPopMatrix(); /* 1 */
           /* render selections */
@@ -1082,7 +1039,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         if (!use_shaders) {
           glPopMatrix(); /* 1 */
         }
-#endif
       } // end slot loop
       if (TM3_IS_ONEBUF) {
         if (t_mode_3 && pass == RenderPass::Transparent && t_first_pass) {
@@ -1091,7 +1047,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           continue;
         }
       }
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
       if (t_mode_3 && pass == RenderPass::Transparent) {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDrawFramebuffer);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, currentReadFramebuffer);
@@ -1153,7 +1108,6 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           }
         }
       } // if transparent w/ t_mode_3
-#endif
     } // for grid
   } // for pass
   if (grid->active)
@@ -1204,22 +1158,18 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         PrepareViewPortForStereo(
             G, I, stereo_mode, render_to_texture, times, pos, viewportOverride);
       }
-#ifndef PURE_OPENGL_ES_2
       if (use_shaders)
         glPushMatrix(); // 1
       if (shouldPrepareOffscreen) {
         G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
         bg_grad(G);
       }
-#endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1, stereo_mode);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
           onlySelections, render_to_texture || excludeSelections, which_objects);
 
-#ifndef PURE_OPENGL_ES_2
       if (use_shaders)
         glPopMatrix(); // 0
-#endif
 
 
       PRINTFD(G, FB_Scene)
@@ -1240,7 +1190,6 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         PrepareViewPortForStereo2nd(
             G, I, stereo_mode, render_to_texture, times, pos, viewportOverride);
       }
-#ifndef PURE_OPENGL_ES_2
       if (!use_shaders)
         glPushMatrix(); // 1
       if (shouldPrepareOffscreen) {
@@ -1251,7 +1200,6 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       ) {
         bg_grad(G);
       }
-#endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2, stereo_mode);
       glClear(GL_DEPTH_BUFFER_BIT);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
@@ -1260,10 +1208,8 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         G->ShaderMgr->stereo_flag = 0;
         G->ShaderMgr->stereo_blend = 0;
       }
-#ifndef PURE_OPENGL_ES_2
       if (!use_shaders)
         glPopMatrix(); // 0
-#endif
 
 
       /* restore draw buffer */
@@ -1438,7 +1384,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
     if (position)
       glClear(GL_DEPTH_BUFFER_BIT);
     break;
-#ifndef PURE_OPENGL_ES_2
   case cStereo_clone_dynamic:
     if (position_inv) {
       glClear(GL_ACCUM_BUFFER_BIT);
@@ -1522,7 +1467,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
       }
     }
     break;
-#endif
   }
 }
 
@@ -1558,40 +1502,28 @@ void SetDrawBufferForStereo(
     glColorMask(true, true, true, true);
     break;
   case cStereo_clone_dynamic:
-#ifndef PURE_OPENGL_ES_2
     glAccum(GL_ACCUM, 0.5);
-#endif
     if (times) {
       float vv[4] = {0.0F, 0.0F, 0.0F, 0.0F};
-#ifndef PURE_OPENGL_ES_2
       glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
       if (fog_active)
         glEnable(GL_FOG);
-#endif
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       OrthoDrawBuffer(G, GL_BACK_RIGHT);
     }
-#ifndef PURE_OPENGL_ES_2
     glAccum(GL_RETURN, 1.0);
-#endif
     OrthoDrawBuffer(G, GL_BACK_LEFT);
     break;
   case cStereo_dynamic:
-#ifndef PURE_OPENGL_ES_2
     glAccum(GL_ACCUM, 0.5);
-#endif
     if (times) {
       float vv[4] = {0.0F, 0.0F, 0.0F, 0.0F};
-#ifndef PURE_OPENGL_ES_2
       glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
       if (fog_active)
         glEnable(GL_FOG);
-#endif
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
-#ifndef PURE_OPENGL_ES_2
     glAccum(GL_RETURN, 1.0);
-#endif
     if (times) {
       SceneSetViewport(
           G, I->rect.left, I->rect.bottom, I->Width + 2, I->Height + 2);
@@ -1640,7 +1572,6 @@ void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
   GLint viewport[4];
   glGetIntegerv(GL_VIEWPORT, viewport);
 
-#ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -1659,7 +1590,6 @@ void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
   glShadeModel(
       SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
   glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-#endif
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
@@ -1675,7 +1605,6 @@ void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
   glStencilFunc(GL_ALWAYS, 1, 1);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-#ifndef PURE_OPENGL_ES_2
   {
     int h = viewport[3], w = viewport[2];
     glLineWidth(1.0);
@@ -1710,17 +1639,14 @@ void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
     } break;
     }
   }
-#endif
 
   glColorMask(true, true, true, true);
   glDepthMask(true);
 
-#ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
-#endif
 }
 
 CGO* GenerateUnitScreenCGO(PyMOLGlobals* G)

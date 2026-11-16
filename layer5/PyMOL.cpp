@@ -2133,7 +2133,6 @@ static void setup_gl_state(void)
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity(); */
 
-#ifndef PURE_OPENGL_ES_2
   glDisable(GL_ALPHA_TEST);
   glDisable(GL_COLOR_LOGIC_OP);
   glDisable(GL_COLOR_MATERIAL);
@@ -2143,15 +2142,12 @@ static void setup_gl_state(void)
   glDisable(GL_LIGHT1);
   glDisable(GL_LINE_SMOOTH);
   glDisable(GL_NORMALIZE);
-#endif
 
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
-#ifndef PURE_OPENGL_ES_2
   glDisable(GL_POLYGON_SMOOTH);
-#endif
 }
 void PyMOL_DrawWithoutLock(CPyMOL * I);
 
@@ -2183,7 +2179,6 @@ static void PyMOL_LaunchStatus_Feedback(PyMOLGlobals * G)
   }
 }
 
-#ifndef PURE_OPENGL_ES_2
 static void check_gl_stereo_capable(PyMOLGlobals * G)
 {
   // quad buffer stereo available?
@@ -2232,7 +2227,6 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
   G->ShaderMgr->defaultBackbuffer.framebuffer = buf;
   G->ShaderMgr->topLevelConfig = G->ShaderMgr->defaultBackbuffer;
 }
-#endif
 
 void PyMOL_DrawWithoutLock(CPyMOL * I)
 {
@@ -2241,14 +2235,12 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
 
     I->G->HaveGUI = I->G->Option->pmgui;
 
-#ifndef PURE_OPENGL_ES_2
     // stereo test with PyQt5 on Linux is broken (QTBUG-59636), so we
     // test for stereo here
     if (I->G->HaveGUI)
     {
       check_gl_stereo_capable(I->G);
     }
-#endif
 
     PyMOL_LaunchStatus_Feedback(I->G);
 

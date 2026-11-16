@@ -1247,9 +1247,6 @@ static void draw_bond(PyMOLGlobals* G, float* v0, float* v1, CGO* shaderCGO)
     }
     CGOEnd(shaderCGO);
   } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glColor3fv(ColorGet(G, 0));
     glBegin(GL_TRIANGLE_STRIP);
     for (a = 0; a <= nEdge; a++) {
@@ -1270,11 +1267,7 @@ static void draw_bond(PyMOLGlobals* G, float* v0, float* v1, CGO* shaderCGO)
       glVertex3fv(v);
     }
     glEnd();
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_TRIANGLE_STRIP);
     glNormal3fv(n0);
     for (a = 0; a <= nEdge; a++) {
@@ -1289,11 +1282,7 @@ static void draw_bond(PyMOLGlobals* G, float* v0, float* v1, CGO* shaderCGO)
       glVertex3fv(v);
     }
     glEnd();
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_TRIANGLE_STRIP);
     scale3f(n0, -1.0F, v);
     glNormal3fv(v);
@@ -1309,7 +1298,6 @@ static void draw_bond(PyMOLGlobals* G, float* v0, float* v1, CGO* shaderCGO)
       glVertex3fv(v);
     }
     glEnd();
-#endif
   }
 }
 
@@ -1339,9 +1327,7 @@ static void draw_globe(PyMOLGlobals* G, float* v2, int number, CGO* shaderCGO)
   n0[2] = 0.0;
   get_system1f3f(n0, n1, n2);
 
-#ifndef PURE_OPENGL_ES_2
   glColor3fv(ColorGet(G, 0));
-#endif
   if (shaderCGO)
     CGOColorv(shaderCGO, ColorGet(G, 0));
   cycle_counter = number;
@@ -1473,9 +1459,6 @@ static void draw_globe(PyMOLGlobals* G, float* v2, int number, CGO* shaderCGO)
       }
       CGOEnd(shaderCGO);
     } else {
-#ifdef PURE_OPENGL_ES_2
-      /* TODO */
-#else
       glBegin(GL_TRIANGLE_STRIP);
       for (a = 0; a <= nEdge; a++) {
         c = a % nEdge;
@@ -1500,11 +1483,7 @@ static void draw_globe(PyMOLGlobals* G, float* v2, int number, CGO* shaderCGO)
         glVertex3fv(v);
       }
       glEnd();
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-      /* TODO */
-#else
       glBegin(GL_TRIANGLE_STRIP);
       for (a = 0; a <= nEdge; a++) {
         c = a % nEdge;
@@ -1529,11 +1508,7 @@ static void draw_globe(PyMOLGlobals* G, float* v2, int number, CGO* shaderCGO)
         glVertex3fv(v);
       }
       glEnd();
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-      /* TODO */
-#else
       glBegin(GL_TRIANGLE_STRIP);
       for (a = 0; a <= nEdge; a++) {
         c = a % nEdge;
@@ -1558,7 +1533,6 @@ static void draw_globe(PyMOLGlobals* G, float* v2, int number, CGO* shaderCGO)
         glVertex3fv(v);
       }
       glEnd();
-#endif
     }
     cycle_counter--;
   }

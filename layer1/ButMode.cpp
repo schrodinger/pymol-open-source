@@ -202,20 +202,16 @@ void CButMode::draw(CGO* orthoCGO)
     if(SettingGet<InternalGUIMode>(m_G, cSetting_internal_gui_mode) == InternalGUIMode::Default) {
       if (orthoCGO)
 	CGOColorv(orthoCGO, BackColor);
-#ifndef PURE_OPENGL_ES_2
       else
 	glColor3fv(BackColor);
-#endif
       fill(orthoCGO);
       drawLeftEdge(orthoCGO);
     } else {
       drawLeftEdge(orthoCGO);
       if (orthoCGO)
 	CGOColor(orthoCGO, .5f, .5f, .5f);
-#ifndef PURE_OPENGL_ES_2
       else
 	glColor3f(0.5, 0.5, 0.5);
-#endif
       drawTopEdge();
       textColor2 = OrthoGetOverlayColor(m_G);
       textColor = textColor2;
@@ -419,17 +415,12 @@ static bool ButModeDrawFastImpl(Block * block, short definitely , CGO *orthoCGO)
   
   TextSetColor(G, I->TextColor);
   y -= cButModeLineHeight;
-#ifndef PURE_OPENGL_ES_2
     {
         int buffer;
         /* TODO : Why do we only do this for the back right buffer,
          for performance? */
         glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
         if(buffer != GL_BACK_RIGHT) {
-#else
-    {
-        {
-#endif
             if(I->Delay <= 0.0F) {
                 if(I->Samples > 0.0F)
                     I->RateShown = (I->Rate / I->Samples);

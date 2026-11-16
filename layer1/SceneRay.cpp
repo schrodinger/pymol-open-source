@@ -781,7 +781,6 @@ int SceneDeferRay(PyMOLGlobals * G,
 }
 
 void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
-#ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -789,13 +788,9 @@ void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-#endif
   
-#ifndef PURE_OPENGL_ES_2
   glRasterPos3f(0, 0, -1);
-#endif
   glDepthMask(GL_FALSE);
-#ifndef PURE_OPENGL_ES_2
   if (PIsGlutThread() && rayVolumeImage) {
     if (rayWidth == I->Width && rayHeight == I->Height){
       glDrawPixels(rayVolumeImage->getWidth(), rayVolumeImage->getHeight(),
@@ -804,23 +799,16 @@ void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
       SceneDrawImageOverlay(G, 1, nullptr);
     }
   }
-#endif
   glDepthMask(GL_TRUE);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glDepthFunc(GL_ALWAYS);
-#ifndef PURE_OPENGL_ES_2
   if (PIsGlutThread() && rayWidth == I->Width && rayHeight == I->Height)
     glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); 
-#endif
   glDepthFunc(GL_LESS);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   
-#ifdef PURE_OPENGL_ES_2
-  /* TODO */
-#else
   glPopMatrix();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
-#endif
 }

@@ -233,9 +233,7 @@ static const char* FontTypeRenderOpenGLImpl(const RenderInfo* info, CFontType* I
 	  return st;
         ScenePushRasterMatrix(G, v);
         TextSetPos(G, zero);
-#ifndef PURE_OPENGL_ES_2
       } else {
-#endif
 	if (!shouldRender)
 	  return st;
       }

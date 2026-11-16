@@ -79,9 +79,7 @@ int CShaderPrg::Link() {
       GLint maxVarFloats;
       int infoLogLength = 0;
 
-#ifndef PURE_OPENGL_ES_2
       glGetIntegerv(GL_MAX_VARYING_FLOATS, &maxVarFloats);
-#endif
       PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	" CShaderPrg_Link-Error: Shader program failed to link name='%s'; GL_MAX_VARYING_FLOATS=%d log follows.\n", name.c_str(), maxVarFloats
 	ENDFB(G);

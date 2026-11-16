@@ -55,10 +55,8 @@ void ScrollBar::fill(CGO* orthoCGO)
 {
   if (orthoCGO)
     CGOColorv(orthoCGO, BackColor);
-#ifndef PURE_OPENGL_ES_2
   else
     glColor3fv(BackColor);
-#endif
   Block::fill(orthoCGO);
 }
 
