@@ -125,7 +125,6 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         self.props_panel = None
         self.builder = None
         self.shortcut_menu_filter_dialog = None
-        self.scene_panel_dialog = None
 
         # setting index -> callable
         self.setting_callbacks = defaultdict(list)
@@ -229,6 +228,11 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         pymol.menu.popup = lambda entries: popup_at_cursor(self, entries, cmd)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.object_panel)
         self.resizeDocks([self.object_panel], [300], Qt.Orientation.Horizontal)
+
+        from .scene_panel import ScenePanel
+        self.scene_panel = ScenePanel(cmd, self)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.scene_panel)
+        self.scene_panel.hide()
 
         '''
         # command completion
@@ -402,6 +406,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         panels = self.menudict['Display'].addMenu('Panels')
         panels.addAction(self.ext_window.toggleViewAction())
         panels.addAction(self.object_panel.toggleViewAction())
+        panels.addAction(self.scene_panel.toggleViewAction())
         panels.addAction('Builder', self.open_builder_panel)
         panels.addSeparator()
         panels.addAction('Reset Layout', self.reset_layout)
@@ -920,12 +925,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.shortcut_menu_filter_dialog.show()
 
     def scene_panel_menu_dialog(self):
-        from .scene_bin_gui import ScenePanel
-
-        if self.scene_panel_dialog is None:
-            self.scene_panel_dialog = ScenePanel(self)
-
-        self.scene_panel_dialog.show()
+        self.scene_panel.show()
+        self.scene_panel.raise_()
+        self.scene_panel.refresh()
+        self.scene_panel.list.setFocus()
 
     def show_about(self):
         QtWidgets.QMessageBox.about(
@@ -976,6 +979,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.feedback_timer.start(500)
         self.object_panel.poll()
+        self.scene_panel.poll()
 
     def doPrompt(self):
         self.doTypedCommand(self.command_get())

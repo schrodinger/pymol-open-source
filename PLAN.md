@@ -22,7 +22,7 @@ user's original numbers; the letters are milestones of the detailed plans.
 | Order | Step | What is left | Exit condition |
 | --- | --- | --- | --- |
 | 5 | **1b** — [Performance and GPU](docs/plans/01-performance-gpu.md) | Renderer default on WSL, draw cost of sticks and surfaces, the two triangulation passes. One measured bottleneck per change. | Each change has before and after numbers. |
-| 5 | **3** — [Modern workspace and metadata](docs/plans/03-modern-ui.md) | Scenes as a dock, rows moved by dragging, a picked atom selects its row, sequence viewer and scene buttons still drawn by the core, spacing of the remaining dialogs, removal of the old C++ panel. | Each increment ships in a reviewable test build. |
+| 5 | **3** — [Modern workspace and metadata](docs/plans/03-modern-ui.md) | Rows moved by dragging, a picked atom selects its row, sequence viewer and scene buttons still drawn by the core, spacing of the remaining dialogs, removal of the old C++ panel. | Each increment ships in a reviewable test build. |
 | none | **8** — [Modern C++ in the core](docs/plans/08-cpp-modernization.md) | No rewrite. One idiom per PR behind sanitizers and tests; vendored C stays; files go in profile order so cleanup and step 1 meet. Next: 8h (run Catch2 in CI, one line), 8i (dead `#ifdef` branches, needs `unifdef` on the development machine), then 8c to 8g. Many PRs, no date. | Each slice passes the suite, the sanitizer job, `bench.py` and a PSE round trip. |
 | none | **5c** — [Release builds without GitHub Actions](docs/plans/05-builds-binaries.md) | A proposal of 2026-11-16 inside finished step 5: Linux in podman, Windows on the host, macOS not possible off Apple hardware. Nothing is built yet. | The user accepts or drops the proposal. |
 

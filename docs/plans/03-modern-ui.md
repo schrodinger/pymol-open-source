@@ -12,6 +12,10 @@ Slices 1 to 3 shipped in 4.5.0: `modules/pmg_qt/object_table.py` (model + dock, 
 
 Slice 4 shipped in 4.5.11: `modules/pmg_qt/object_panel.py` replaces the 4.5.0 object table and the object list of the viewport's internal GUI, see [Objects panel](#objects-panel). Open: menu cleanup (6), the items listed in that section, spacing audit of the remaining dialogs.
 
+## Status 2026-11-16
+
+Scenes are a dock since 4.13.4 (Workspace layout, step 6). Checks: `testing/tests/api/scene_panel.py`; real GUI on WSLg at 150 %: thumbnails, rename through the editor, Ctrl+Down, Enter. Not exercised: a row dragged with the real mouse (the drop goes through the same `moveRow` as Ctrl+Up / Ctrl+Down). The scene buttons the core draws in the viewport are still there next to the dock (`scene_buttons`); they are part of the open row "Sequence viewer, scene buttons".
+
 ## Reference products and current constraints
 
 Use commercial PyMOL for familiar molecular workflows and Maestro for its
@@ -107,7 +111,7 @@ banner) are not imitated.
 | 3 | **Content panel look**: no header row, visibility shown as a dot, A/S/H/L/C as rounded chips (accent colors on the "all" row, neutral on the others; since 4.5.15 every shown row, see Row state and colors), taller rows. Still the same checkable tree, so the keyboard works as before. | `object_panel.py` | Done 4.5.14 |
 | 4 | **Toggle bar** under the content panel: mouse mode (the Mouse menu), Wizard (the Wizard menu), SEQ (sequence viewer), `>_` (show or hide the command area). The states panel sits above it ([step 6](06-states-panel.md)). | `object_panel.py` footer, filled by the window | Done 4.5.14 |
 | 5 | Saved layouts are versioned again (2) so the command area starts at the bottom. `pymolish -x` (no external GUI) hides the toolbar and the command area as before. | `pymol_qt_gui.py` | Done 4.5.14 |
-| 6 | Scenes as a docked panel with thumbnails, like the reference's left panel. Today "Scenes" opens the existing dialog. | | Open |
+| 6 | **Scenes as a docked panel** with thumbnails, like the reference's left panel: one row per scene, the current one marked; Enter or double click recalls, F2 renames, dragging or Ctrl+Up / Ctrl+Down reorders; Add, Update, Rename, Delete. Hidden until the toolbar's Scenes button, Scene > Scenes or Display > Panels opens it; its place is saved with the layout. Polled from the window's 0.5 s timer while shown (marked `ponytail:`). The separate Scene Panel window (397 lines) is deleted. | New `modules/pmg_qt/scene_panel.py` (dock `dock_scenes`), `pymol_qt_gui.py` | Done 4.13.4 |
 | 7 | Icons for the toolbar, from the Lucide set of step 11. | `action_toolbar.py`, `icons.py` | Done 4.7.0 ([step 7](07-toolbar-icons-scale.md)) |
 | 11 | **Menu look.** Request 2026-11-12 with a reference picture: rounded menus, roomy rows, thin-line icons, hairline separators. One style for every menu in the window (`pymol.sty`); `theme.round_menus` makes the window corners see-through. Icons: 43 Lucide drawings (ISC license, `data/pmg_qt/icons/lucide/`), matched to menu labels in `icons.py` and tinted with the text color; delete, reinitialize and quit keep their red. Menu titles are muted captions. Tear-off rows are removed. | `icons.py`, `pymol.sty`, `theme.py`, `object_panel.py` | Done 4.5.18 |
 | 8 | Timeline. Not planned: no timeline feature exists in this code base. | | Skipped |

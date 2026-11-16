@@ -4,6 +4,25 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.13.4
+
+	* Scenes panel
+	  - Scenes are a panel docked on the left, opened by the toolbar's
+	    Scenes button, Scene > Scenes or Display > Panels > Scenes. One
+	    row per scene with its thumbnail; the current scene is marked.
+	    Enter or a double click recalls a scene, F2 or Rename renames
+	    it, dragging a row or Ctrl+Up / Ctrl+Down moves it. Add, Update
+	    and Delete as before. The panel follows scenes made by commands
+	    and its place is saved with the window layout.
+	  - It replaces the separate Scene Panel window, which showed new
+	    scenes only after it got the focus again.
+	  - A rename to an empty name, to a name with a space or to the
+	    name of another scene is refused (the old window deleted or
+	    overwrote the scene).
+	  - No cmd.* change.
+
+2026-11-16 pymolish-studio
+
 	* 4.13.3
 
 	* Core

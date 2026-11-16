@@ -39,7 +39,6 @@ class PyMOLDesktopGUI(object):
     cd_dialog = None
     show_about = None
     shortcut_menu_edit_dialog = None
-    scene_panel_dialog = None
 
     def new_window(self, extra_argv=()):
         import pymol
@@ -782,7 +781,7 @@ class PyMOLDesktopGUI(object):
                 ('check', 'Overlay Text', 'overlay'),
             ]),
             ('menu', 'Scene', [
-                ('command', 'Scenes...', self.scene_panel_menu_dialog),
+                ('command', 'Scenes', self.scene_panel_menu_dialog),
                 ('separator',),
                 ('command', 'Next [PgDn]', lambda: cmd.scene('', 'next')),
                 ('command', 'Previous [PgUp]', lambda: cmd.scene('', 'previous')),

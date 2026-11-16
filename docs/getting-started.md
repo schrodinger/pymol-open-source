@@ -26,6 +26,7 @@ Objects panel on the right.
 | Toolbar | top | Undo, Zoom, Orient, ready-made looks (Presets), the Builder, Scenes, and Draw/Ray for pictures. The percent button changes the size of text and controls. |
 | Viewport | middle | The molecule. Everything you do with the mouse happens here. |
 | Objects panel | right | One row per molecule. Click a row to hide or show it; double-click to zoom on it. |
+| Scenes panel | left, after a click on Scenes | One row per saved scene with a small picture. Add stores the current view; double-click a row to return to it. |
 | Command line | bottom | Type a command and press Enter. The log above it shows the answer. |
 
 ## 3. Move the molecule
