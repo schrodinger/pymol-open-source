@@ -84,6 +84,31 @@ class TestUtil(testing.PyMOLTestCase):
         cmd.iterate('*', 'stored.colors.add((ss or "L", color))')
         self.assertEqual(stored.colors, set(zip('HSL', c)))
 
+    def test_shades(self):
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.alter('resi 92-', 'chain="B"')
+        cmd.alter('resi 106-', 'chain="C"')
+        self.assertEqual(cmd.get_chains(), ['A', 'B', 'C'])
+
+        def colors(selection):
+            stored.colors = []
+            cmd.iterate(selection + ' & guide', 'stored.colors.append(color)')
+            return [get_color_tuple(c) for c in stored.colors]
+
+        # along each chain: from a light tint to a dark shade
+        pymol.util.shades('blue', '*')
+        for chain in 'ABC':
+            c = colors('chain ' + chain)
+            self.assertEqual(c[0], (0.7, 0.7, 1.0))
+            self.assertEqual(c[-1][:2], (0.0, 0.0))
+            self.assertLess(c[-1][2], 0.7)  # spectrum stops short of the end
+            self.assertGreater(len(set(c)), 3)
+        # one shade per chain, the color itself in the middle
+        pymol.util.shades('blue', '*', chains=1)
+        self.assertEqual(set(colors('chain A')), {(0.7, 0.7, 1.0)})
+        self.assertEqual(set(colors('chain B')), {(0.0, 0.0, 1.0)})
+        self.assertEqual(set(colors('chain C')), {(0.0, 0.0, 0.5)})
+
     def _test_cba(self, fun, expected_color):
         cmd.fragment('gly')
         cmd.color('white')

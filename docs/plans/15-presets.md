@@ -1,7 +1,8 @@
 # 15 — Presets and looks
 
 [Roadmap](../../PLAN.md) · Request 2026-11-16 · **15a done 2026-11-16 in
-4.14.0, 15d in 4.14.3.** 15b, 15c and 15e are open and wait for the user.
+4.14.0, 15d in 4.14.3, 15f in 4.14.4.** 15b, 15c and 15e are open and wait for
+the user.
 
 **The preset menu is ordered, has one solvent row instead of twin rows, a
 glass preset and a cartoon transparency row. Every preset but "simple" draws
@@ -59,11 +60,25 @@ Second round, request of 2026-11-16 (15d and 15e), same structure:
 | Gallery, "Complex Stylized Protein": grey balls inside a rim-only surface (`ray_transparency_oblique_power` 20) | Works; reads only on small proteins | 15e |
 | `ray_texture` 2 (in the gist) on a surface | No visible difference | Not set |
 
+Third round, request of 2026-11-16 with six example pictures (15f):
+
+| Tried | Result | Verdict |
+| --- | --- | --- |
+| `cartoon_debug` 3: the cartoon builder writes line strips instead of triangle strips | Helices, sheets and loops as a wire mesh, in the viewport and ray traced; close to the two wire pictures | Preset **wire** |
+| `cartoon_fancy_helices` 0 and `cartoon_sampling` 14 with the wire | Little difference; a denser mesh only gets darker | Not set |
+| `spectrum` with three colors: a light tint, the color, a dark shade | One color from light to dark along the chain | `util.shades`, rows **shades** |
+| The look flat on shades of blue | `ray_trace_mode` 3 rounds every color to four steps: the shades became cyan, white and teal | flat now uses `ray_trace_mode` 1 |
+| Faint surface (white, `transparency` 0.85) around the cartoon, look flat | The surface has no outline: the ray tracer leaves out everything more than 5 % transparent | See the next row |
+| `ray_trace_trans_cutoff` 1 | The surface gets its silhouette line and small crease marks, as in the proteinbase pictures | In the look **flat**; preset **illustration** |
+| The same cutoff in the look figure with the glass preset | Heavy black lines over the glass | Only in flat |
+| A pale blue surface at `transparency` 0.7 | A little closer to the examples, but wrong after recoloring in another color | White at 0.85 |
+| Dark end of the shades at 40 % of the color | Lost on a black background | 50 % |
+
 Outlines come from the ray tracer (`ray_trace_mode`). The viewport has no
 outline pass, so figure, soft and flat show their outline only in images made
 with Draw/Ray > Ray. That is 15b. Comic and sketch depend on it most: in
 the viewport comic is a bright light on white, and sketch is the default
-light on white.
+light on white. The preset illustration is flat blue shapes there.
 
 ## Decisions
 
@@ -95,19 +110,28 @@ light on white.
   It sets `cartoon_transparency` on the objects of the menu; `_prepare`
   restores it, so it lasts until the next preset.
 
-## The menu after 15d
+- **"illustration" also picks the look flat** (15f). It is the one preset
+  that sets a look: without the outline the picture is not there. Another
+  preset does not undo the look; the Look rows do.
+- **flat keeps colors as they are** (15f): `ray_trace_mode` 1. The color
+  steps are comic's.
+- **Shades are a color action, not a preset:** `util.shades(color,
+  selection, chains)`, in the color menus next to rainbow and next to "by
+  chain". Eight colors in the menu; any color name works when typed.
+
+## The menu after 15f
 
 | Group | Rows |
 | --- | --- |
 | Reset | default · classified |
 | Plain | simple · technical · ball and stick · b factor putty |
-| Pictures | pretty · publication · glass |
+| Pictures | pretty · publication · glass · wire · illustration |
 | Binding | ligands · ligand sites ▸ · protein interface |
 | Option | cartoon transparency ▸ · show solvent / hide solvent |
 | Look (toolbar only) | default · figure · soft · flat · comic · sketch · x-ray |
 
-14 preset rows, as before step 15: three twin rows left; glass, the solvent
-row and cartoon transparency came.
+16 preset rows, two more than before step 15: three twin rows left; glass,
+wire, illustration, the solvent row and cartoon transparency came.
 
 ## Slices
 
@@ -134,6 +158,18 @@ row and cartoon transparency came.
 - Commit: `ui(presets): cartoon in every preset, ligand balls and sticks,
   cartoon transparency, comic and sketch looks`.
 
+**15f, wire, illustration, shades. Done in 4.14.4.**
+- `preset.py`: `wire`, `illustration`; `_prepare` restores `cartoon_debug`;
+  the look flat.
+- `util.py`: `shades`. `menu.py`: builder `shades`, rows in `spectrum`,
+  `by_chain` and `presets`.
+- Checks: `testing/tests/api/preset.py` (`testWire`, `testIllustration`),
+  `util.py` (`test_shades`), `menu.py` (`testShades`, `testPresets`). Real
+  window on WSLg: wire, the preset after wire, illustration, shades by
+  chain. Ray-traced: illustration in two colors, wire, publication and
+  glass in the new flat.
+- Commit: `ui(presets): wire and illustration presets, shades of one color`.
+
 **15b, outline in the viewport. Open, the user decides.**
 - A screen-space edge pass over the depth buffer after the scene is drawn,
   in `data/shaders/` and the Scene draw path of `layer1/`. New shader code,
@@ -154,6 +190,7 @@ except the first, which needs code.
 | Helices as cylinders, a schematic preset | One preset: `cartoon_cylindrical_helices` 1 on the publication preset; `_prepare` restores it. |
 | Ambient occlusion in the soft look | `ambient_occlusion_mode` 1 in the look; glass must switch it off for its own objects. To be timed on a large surface first. |
 | "Balls in glass" preset from the gallery | One preset; only for small proteins. |
+| Glow and blur with distance, as in the wire example pictures | Not tried, needs code: a blur pass over the drawn picture, the same kind of pass as 15b. |
 
 ## Skipped
 
@@ -170,6 +207,8 @@ except the first, which needs code.
 - A ball-and-stick ligand in "pretty", "publication" and "glass". They keep
   sticks.
 - A mark on the active cartoon transparency.
+- A cross-hatched mesh on sheets. The wire draws them as a zigzag.
+- A color picker for the shades, and "shades (elem C)" rows.
 - A ChimeraX representation preset. "classified" already shows cartoon,
   ligand sticks and ion spheres.
 

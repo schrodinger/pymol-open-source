@@ -97,13 +97,37 @@ class TestPreset(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_setting_float('ray_transparency_oblique'), 0)
         self.assertEqual(cmd.get('surface_color', '1oky'), 'default')
 
+    def testWire(self):
+        cmd.load(self.datafile('1oky.pdb.gz'))
+        preset.wire('all')
+        self.assertEqual(cmd.count_atoms('rep cartoon & guide'), cmd.count_atoms('guide'))
+        self.assertEqual(cmd.get_setting_int('cartoon_debug'), 3)
+        preset.pretty('all')  # the next preset makes the cartoon solid again
+        self.assertEqual(cmd.get_setting_int('cartoon_debug'), 0)
+
+    def testIllustration(self):
+        cmd.load(self.datafile('1oky.pdb.gz'))
+        self.addCleanup(preset.look, 'default')
+        preset.illustration('all')
+        self.assertEqual(cmd.count_atoms('rep surface'), cmd.count_atoms('polymer'))
+        self.assertEqual(cmd.count_atoms('rep cartoon & guide'), cmd.count_atoms('guide'))
+        stored.colors = set()
+        cmd.iterate('guide', 'stored.colors.add(color)')
+        self.assertGreater(len(stored.colors), 10)  # shades of one color
+        # it picks the look flat: true colors, outlines on transparent things
+        self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 1)
+        self.assertEqual(cmd.get_setting_float('ray_trace_trans_cutoff'), 1)
+        self.assertEqual(cmd.get_color_tuple(cmd.get('bg_rgb')), (1.0, 1.0, 1.0))
+        preset.look('default')
+        self.assertAlmostEqual(cmd.get_setting_float('ray_trace_trans_cutoff'), 0.05)
+
     def testMenuSolvent(self):
         # one solvent row in the menu instead of "(with solvent)" twins
         cmd.load(self.datafile('1oky.pdb.gz'))
         self.addCleanup(setattr, preset, 'solvent', False)
         n_solvent = cmd.count_atoms('solvent')
         for name in ('simple', 'technical', 'ball_and_stick', 'b_factor_putty',
-                     'pretty_solv', 'pub_solv', 'glass', 'ligands',
+                     'pretty_solv', 'pub_solv', 'glass', 'wire', 'ligands',
                      'ligand_sites', 'ligand_cartoon', 'interface', 'classified'):
             preset.from_menu(name, 'all')
             self.assertEqual(cmd.count_atoms('solvent & visible'), 0, name)

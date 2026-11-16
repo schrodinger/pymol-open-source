@@ -213,7 +213,8 @@ class TestMenu(testing.PyMOLTestCase):
         labels = [row[1] for row in m if row[0] == 1]
         self.assertEqual(labels, [
             'default', 'classified', 'simple', 'technical', 'ball and stick',
-            'b factor putty', 'pretty', 'publication', 'glass', 'ligands',
+            'b factor putty', 'pretty', 'publication', 'glass', 'wire',
+            'illustration', 'ligands',
             'ligand sites', 'protein interface', 'cartoon transparency',
             'show solvent'])
         from pymol import preset
@@ -222,13 +223,23 @@ class TestMenu(testing.PyMOLTestCase):
         self.assertEqual(menu.presets(cmd, sele)[-1][1], 'hide solvent')
         cmd.do(d['glass'], echo=0)
         self.assertGreater(cmd.count_atoms('rep surface'), 0)
-        cmd.do(self._to_dict(menu.looks(cmd))['flat'], echo=0)
+        cmd.do(self._to_dict(menu.looks(cmd))['comic'], echo=0)
         self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 3)
         # cartoon transparency lasts until the next preset
         cmd.do(self._to_dict(d['cartoon transparency'])['50%'], echo=0)
         self.assertEqual(cmd.get_setting_float('cartoon_transparency', sele), 0.5)
         cmd.do(d['pretty'], echo=0)
         self.assertEqual(cmd.get_setting_float('cartoon_transparency', sele), 0)
+
+    def testShades(self):
+        # "shades" under spectrum and under by chain: one color, light to dark
+        cmd.load(self.datafile('1oky-frag.pdb'), 'm1')
+        for builder in (menu.spectrum, menu.by_chain):
+            rows = self._to_dict(self._to_dict(builder(cmd, 'm1'))['shades'])
+            self.assertEqual(len(rows), 8)
+            cmd.color('white')
+            cmd.do(rows['\\059marine'], echo=0)
+            self.assertEqual(cmd.count_atoms('color white'), 0)
 
     def testRampAction(self):
         sele = 'r1'

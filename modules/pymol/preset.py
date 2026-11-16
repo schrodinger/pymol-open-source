@@ -56,6 +56,7 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
     cmd.hide("everything",s)
 
     cmd.set("two_sided_lighting",0) # global
+    cmd.unset("cartoon_debug") # global
     cmd.unset("ray_transparency_oblique") # global
     cmd.unset("transparency",s)
     cmd.unset("cartoon_transparency",s)
@@ -432,6 +433,43 @@ def glass(selection='*', _self=cmd):
     _self.delete(s)
 
 
+def wire(selection='*', _self=cmd):
+    '''
+    Cartoon by chain as a wire mesh, and ligand sticks.
+    '''
+    s = _prepare(selection, _self=_self)[0]
+
+    util.cbc(s, _self=_self)
+    _self.color('atomic', '?%s & !(elem C)' % (s))
+
+    _self.show('cartoon', 'polymer & ?' + s)
+    _self.show('licorice', '(organic | inorganic) & ?' + s)
+    # global, the cartoon builder reads no other level: line strips
+    # instead of triangle strips
+    _self.set('cartoon_debug', 3)
+
+    _self.delete(s)
+
+
+def illustration(selection='*', _self=cmd):
+    '''
+    Cartoon in shades of blue inside a faint surface, and the look "flat":
+    ray traced, a colored line drawing like the pictures of proteinbase.
+    '''
+    s, selection = _prepare(selection, _self=_self)[:2]
+
+    util.shades('marine', 'polymer & ?' + s, _self=_self)
+
+    _self.show('cartoon', 'polymer & ?' + s)
+    _self.show('licorice', '(organic | inorganic) & ?' + s)
+    _self.show('surface', 'polymer & ?' + s)
+    _self.set('transparency', 0.85, s)
+    _self.set('surface_color', 'white', selection)
+    look('flat', _self=_self) # the picture is its outline
+
+    _self.delete(s)
+
+
 solvent = False  # the solvent row of the preset menu
 
 
@@ -472,9 +510,9 @@ LOOKS = {
     'soft': dict(_outline, light_count=8, ambient=0.35, direct=0, reflect=0.9,
                  spec_count=1, shininess=10, specular=0.1,
                  ray_shadow_decay_factor=0.1, ray_shadow_decay_range=2),
-    # unshaded colors, after David Goodsell's illustrations
-    'flat': dict(_outline, ray_trace_mode=3, ambient=1, direct=0, reflect=0,
-                 specular=0, ray_shadow=0),
+    # unshaded colors as they are; outlines also around transparent things
+    'flat': dict(_outline, ambient=1, direct=0, reflect=0, specular=0,
+                 ray_shadow=0, ray_trace_trans_cutoff=1),
     # bright colors in four steps inside thick outlines, like a comic
     'comic': dict(_outline, ray_trace_mode=3, antialias=1, ambient=0.5,
                   direct=0.6, reflect=0.3, specular=0, ray_shadow=0),

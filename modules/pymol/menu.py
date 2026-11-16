@@ -433,6 +433,16 @@ def by_rep_sub(self_cmd, rep, setting, sele):
     ]
     return r
 
+def shades(self_cmd, sele, chains=0):
+    # one color from light to dark: along each chain, or one shade per chain
+    return [[ 2, 'Shades of:', '' ]] + [
+        [ 1, code + name,
+          'util.shades("%s","%s",%d,_self=cmd)' % (name, sele, chains) ]
+        for code, name in (
+            ('\\009', 'blue'), ('\\059', 'marine'), ('\\077', 'teal'),
+            ('\\151', 'forest'), ('\\950', 'orange'), ('\\900', 'red'),
+            ('\\727', 'purple'), ('\\555', 'grey50')) ]
+
 def spectrum(self_cmd, sele):
     r = [
         [ 2, 'Spectrum:'     ,''                               ],
@@ -442,6 +452,7 @@ def spectrum(self_cmd, sele):
           'cmd.spectrum("count",selection="('+sele+')&*/CA")'],
         [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
           'cmd.spectrum("count",selection="'+sele+'",byres=1)'],
+        [ 1, 'shades', shades(self_cmd, sele) ],
         [ 0, ''                                , ''                 ],
         [ 1, 'b-factors'   ,   'cmd.spectrum("b",selection=("'+sele+'"),quiet=0)'         ],
         [ 1, 'b-factors(*/CA)' , 'cmd.spectrum("b",selection="(('+sele+')&*/CA)",quiet=0)'         ],
@@ -464,6 +475,7 @@ def by_chain(self_cmd, sele):
                       [ 0, ''                                , ''                 ],
               [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
                  'util.chainbow("('+sele+')",_self=cmd)'],
+              [ 1, 'shades', shades(self_cmd, sele, 1) ],
               [ 0, '', '' ],
               [ 1, by_segi + '(elem C)', 'cmd.spectrum("segi","rainbow","('+sele+') & elem C")'],
               [ 1, by_segi, 'cmd.spectrum("segi","rainbow","' + sele + '")' ],
@@ -741,6 +753,8 @@ def presets(self_cmd, sele):
               _preset('pretty', 'pretty_solv', sele),
               _preset('publication', 'pub_solv', sele),
               _preset('glass', 'glass', sele),
+              _preset('wire', 'wire', sele),
+              _preset('illustration', 'illustration', sele),
               [ 0, '', '' ],
               _preset('ligands', 'ligands', sele),
               [ 1, 'ligand sites'   , preset_ligand_sites(self_cmd, sele)         ],

@@ -4,6 +4,26 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.14.4
+
+	* Presets, looks and colors
+	  - New preset wire (preset.wire): the cartoon as a wire mesh,
+	    colored by chain, with ligand sticks. It sets the global
+	    cartoon_debug to 3; every preset now restores it.
+	  - New preset illustration (preset.illustration): cartoon in
+	    shades of blue inside a faint surface. It also picks the look
+	    flat; ray traced, that is a colored line drawing.
+	  - New util.shades(color, selection, chains=0): shades of one
+	    color from light to dark, along each chain, or with chains=1
+	    one shade per chain. In the color menus as "shades" under
+	    "spectrum" and under "by chain", with eight colors.
+	  - Behavior change: the look flat uses ray_trace_mode 1, not 3,
+	    so colors are no longer rounded to four steps, and it sets
+	    ray_trace_trans_cutoff to 1, so transparent surfaces and
+	    cartoons get an outline too.
+
+2026-11-16 pymolish-studio
+
 	* 4.14.3
 
 	* Presets and looks

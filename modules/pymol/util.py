@@ -818,6 +818,26 @@ def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
 
 color_chains = cbc
 
+def shades(color, selection='(all)', chains=0, quiet=1, _self=cmd):
+    '''
+    Color in shades of one color, from a light tint over the color itself
+    to a dark shade: along each chain, or with chains=1 one shade per chain.
+    '''
+    rgb = _self.get_color_tuple(color)
+    def shade(f):  # f in 0..1, the color itself at 0.5
+        if f < 0.5:
+            mixed = [c + (1 - c) * 0.7 * (1 - 2 * f) for c in rgb]
+        else:
+            mixed = [c * (1 - 0.5 * (2 * f - 1)) for c in rgb]
+        return '0x%02x%02x%02x' % tuple(round(255 * c) for c in mixed)
+    if int(chains):
+        names = _self.get_chains(selection)
+        for i, a in enumerate(names):
+            _self.color(shade(i / max(len(names) - 1, 1)),
+                    "(chain '%s' & (%s))" % (a, selection), quiet=quiet)
+    else:
+        chainbow(selection, ' '.join(map(shade, (0, 0.5, 1))), quiet, _self)
+
 def ray_shadows(mode,_self=cmd):
     cmd = _verbose_cmd_proxy(_self)
     # adjustment factors for new lighting model in 0.99
