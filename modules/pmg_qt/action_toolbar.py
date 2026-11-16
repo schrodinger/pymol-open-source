@@ -82,7 +82,9 @@ class ActionToolbar(QtWidgets.QToolBar):
         self.rock.setChecked(bool(cmd.get_setting_int("rock")))
         setting_callbacks[index("rock")].append(lambda v: self.rock.setChecked(bool(v)))
 
-        self.presets = self._menu_button("Presets", "Apply a preset to everything")
+        self.presets = self._menu_button(
+            "Presets", "A preset for everything, a look for the scene"
+        )
         self.presets.menu().aboutToShow.connect(self._fill_presets)
 
         self.colors = self._menu_button(
@@ -234,4 +236,5 @@ class ActionToolbar(QtWidgets.QToolBar):
     def _fill_presets(self):
         menu = self.presets.menu()
         menu.clear()
-        fill_menu(menu, menus.presets(self.cmd, "all"), self.cmd)
+        rows = menus.presets(self.cmd, "all") + [[0, "", ""]] + menus.looks(self.cmd)
+        fill_menu(menu, rows, self.cmd)

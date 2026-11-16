@@ -56,7 +56,9 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
     cmd.hide("everything",s)
 
     cmd.set("two_sided_lighting",0) # global
+    cmd.unset("ray_transparency_oblique") # global
     cmd.unset("transparency",s)
+    cmd.unset("surface_color", selection)
     cmd.unset("surface_quality", selection)
     cmd.unset("surface_type",selection)
     cmd.unset("sphere_scale",s)
@@ -397,3 +399,82 @@ def classified(selection='*', _self=cmd):
     _self.show_as('spheres', 'inorganic & %' + s)
 
     _self.delete(s)
+
+
+def glass(selection='*', _self=cmd):
+    '''
+    Cartoon and ligand sticks by chain, inside a transparent white surface
+    that gets denser toward its edges, like glass.
+    '''
+    s, selection = _prepare(selection, _self=_self)[:2]
+
+    util.cbc(s, _self=_self)
+    _self.color('atomic', '?%s & !(elem C)' % (s))
+
+    _self.show('cartoon', 'polymer & ?' + s)
+    _self.show('licorice', '(organic | inorganic) & ?' + s)
+    _self.show('surface', 'polymer & ?' + s)
+    _self.set('transparency', 0.6, s)
+    _self.set('surface_color', 'white', selection)
+    _self.set('ray_transparency_oblique', 1) # global
+
+    _self.delete(s)
+
+
+solvent = False  # the solvent row of the preset menu
+
+
+def from_menu(name, selection='*', _self=cmd):
+    '''
+    A row of the preset menu: preset `name`, without the solvent unless the
+    menu's "show solvent" row was used. "default" shows everything.
+    '''
+    if not solvent and name != 'default':
+        _self.hide('everything', '(%s) & solvent' % (selection))
+        selection = '(%s) & !solvent' % (selection)
+    globals()[name](selection, _self=_self)
+
+
+def show_solvent(show, selection='*', _self=cmd):
+    '''
+    The solvent row of the preset menu: show or hide the solvent now, and
+    keep it that way in the presets picked from the menu afterwards.
+    '''
+    global solvent
+    solvent = bool(show)
+    if solvent:
+        _self.show('licorice', '(%s) & solvent' % (selection))
+    else:
+        _self.hide('everything', '(%s) & solvent' % (selection))
+
+
+# Looks: light, background and outline of the whole scene (global settings).
+# The outline is drawn in ray-traced images only.
+_outline = dict(bg_rgb='white', depth_cue=0, ray_trace_mode=1,
+                ray_trace_color='black', antialias=2, ray_opaque_background=1)
+LOOKS = {
+    'default': {},
+    # matte, the Rubber light of the Lighting plugin
+    'figure': dict(_outline, ambient=0.05, direct=0.2, reflect=0.5,
+                   shininess=10, power=1.67),
+    # light from eight sides and soft shadows, after ChimeraX "lighting soft"
+    'soft': dict(_outline, light_count=8, ambient=0.35, direct=0, reflect=0.9,
+                 spec_count=1, shininess=10, specular=0.1,
+                 ray_shadow_decay_factor=0.1, ray_shadow_decay_range=2),
+    # unshaded colors, after David Goodsell's illustrations
+    'flat': dict(_outline, ray_trace_mode=3, ambient=1, direct=0, reflect=0,
+                 specular=0, ray_shadow=0),
+    # the X-Ray light of the Lighting plugin
+    'x-ray': dict(ambient=1, direct=-0.6, reflect=-0.6, shininess=0,
+                  specular=0),
+}
+
+
+def look(name, _self=cmd):
+    '''
+    Give the whole scene the light, background and outline of LOOKS[name].
+    '''
+    for key in {key for settings in LOOKS.values() for key in settings}:
+        _self.unset(key)
+    for key, value in LOOKS[name].items():
+        _self.set(key, value)

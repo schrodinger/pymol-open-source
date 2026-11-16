@@ -25,6 +25,7 @@ Numbers in brackets are pymolish-studio versions; the
 | Shorter menus | The A menu of an object has 10 rows instead of 19; the less used ones are under "more". Right click on a row of the Objects panel gives Show as, Color, rename, duplicate and delete at once (4.13.0). |
 | Name | Title, About box and icon say pymolish-studio (4.8.0). |
 | Object colors | The palette button in the toolbar shows the palettes as color strips. Picking one recolors the loaded objects, and new objects and "by chain" follow it. The choice is remembered (4.10.0, 4.13.1). |
+| Presets and looks | The Presets button lists the presets in order, with one "show solvent" / "hide solvent" row and a glass preset (cartoon inside a transparent surface). Below them are looks for the whole scene: figure (white, black outline), soft, flat and x-ray. Outlines appear in ray-traced images (4.14.0). |
 
 ### Object color palettes
 

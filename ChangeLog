@@ -4,6 +4,34 @@ CHANGE LOG
 
 2026-11-16 pymolish-studio
 
+	* 4.14.0
+
+	* Presets and looks
+	  - The preset menu (the toolbar's Presets button and A > preset)
+	    is ordered: default, classified; simple, technical, ball and
+	    stick, b factor putty; pretty, publication, glass; ligands,
+	    ligand sites, protein interface.
+	  - One row "show solvent" / "hide solvent" replaces the rows
+	    "simple (no solvent)", "pretty (with solvent)" and
+	    "publication (with solvent)". It shows or hides the water at
+	    once and the presets picked afterwards keep the choice. It
+	    starts hidden: "simple", "technical", "ball and stick" and the
+	    ligand presets picked from the menu no longer show water until
+	    "show solvent" is used. "default" shows everything.
+	  - New preset glass (preset.glass): cartoon and ligand sticks by
+	    chain inside a transparent white surface that gets denser
+	    toward its edges.
+	  - Looks, in the toolbar's Presets menu: default, figure (white
+	    background, matte, black outline), soft (even light from eight
+	    sides, outline), flat (unshaded colors, outline), x-ray. They
+	    set global light, background and outline settings
+	    (preset.look). The outline is drawn in ray-traced images only.
+	  - The preset functions are unchanged, with one addition: every
+	    preset now also restores surface_color of its objects and the
+	    global ray_transparency_oblique, which glass sets.
+
+2026-11-16 pymolish-studio
+
 	* 4.13.4
 
 	* Scenes panel

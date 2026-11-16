@@ -209,6 +209,20 @@ class TestMenu(testing.PyMOLTestCase):
         m = menu.presets(cmd, sele)
         d = self._to_dict(m)
         self._eval_first(d['simple'])
+        # 15: ordered, one solvent row instead of twin rows, glass
+        labels = [row[1] for row in m if row[0] == 1]
+        self.assertEqual(labels, [
+            'default', 'classified', 'simple', 'technical', 'ball and stick',
+            'b factor putty', 'pretty', 'publication', 'glass', 'ligands',
+            'ligand sites', 'protein interface', 'show solvent'])
+        from pymol import preset
+        self.addCleanup(setattr, preset, 'solvent', False)
+        cmd.do(d['show solvent'], echo=0)
+        self.assertEqual(menu.presets(cmd, sele)[-1][1], 'hide solvent')
+        cmd.do(d['glass'], echo=0)
+        self.assertGreater(cmd.count_atoms('rep surface'), 0)
+        cmd.do(self._to_dict(menu.looks(cmd))['flat'], echo=0)
+        self.assertEqual(cmd.get_setting_int('ray_trace_mode'), 3)
 
     def testRampAction(self):
         sele = 'r1'

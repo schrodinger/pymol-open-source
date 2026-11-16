@@ -56,7 +56,9 @@ class TestActionToolbar(testing.PyMOLTestCase):
         self.assertNotEqual(cmd.get_view(), view)
 
         bar.presets.menu().aboutToShow.emit()
-        self.assertIn("simple", [a.text() for a in bar.presets.menu().actions()])
+        rows = [a.text() for a in bar.presets.menu().actions()]
+        self.assertIn("simple", rows)
+        self.assertIn("figure", rows)  # the looks, below the presets
 
         texts["Builder"].trigger()
         more = {a.text(): a for a in bar.more.menu().actions()}

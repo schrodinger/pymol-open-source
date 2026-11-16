@@ -25,8 +25,9 @@ user's original numbers; the letters are milestones of the detailed plans.
 | 5 | **3** — [Modern workspace and metadata](docs/plans/03-modern-ui.md) | Rows moved by dragging, a picked atom selects its row, sequence viewer and scene buttons still drawn by the core, spacing of the remaining dialogs, removal of the old C++ panel. | Each increment ships in a reviewable test build. |
 | none | **8** — [Modern C++ in the core](docs/plans/08-cpp-modernization.md) | No rewrite. One idiom per PR behind sanitizers and tests; vendored C stays; files go in profile order so cleanup and step 1 meet. Next: 8h (run Catch2 in CI, one line), 8i (dead `#ifdef` branches, needs `unifdef` on the development machine), then 8c to 8g. Many PRs, no date. | Each slice passes the suite, the sanitizer job, `bench.py` and a PSE round trip. |
 | none | **5c** — [Release builds without GitHub Actions](docs/plans/05-builds-binaries.md) | A proposal of 2026-11-16 inside finished step 5: Linux in podman, Windows on the host, macOS not possible off Apple hardware. Nothing is built yet. | The user accepts or drops the proposal. |
+| none | **15** — [Presets and looks](docs/plans/15-presets.md) | 15b: the outline of the looks in the viewport (today only in ray-traced images). 15c: ChimeraX object colors as a palette. 15a (ordered menu, solvent row, glass, looks) shipped in 4.14.0. | The user picks or drops 15b and 15c. |
 
-Steps 8 and 5c never got an order number. GPU compute is not on the critical
+Steps 8, 5c and 15 never got an order number. GPU compute is not on the critical
 path. What needs the user's answer first is in "Waiting for the user", not
 repeated in this table.
 
@@ -67,6 +68,8 @@ recommended direction, not a claim that an implementation has passed tests.
 | 2 | Delete the old C++ object panel (Display > Internal GUI)? The Qt panel replaced it in 4.5.11. `pymolish -x` still uses it. | [03-modern-ui.md](docs/plans/03-modern-ui.md), Objects panel | One removal PR |
 | 3 | Rights line for the icon and the logo: who made them, which license. | [09-icons-logo.md](docs/plans/09-icons-logo.md), `docs/licenses.md` | A complete license list; no code |
 | 4 | 5c: build the Linux and Windows bundles on the development machine, or stay with GitHub Actions now that the failing test is fixed (4.12.7)? | [05-builds-binaries.md](docs/plans/05-builds-binaries.md), 5c | 5c |
+| 5 | 15b: draw the black outline of the looks figure, soft and flat in the viewport too? It needs a new edge pass in the shaders; today the outline appears only in ray-traced images. | [15-presets.md](docs/plans/15-presets.md), Slices | 15b |
+| 6 | 15c: add ChimeraX's object colors (tan, sky blue, plum, ...) as one more palette? | [15-presets.md](docs/plans/15-presets.md), Slices | 15c, one line |
 
 The user's to do, not decisions:
 

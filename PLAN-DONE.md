@@ -67,7 +67,7 @@ Decided by the user on 2026-11-16 and applied:
 
 ## Finished milestones of open steps
 
-Steps 1, 3 and 8 stay in the roadmap. These parts of them have shipped.
+Steps 1, 3, 8 and 15 stay in the roadmap. These parts of them have shipped.
 
 | Step | Milestone | Result |
 | --- | --- | --- |
@@ -77,6 +77,7 @@ Steps 1, 3 and 8 stay in the roadmap. These parts of them have shipped.
 | 3 | Slice 5, partly | 4.5.2 dark theme. 4.5.7 UI Scale and the dark-theme color audit. 4.5.13 no fixed point sizes in rich text. Open: spacing of the remaining dialogs. |
 | 8 | 8a — safety net | Done 2026-11-13 (4.7.2): CI job with ASan and UBSan, three bugs fixed, coverage measured (about half of the core). Catch2 is compiled in CI and not run: that is 8h. |
 | 8 | 8b — strings, mostly | 4.7.3 to 4.7.6: 408 of 475 `sprintf`, `strcpy` and `strcat` calls are bounded; three real defects fixed with a test. About 80 calls through a pointer close with 8c and 8e. |
+| 15 | 15a — menu, glass and looks | Done 2026-11-16 (4.14.0): [docs/plans/15-presets.md](docs/plans/15-presets.md). The preset menu is ordered and has 13 rows instead of 14; one solvent row replaces three twin rows; new preset glass; five looks (default, figure, soft, flat, x-ray) in the toolbar menu. Tried and left out: Metal, Plastic and Rubber of the Lighting plugin. |
 
 ## Validation of the original draft, closed rows
 
