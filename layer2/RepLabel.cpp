@@ -1225,7 +1225,6 @@ static void RepLabelRenderRayBackground(
 
 static void RepLabelRenderRay(RepLabel* I, RenderInfo* info)
 {
-#ifndef _PYMOL_NO_RAY
   PyMOLGlobals* G = I->G;
   CRay* ray = info->ray;
   int font_id = SettingGet_i(
@@ -1282,7 +1281,6 @@ static void RepLabelRenderRay(RepLabel* I, RenderInfo* info)
       l++;
     }
   }
-#endif
 }
 
 void RepLabelPick(RepLabel* I, RenderInfo* info)

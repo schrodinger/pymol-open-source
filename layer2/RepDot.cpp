@@ -151,7 +151,6 @@ void RepDot::render(RenderInfo * info)
   int ok = true;
 
   if(ray) {
-#ifndef _PYMOL_NO_RAY
     float radius;
 
     if(I->dotSize <= 0.0F) {
@@ -171,7 +170,6 @@ void RepDot::render(RenderInfo * info)
       v += 3;
       cc--;
     }
-#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else { /* else not pick, i.e., when rendering */

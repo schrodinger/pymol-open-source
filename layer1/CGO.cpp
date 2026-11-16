@@ -5720,9 +5720,6 @@ static int CGORenderQuadricRay(CRay* ray, float* v, float r, float* q)
 int CGORenderRay(CGO* I, CRay* ray, RenderInfo* info, const float* color,
     ObjectGadgetRamp* ramp, CSetting* set1, CSetting* set2)
 {
-#ifdef _PYMOL_NO_RAY
-  return 0;
-#else
   int vc = 0;
   float linewidth = 1.0F;
   float widthscale = 0.15F;
@@ -6164,7 +6161,6 @@ int CGORenderRay(CGO* I, CRay* ray, RenderInfo* info, const float* color,
   if (ok)
     ray->transparentf(0.0F);
   return ok;
-#endif
 }
 
 /**

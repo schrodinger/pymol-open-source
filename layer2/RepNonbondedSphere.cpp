@@ -58,9 +58,7 @@ void RepNonbondedSphere::render(RenderInfo* info)
   auto pick = info->pick;
 
   if(ray) {
-#ifndef _PYMOL_NO_RAY
     CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
-#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if (I->shaderCGO){

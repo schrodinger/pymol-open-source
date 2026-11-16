@@ -92,10 +92,6 @@ bool SceneRay(PyMOLGlobals * G,
               char **charVLA_ptr, float angle,
               float shift, int quiet, G3dPrimitive ** g3d, int show_timing, int antialias)
 {
-#ifdef _PYMOL_NO_RAY
-  FeedbackAdd(G, "" _PYMOL_NO_RAY);
-  return false;
-#else
 
   CScene *I = G->Scene;
   CRay *ray = nullptr;
@@ -749,7 +745,6 @@ bool SceneRay(PyMOLGlobals * G,
   PyMOL_SetBusy(G->PyMOL, false);
 
   return true;
-#endif
 }
 
 int SceneDeferRay(PyMOLGlobals * G,

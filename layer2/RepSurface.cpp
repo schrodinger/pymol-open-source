@@ -1605,7 +1605,6 @@ void RepSurface::render(RenderInfo* info)
   if (fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if (ray) {
-#ifndef _PYMOL_NO_RAY
     ray->transparentf(1.0F - alpha);
     if (I->Type == SurfaceType::DotDefault) {
       /* dot surface */
@@ -1818,7 +1817,6 @@ void RepSurface::render(RenderInfo* info)
     } else {
       /* If not ok, then Clear Entire RepSurface, not just the ray object */
     }
-#endif
   } else if (G->HaveGUI && G->ValidContext) {
     /* Not ray tracing, but rendering */
     if (pick) {

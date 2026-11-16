@@ -247,7 +247,6 @@ void RepCartoon::render(RenderInfo* info)
   auto I = this;
 
   if (info->ray) {
-#ifndef _PYMOL_NO_RAY
     CGO* raycgo = I->ray ? I->ray : I->preshader;
 
     if (raycgo && !CGORenderRay(raycgo, info->ray, info, nullptr, nullptr,
@@ -256,7 +255,6 @@ void RepCartoon::render(RenderInfo* info)
         " %s-Warning: ray rendering failed\n", __func__ ENDFB(G);
       CGOFree(I->ray);
     }
-#endif
     return;
   }
 

@@ -174,10 +174,8 @@ void RepCylBond::render(RenderInfo * info)
   int ok = true;
 
   if(ray) {
-#ifndef _PYMOL_NO_RAY
     CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
     ray->transparentf(0.0);
-#endif
   } else if(G->HaveGUI && G->ValidContext) {
     bool use_shader = SettingGetGlobal_b(G, cSetting_stick_use_shader)
       && SettingGetGlobal_b(G, cSetting_use_shaders);

@@ -203,10 +203,8 @@ void RepNonbonded::render(RenderInfo* info)
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
-#ifndef _PYMOL_NO_RAY
     CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->cs->Obj->Setting.get());
     ray->transparentf(0.0);
-#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       CGORenderPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());

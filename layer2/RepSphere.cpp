@@ -94,7 +94,6 @@ void RenderSphereComputeFog(PyMOLGlobals *G, RenderInfo *info, float *fog_info)
   
 }
 
-#ifndef _PYMOL_NO_RAY
 static int RepSphereRenderRay(PyMOLGlobals *G, RepSphere * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
@@ -111,7 +110,6 @@ static int RepSphereRenderRay(PyMOLGlobals *G, RepSphere * I, RenderInfo * info)
   ray->transparentf(0.0);
   return true;
 }
-#endif
 
 static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, int sphere_mode)
 {
@@ -156,9 +154,7 @@ void RepSphere::render(RenderInfo* info)
   bool use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) &&
                     SettingGetGlobal_b(G, cSetting_use_shaders);
   if(ray) {
-#ifndef _PYMOL_NO_RAY
     ok &= RepSphereRenderRay(G, I, info);
-#endif
     return;
   }
   int sphere_mode = RepGetSphereMode(G, I, use_shader);
