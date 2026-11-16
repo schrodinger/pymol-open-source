@@ -5,6 +5,7 @@ panel and the wizard buttons. Headless (offscreen QApplication).
 """
 
 import os
+import re
 
 from pymol import cmd, menu, testing
 
@@ -90,6 +91,12 @@ class TestObjectPanel(testing.PyMOLTestCase):
             self.assertTrue(drawn, label)
             self.assertTrue(all(c.lightness() > 240 for c in drawn), label)
         self.assertIsNone(icons.menu_icon("no such command", white))
+        # destructive rows get the trash icon, not a red square
+        source = open(menu.__file__).read()
+        risky = re.findall(r"(?:del|rem)_col \+ '([^']+)'", source)
+        self.assertGreater(len(risky), 20)
+        for label in risky:
+            self.assertIsNotNone(icons.menu_icon(label, white), label)
         # every top-level command of the viewport's menu has an icon
         for entry in menu.main_menu(cmd, (0, 0, 0), (0, 0)):
             if entry[0] == 1:

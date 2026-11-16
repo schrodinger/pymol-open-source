@@ -852,3 +852,211 @@ def file_save_aln(self):
             'No alignment objects loaded\n\n'
             'Hint: create alignment objects with "align" and\n'
             '"super" using the "object=..." argument.')
+
+
+def _pick_folder(parent, lineedit):
+    path = QtWidgets.QFileDialog.getExistingDirectory(
+        parent, "Folder", lineedit.text()
+    )
+    if path:
+        lineedit.setText(path)
+
+
+def file_open_folder(parent):
+    """File > Open Folder: "load_files" with a count of the matching files"""
+    from pymol import batch
+
+    form = parent.load_form("load_folder")
+    form.input_dir.setText(parent.initialdir)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+
+    def get_command():
+        command = "load_files %s, %s" % (
+            form.input_dir.text(),
+            form.input_format.currentText(),
+        )
+        if form.input_group.text():
+            command += ", " + form.input_group.text()
+        if form.input_filter.text():
+            command += ", pattern=" + form.input_filter.text()
+        if form.input_recursive.isChecked():
+            command += ", recursive=1"
+        return command
+
+    def update(*_):
+        # shortcut: counted on every change in the GUI thread; a tree of
+        # 100,000 files with "subfolders" stutters, then use AsyncFunc
+        try:
+            count = len(
+                batch.find_files(
+                    form.input_dir.text(),
+                    form.input_format.currentText(),
+                    form.input_filter.text() or "*",
+                    form.input_recursive.isChecked(),
+                )
+            )
+            form.output_count.setText("%d files match" % count)
+        except pymol.CmdException:
+            count = 0
+            form.output_count.setText("Not a folder")
+        ok.setEnabled(count > 0)
+        form.output_command.setText(get_command())
+
+    def run():
+        parent.initialdir = form.input_dir.text()
+        parent.cmd.do(get_command())
+        form._dialog.close()
+
+    form.button_browse.clicked.connect(
+        lambda: _pick_folder(parent, form.input_dir)
+    )
+    form.input_dir.textChanged.connect(update)
+    form.input_format.editTextChanged.connect(update)
+    form.input_filter.textChanged.connect(update)
+    form.input_recursive.toggled.connect(update)
+    form.input_group.textChanged.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form
+
+
+def file_export_objects(parent):
+    """File > Export Objects: "export_objects", one file per object"""
+    cmd = parent.cmd
+    form = parent.load_form("export_objects")
+    form.input_selection.addItems(
+        cmd.get_names("public_group_objects") + cmd.get_object_list()
+    )
+    form.input_dir.setText(parent.initialdir)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+
+    def get_command():
+        command = "export_objects %s, %s, %s" % (
+            form.input_selection.currentText(),
+            form.input_dir.text(),
+            form.input_format.currentText(),
+        )
+        if form.input_overwrite.isChecked():
+            command += ", overwrite=1"
+        return command
+
+    def update(*_):
+        try:
+            count = len(cmd.get_object_list(form.input_selection.currentText()))
+        except pymol.CmdException:
+            count = 0
+        form.output_count.setText("%d objects" % count)
+        ok.setEnabled(count > 0 and bool(form.input_dir.text()))
+        form.output_command.setText(get_command())
+
+    def run():
+        parent.initialdir = form.input_dir.text()
+        cmd.do(get_command())
+        form._dialog.close()
+
+    form.button_browse.clicked.connect(
+        lambda: _pick_folder(parent, form.input_dir)
+    )
+    form.input_selection.editTextChanged.connect(update)
+    form.input_dir.textChanged.connect(update)
+    form.input_format.editTextChanged.connect(update)
+    form.input_overwrite.toggled.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form
+
+
+def _ask_and_run(parent, title, label, command, text=""):
+    """One text field; the command runs through cmd.do, so it is logged"""
+    text, ok = QtWidgets.QInputDialog.getText(parent, title, label, text=text)
+    if ok and text.strip():
+        parent.cmd.do(command % text.strip())
+
+
+def file_fetch_uniprot(parent):
+    _ask_and_run(
+        parent,
+        "Get by UniProt",
+        'UniProt accession. "P00918, 5" loads the first five PDB entries.',
+        "fetch_by_uniprot %s, async_=1",
+    )
+
+
+def file_fetch_fold(parent):
+    _ask_and_run(
+        parent,
+        "Get Predicted Structure",
+        "UniProt accession (AlphaFold DB) or protein sequence (ESMFold):",
+        "fetch_fold %s, async_=1",
+    )
+
+
+def build_from_smiles(parent):
+    """Build > From SMILES: the field starts with the clipboard text"""
+    clip = QtWidgets.QApplication.clipboard().text().strip()
+    _ask_and_run(
+        parent,
+        "From SMILES",
+        "SMILES:",
+        'load_smiles "%s"',
+        clip if len(clip.split()) == 1 else "",
+    )
+
+
+def fix_structure_dialog(parent, selection=""):
+    """A > clean > fix structure: the options of "fix_structure" """
+    cmd = parent.cmd
+    form = parent.load_form("fix_structure")
+    form.input_object.addItems(cmd.get_object_list())
+    if selection:
+        form.input_object.setEditText(selection)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+    options = (  # argument, checkbox; all are on by default
+        ("missing_atoms", form.input_atoms),
+        ("nonstandard", form.input_nonstandard),
+        ("hydrogens", form.input_hydrogens),
+        ("keep_water", form.input_water),
+        ("keep_heterogens", form.input_heterogens),
+    )
+
+    def get_command():
+        command = "fix_structure " + form.input_object.currentText()
+        for argument, box in options:
+            if not box.isChecked():
+                command += ", %s=0" % argument
+        if form.input_hydrogens.isChecked() and form.input_ph.value() != 7:
+            command += ", ph=%.1f" % form.input_ph.value()
+        return command + ", async_=1"
+
+    def update(*_):
+        form.input_ph.setEnabled(form.input_hydrogens.isChecked())
+        try:
+            count = len(cmd.get_object_list(form.input_object.currentText()))
+        except pymol.CmdException:
+            count = 0
+        ok.setEnabled(count == 1)
+        form.output_command.setText(get_command())
+
+    def run():
+        cmd.do(get_command())
+        form._dialog.close()
+
+    form.input_object.editTextChanged.connect(update)
+    form.input_ph.valueChanged.connect(update)
+    for _, box in options:
+        box.toggled.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form

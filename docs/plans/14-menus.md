@@ -47,7 +47,7 @@ their rows, so the menus are audited once.**
 
 ## Slices
 
-**14a, red squares. Small, no dependency on other steps.**
+**14a, red squares. Done in 4.10.1.**
 - `icons.menu_icon`: fall back to the label's first word, so every
   "delete ..." and "remove ..." row gets the trash icon, tinted red.
   One line. Squares remain only where a row has a color and no icon: the
@@ -57,13 +57,50 @@ their rows, so the menus are audited once.**
   an icon.
 - Commit: `fix(ui): destructive menu rows show a red trash icon, not a square`.
 
-**14b, audit. After steps 12 and 13.**
+**14b, audit. Done 2026-11-14; the table for approval is below.**
 - A throwaway script calls every builder with a dummy name and prints
   menu, path, label, command. Not committed.
 - From that table: rows with the same command in one menu, rows whose command
   raises `IncentiveOnlyException`, rows unused in the three places above.
 - Output: one keep / merge / drop table in this file, for the user's approval.
   Also the before numbers: rows per menu, lines in `menu.py`.
+
+### 14b result, 2026-11-14 (4.12.3): for approval
+
+A throwaway script called every builder with real objects (a peptide, a
+selection, a group, a map, a mesh, a surface, a distance) and walked the
+submenus. Before numbers: `menu.py` has 1,869 lines and 127 builders.
+
+| Menu | Top rows | Rows at all levels |
+| --- | --- | --- |
+| `mol_action` (A on an object) | 23 | 120 |
+| `group_action` (A on a group) | 25 | 121 |
+| `sele_action` (A on a selection) | 19 | 145 |
+| `sele_action2` (right click on a selected atom, "actions") | 16 | 108 |
+| `all_action` (A on "all") | 12 | 69 |
+| `map_action`, `mesh_action`, `surface_action`, `slice_action` | 14, 9, 9, 12 | 40, 25, 25, 14 |
+| `mol_show`, `mol_hide`, `mol_labels` | 21, 22, 17 | 43, 23, 25 |
+| `mol_color` | 15 | 878 |
+
+No action menu has two rows with the same command, with one exception
+(row 3 below). The color menus repeat colors on purpose (one color sits in
+"greens" and in "tints").
+
+| # | Verdict | What | Why |
+| --- | --- | --- | --- |
+| 1 | Drop | Builders `test1`, `test2`, `mol_toggle`, `simple_show`, `simple_hide` | No caller in Python, C++ or `data/`. |
+| 2 | Drop | find > pi interactions > all (in six menus, one source row) | `cmd.pi_interactions` raises `IncentiveOnlyException`. "pi-pi" and "pi-cation" next to it work and stay. |
+| 3 | Fix | modify > exclude > polymer and > inorganic | Copy-paste error: both run "not organic", like the organic row. |
+| 4 | Drop | label > stereochemistry | The `stereo` property is only filled by `assign_stereo`, which raises `IncentiveOnlyException`; the row labels nothing. |
+| 5 | Merge | `sele_action2` into `sele_action` with a flag | Their 16 and 19 top rows share 11. The right-click variant leaves out zoom, orient, center, origin, drag and clean, which its parent menu already has, and shows the five "modify" rows flat. |
+| 6 | Merge | `group_action` and `mol_action` into one builder | 17 of the top rows are the same; the differences are labels (rename object / rename group), drag matrix against drag, and the four group rows. |
+| 7 | Regroup | A menu of an object: zoom, orient, center · rename, duplicate, delete · clean ▸ · preset ▸ · find ▸ · align ▸ · hydrogens ▸ · group ▸ · more ▸ | 23 top rows become 13. "more" holds origin, drag, reset matrix, generate, assign sec. struc., state, masking, sequence, movement, compute. "copy to object" moves under "duplicate". |
+| 8 | Add | Right click on a row: zoom, show as ▸, color ▸, rename, duplicate, delete on top, then the five submenus | The essentials one click away, as planned. |
+| 9 | Keep | Everything else, also the zoom, orient and center rows that the toolbar has too | The toolbar is global, the menu is per object. |
+
+Rows 1 to 4 remove dead things and fix a bug: they change nothing a user
+relies on. Rows 5 to 8 move rows that people know by position: say which of
+them to apply. 14c waits for that answer.
 
 **14c, apply.**
 - One builder for selection actions (`sele_action2` becomes a flag); one for

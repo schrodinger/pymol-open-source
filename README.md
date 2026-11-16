@@ -50,6 +50,7 @@ checksums.
 | --- | --- |
 | Open a structure and make a picture | [Getting started](docs/getting-started.md) |
 | Know what changed compared with PyMOL | [What is different](docs/features.md) |
+| Look up the commands that PyMOL does not have | [Commands](docs/commands.md) |
 | Build it from source | [Install from source](docs/install.md) |
 | Write a plugin | [Writing a plugin](docs/plugins.md) |
 | Help with the code | [Contributing](CONTRIBUTING.md) |

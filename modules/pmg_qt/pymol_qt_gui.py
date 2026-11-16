@@ -38,6 +38,12 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
             load_dialog,
             load_mae_dialog,
             file_fetch_pdb,
+            file_fetch_uniprot,
+            file_fetch_fold,
+            build_from_smiles,
+            fix_structure_dialog,
+            file_open_folder,
+            file_export_objects,
             file_save_png,
             file_save_mpeg,
             file_save_map,
@@ -1265,6 +1271,7 @@ def execapp():
     app.setWindowIcon(make_pymol_qicon())
     theme.apply(app, theme.is_dark())
     theme.round_menus(app)
+    theme.float_docks_as_dialogs(app)
 
     window = PyMOLQtGUI()
     window.setWindowTitle("pymolish-studio")

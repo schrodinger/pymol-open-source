@@ -118,6 +118,32 @@ def round_menus(app):
     app.installEventFilter(_RoundMenus(app))
 
 
+class _DialogDocks(QtCore.QObject):
+    def eventFilter(self, watched, event):
+        if event.type() == QtCore.QEvent.Type.Show and isinstance(
+            watched, QtWidgets.QDockWidget
+        ):
+            flags = watched.windowFlags()
+            # a dock being dragged bypasses the window manager: leave it alone
+            if flags & _TYPE == _TOOL and not flags & _BYPASS:
+                watched.setWindowFlags(flags & ~_TYPE | QtCore.Qt.WindowType.Dialog)
+                watched.show()
+        return False
+
+
+_TYPE = QtCore.Qt.WindowType.WindowType_Mask
+_TOOL = QtCore.Qt.WindowType.Tool
+_BYPASS = QtCore.Qt.WindowType.X11BypassWindowManagerHint
+
+
+def float_docks_as_dialogs(app, environ=os.environ):
+    """A floating dock is a Qt.Tool window, a "utility" window on X11. WSLg
+    never places those: the dock is drawn in the screen corner, cannot be
+    moved and gets no clicks. As a dialog it is an ordinary window."""
+    if "WSL_DISTRO_NAME" in environ and app.platformName() == "xcb":
+        app.installEventFilter(_DialogDocks(app))
+
+
 def apply(app, dark):
     # Fusion + palette darkens every Qt-drawn menu and widget. The color
     # scheme hint darkens what the OS draws (macOS menu bar, Windows title

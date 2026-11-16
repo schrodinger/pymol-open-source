@@ -292,3 +292,44 @@ the cost belongs to CPU ray tracing of multi-million-triangle scenes, not to
 marching cubes or mesh storage, and the OpenGL display path does not pay it.
 Not optimized: a 1σ contour of a whole EM map is noise, 2σ takes 1.3 s.
 
+
+### Bundle size with rdkit (4.11.3)
+
+Linux bundle built on this machine with `packaging/pyinstaller.spec`,
+2026-11-14, same tree, without and with the `chem` extra installed:
+
+| | unpacked | tar.gz |
+| --- | --- | --- |
+| without rdkit | 287 MB | 109 MB |
+| with rdkit 2026.9.2 (and the Pillow it needs) | 344 MB | 129 MB |
+
+| with rdkit, pdbfixer 1.12.0 and openmm 8.6.1 (4.12.2) | 419 MB | 142 MB |
+
+rdkit adds 57 MB unpacked and 20 MB to the download; pdbfixer and openmm add
+75 MB and 13 MB. 64 MB of that is the `openmm` package with its force-field
+files; the OpenCL plugins of the wheel are left out. `fix_structure` runs in
+the bundle with the Reference and CPU platforms. `load_smiles` runs in
+the bundle with no change to the spec except the two license texts. rdkit
+2026.9.2 has wheels for Python 3.13 and 3.14.
+
+### minimize (4.12.3)
+
+`fix_structure`, then `minimize` with 500 steps, CPU platform, 32 threads,
+2026-11-14. Amber14 with GBn2 implicit solvent, heavy atoms restrained.
+
+| Protein | Atoms with hydrogens | No cutoff | 2.0 nm cutoff | 1.0 nm cutoff |
+| --- | --- | --- | --- | --- |
+| 12CA, 260 residues | 4009 | 126 to 272 s | 52 s | 4.3 to 5.9 s |
+| AlphaFold P04637, 393 residues | 6220 | 397 s | not run | 7.3 s |
+
+The heavy-atom RMSD to the start is the same with and without the cutoff
+(0.14 A for 12CA), so the command uses 1.0 nm. `fix_structure` takes 0.7 s
+on both. One force evaluation of 12CA: 1.2 s without a cutoff, 0.05 s with.
+
+### Batch load (4.11.1)
+
+`load_files` on a folder of 502 small PDB files (24 atoms each, 2 of them
+unreadable), measured 2026-11-14: 0.30 to 0.57 s without a window, 0.42 s in
+the window under WSLg. A plain `cmd.load` loop over the same files takes
+0.31 s, so the command adds nothing measurable. Under the one-second limit
+of step 12b: the load loop stays on the GUI thread.

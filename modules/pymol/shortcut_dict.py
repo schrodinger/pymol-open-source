@@ -35,6 +35,8 @@ shortcut_dict_ref = {
 'CTRL-H': ('help edit_keys','help',''),
 'CTRL-I': ('editing_ring invert','invert selection',''),
 'CTRL-L': ('util.ligand_zoom()','zoom next ligand',''),
+'CTRL-N': ('group_next','next group member',''),
+'CTRL-P': ('group_previous','previous group member',''),
 'CTRL-T': ('bond;unpick','create bond',''),
 'CTRL-V': ('editing_ring paste','paste',''),
 'CTRL-X': ('editing_ring cut','cut',''),

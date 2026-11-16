@@ -266,7 +266,9 @@ from .editor import \
       fnab
 
 from .computing import \
-      clean
+      clean, \
+      fix_structure, \
+      minimize
 
 matrix_transfer = matrix_copy # legacy
 
@@ -456,9 +458,7 @@ from .experimenting import \
       check,              \
       dump,               \
       get_bond_print,     \
-      fast_minimize,      \
       mem,                \
-      minimize,           \
       spheroid,           \
       focal_blur,         \
       callout,            \
@@ -487,6 +487,34 @@ from .properties import \
 
 from . import palettes
 from .palettes import palette
+
+from . import batch
+from .batch import export_objects, load_files
+
+from . import fetching
+from .fetching import \
+     color_plddt, \
+     fetch_by_uniprot, \
+     fetch_fold, \
+     list_uniprot_structures
+
+from . import smiles
+from .smiles import load_smiles
+
+from . import finding
+from .finding import search_sequence
+
+from . import grouping
+from .grouping import \
+     cluster_ligands, \
+     color_group_with_gradient, \
+     copy_group, \
+     extract_chain, \
+     group_disable, \
+     group_enable, \
+     group_next, \
+     group_previous, \
+     sort_group
 
 from . import util
 from . import movie

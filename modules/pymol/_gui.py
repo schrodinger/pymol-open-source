@@ -86,13 +86,17 @@ class PyMOLDesktopGUI(object):
                 ]),
                 ('separator',),
                 ('command', 'Open...',                      self.file_open),
+                ('command', 'Open Folder...',               self.file_open_folder),
                 ('open_recent_menu',),
                 ('command', 'Get PDB...',                   self.file_fetch_pdb),
+                ('command', 'Get by UniProt...',            self.file_fetch_uniprot),
+                ('command', 'Get Predicted Structure...',   self.file_fetch_fold),
                 ('separator',),
                 ('command', 'Save Session',                 self.session_save),
                 ('command', 'Save Session As...',           self.session_save_as),
                 ('separator',),
                 ('command', 'Export Molecule...',             self.file_save),
+                ('command', 'Export Objects...',              self.file_export_objects),
                 ('command', 'Export Map...',                  self.file_save_map),
                 ('command', 'Export Alignment...',            self.file_save_aln),
                 ('menu', 'Export Image As', [
@@ -141,6 +145,8 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Redo [Ctrl-Y]', cmd.redo),
             ]),
             ('menu', 'Build', [
+                ('command', 'From SMILES...', self.build_from_smiles),
+                ('separator',),
                 ('menu', 'Fragment', [
                     ('command', 'Acetylene [Alt-J]', "editor.attach_fragment('pk1','acetylene',2,0)"),
                     ('command', 'Amide N->C [Alt-1]', "editor.attach_fragment('pk1','formamide',3,1)"),

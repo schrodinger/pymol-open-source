@@ -58,7 +58,7 @@ LABELS = {
     "select": "mouse-pointer-click",
     "create object": "copy-plus",
     "copy to object": "copy",
-    "duplicate selection": "copy",
+    "duplicate": "copy",
     "extract object": "scissors",
     "rename": "pencil",
     "rename selection": "pencil",
@@ -108,8 +108,8 @@ def _pixmap(name, color, ratio):
 
 def menu_icon(label, color):
     """The icon for a menu label, drawn in `color` (a QColor); None if the
-    label has none."""
-    name = LABELS.get(label)
+    label has none. "delete object" falls back to the icon of "delete"."""
+    name = LABELS.get(label) or LABELS.get(label.split(" ")[0])
     if name:
         ratio = QtWidgets.QApplication.instance().devicePixelRatio()
         return QtGui.QIcon(_pixmap(name, color.name(), ratio))

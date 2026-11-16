@@ -1,7 +1,10 @@
 # 12 — pymolish plugin commands, native
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; plugin 0.1.27
-(`b970e67`) and the GUI code were read, nothing was ported or measured.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · **Done 2026-11-14, 4.11.0 to
+4.11.4.** 18 commands in five new files (`grouping.py`, `batch.py`,
+`fetching.py`, `smiles.py`, `finding.py`), listed in
+[docs/commands.md](../commands.md). The text below is the plan as written
+before the work (plugin 0.1.27, `b970e67`).
 
 **Port the useful command bodies of the
 [pymolish plugin](https://github.com/adrian-jasinski/pymolish) into the
@@ -82,13 +85,15 @@ Every dialog runs the command through `cmd.do`, so it lands in the log.
 
 ## Slices, one PR each
 
-1. **12a groups:** `grouping.py`, group menu rows, keys.
+1. **12a groups:** `grouping.py`, group menu rows, keys. Done in 4.11.0.
 2. **12b batch I/O:** `batch.py`, the two File dialogs. Time 500 small files;
-   over one second, move the load loop off the GUI thread.
+   over one second, move the load loop off the GUI thread. Done in 4.11.1:
+   0.4 s, the loop stays on the GUI thread.
 3. **12c fetch:** `fetching.py`, `color_plddt`, two File entries. Network tests
-   stay out of `--run all`.
-4. **12d rdkit:** `load_smiles`, Build entry, extra `chem`, spec, CI, licenses row.
-5. **12e:** `search_sequence`, `cluster_ligands`.
+   stay out of `--run all`. Done in 4.11.2.
+4. **12d rdkit:** `load_smiles`, Build entry, extra `chem`, spec, CI, licenses row. Done in 4.11.3.
+5. **12e:** `search_sequence`, `cluster_ligands`. Done in 4.11.4, with
+   `color_group_with_gradient`, which no slice had named.
 
 Each slice: one real test per kept command in `testing/tests/api/` (the
 plugin's mock-based tests are not ported), a `ChangeLog` line, a row in

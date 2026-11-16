@@ -1,7 +1,8 @@
 # 13 — Clean, fix and optimize structures
 
-[Roadmap](../../PLAN.md) · Request 2026-11-14 · Draft; source and PyPI
-metadata were read, nothing was installed, built or timed.
+[Roadmap](../../PLAN.md) · Request 2026-11-14 · **Done 2026-11-14, 4.12.0 to
+4.12.3.** The text below is the plan as written before the work; the notes
+at each slice say what changed.
 
 **Four layers, cheapest first: remove water and ions (no dependency), make the
 dead `clean` work for ligands (rdkit), repair proteins (PDBFixer), relax
@@ -63,11 +64,11 @@ The top-level "remove waters" row goes away (it moved): one less duplicate for
 
 ## Slices
 
-**13a, remove.** Menu rows only; no new command, the selectors are the API.
+**13a, remove. Done in 4.12.0.** Menu rows only; no new command, the selectors are the API.
 Test: PDB string with protein, water, Na and a ligand; after each entry the
 matching `count_atoms` is 0 and the rest is unchanged.
 
-**13b, `clean` for small molecules.** Fill the existing `cmd.clean` signature:
+**13b, `clean` for small molecules. Done in 4.12.1.** Fill the existing `cmd.clean` signature:
 selection to MOL (`cmd.get_str`), `MMFFOptimizeMolecule`, coordinates back with
 `cmd.load_coords`. Method name stays `mmff`.
 - Cap at about 1,000 atoms; above it the message points to 13d.
@@ -76,7 +77,10 @@ selection to MOL (`cmd.get_str`), `MMFFOptimizeMolecule`, coordinates back with
 - Test: stretched C-C bond in ethane returns to 1.53 Å ± 0.02; skipped without rdkit.
 - Public behavior change (`clean` works): `ChangeLog`.
 
-**13c, `fix_structure`.**
+**13c, `fix_structure`. Done in 4.12.2, without `missing_residues`:** PDBFixer
+finds missing residues from SEQRES records, and a PyMOL object does not keep
+them, so the option could never do anything on this path. The bundle ships
+only the Reference and CPU platforms of OpenMM.
 `fix_structure object [, missing_atoms=1, hydrogens=1, ph=7.0, nonstandard=1, missing_residues=0, keep_water=1, keep_heterogens=1, name=]`
 - Path: `cmd.get_pdbstr` → `PDBFixer(pdbfile=StringIO)` → `PDBFile.writeFile(keepIds=True)` → `cmd.read_pdbstr`.
 - Dialog `fix_structure.ui`: those checkboxes and the pH. Missing residues is
@@ -84,7 +88,9 @@ selection to MOL (`cmd.get_str`), `MMFFOptimizeMolecule`, coordinates back with
 - Test: build `fab AKA`, delete one side-chain atom, fix, atom count is back;
   skipped without pdbfixer.
 
-**13d, `minimize`.** OpenMM, Amber14, implicit solvent, heavy atoms restrained
+**13d, `minimize`. Done in 4.12.3**, with a 1.0 nm cutoff (45 times faster,
+same result, `docs/baseline.md`); the nonfunctional tinker-based
+`cmd.minimize` and `cmd.fast_minimize` gave up the name. OpenMM, Amber14, implicit solvent, heavy atoms restrained
 so clashes relax without drift; `maxiter` argument.
 - Standard residues, water and ions only. A ligand without parameters gives a
   clear error: remove it or run on the protein alone.

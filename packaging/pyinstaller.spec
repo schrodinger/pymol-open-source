@@ -5,12 +5,35 @@
 #
 # Output: dist/pymolish/ with the pymolish executable. Data lives at
 # pymolish/_internal/pymol/pymol_path so pymol.guess_pymol_path() finds it.
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+import glob
+import os
+from importlib.util import find_spec
+
+from PyInstaller.utils.hooks import (collect_data_files, collect_submodules,
+                                     copy_metadata)
 
 # plugins under data/startup are loaded from pymol_path at runtime, not frozen
 hidden = (collect_submodules('pymol', filter=lambda n: not n.startswith('pymol.plugins.startup.'))
           + collect_submodules('pmg_qt') + collect_submodules('chempy')
           + ['PySide6.QtUiTools'])
+
+# pdbfixer and openmm (extra "fix", found through pymol/computing.py).
+# openmm loads its platforms from OpenMM.libs/lib/plugins next to the package
+# and reads force-field files; pdbfixer reads residue templates. Only the
+# Reference and CPU platforms are shipped: the OpenCL, CUDA and HIP ones are
+# LGPL and need drivers. License texts: licenses/OpenMM.txt and the metadata.
+fix_datas, fix_binaries = [], []
+if find_spec('pdbfixer'):
+    fix_datas = (collect_data_files('openmm') + copy_metadata('pdbfixer')
+                 + collect_data_files('pdbfixer', excludes=['tests/*']))
+    libs = os.path.join(os.path.dirname(find_spec('openmm').origin), os.pardir,
+                        'OpenMM.libs', 'lib')
+    for sub in ('', 'plugins'):
+        fix_binaries += [
+            (f, os.path.join('OpenMM.libs', 'lib', sub))
+            for f in glob.glob(os.path.join(libs, sub, '*'))
+            if os.path.isfile(f) and not any(
+                gpu in f.lower() for gpu in ('opencl', 'cuda', 'hip'))]
 
 a = Analysis(
     ['launcher.py'],
@@ -19,7 +42,13 @@ a = Analysis(
            ('../LICENSE-MIT', 'pymol/pymol_path'),
            # Qt is LGPL: a bundle that ships it must ship the text
            ('licenses', 'pymol/pymol_path/licenses')]
-          + collect_data_files('pmg_qt') + collect_data_files('pymol'),
+          + collect_data_files('pmg_qt') + collect_data_files('pymol')
+          # rdkit (extra "chem", found through the import in pymol/smiles.py)
+          # and the Pillow it pulls in are BSD-style: ship their license texts
+          + (copy_metadata('rdkit') + copy_metadata('pillow')
+             if find_spec('rdkit') else [])
+          + fix_datas,
+    binaries=fix_binaries,
     hiddenimports=hidden,
     excludes=['tkinter', 'PySide6.QtWebEngineCore', 'PySide6.QtQml',
               'PySide6.QtQuick', 'PySide6.Qt3DCore', 'PySide6.QtMultimedia',
