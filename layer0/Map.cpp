@@ -452,7 +452,7 @@ int MapSetupExpressPerp(MapType* I, const float* vert, float front,
   return ok;
 }
 
-int MapSetupExpress(MapType* I)
+int MapSetupExpress(MapType* I, bool interruptible)
 { /* setup a list of neighbors for each square */
   PyMOLGlobals* G = I->G;
   int n = 0;
@@ -502,7 +502,7 @@ int MapSetupExpress(MapType* I)
                   /*i=MapNext(I,i); */
                 } while (ok && (i = link[i]) >= 0);
               }
-              ok &= !G->Interrupt;
+              ok &= !(interruptible && G->Interrupt);
             }
             if (ok)
               i_ptr5 = (i_ptr4 += D2);
@@ -525,6 +525,11 @@ int MapSetupExpress(MapType* I)
   if (ok) {
     I->EList = std::move(e_list);
     I->EList.shrink_to_fit();
+  } else {
+    // Interrupted: EHead may already have starts into e_list, which is
+    // discarded. Leave a consistent "no neighbors" table instead.
+    I->EHead.assign(mapSize, 0);
+    I->EList.clear();
   }
   PRINTFD(G, FB_Map)
   " MapSetupExpress-Debug: leaving...n=%d\n", n ENDFD;
@@ -894,7 +899,9 @@ MapType::MapType(PyMOLGlobals* G, float range, const float* vert, int nVert,
 MapEIter::MapEIter(MapType& map, const float* v, bool excl)
 {
   if (map.EList.empty()) {
-    MapSetupExpress(&map);
+    // Not interruptible: callers can't tell an interrupted setup from
+    // "no neighbors" and would silently produce wrong results.
+    MapSetupExpress(&map, false);
   }
 
   m_elist = map.EList.data();

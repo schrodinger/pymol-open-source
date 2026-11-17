@@ -71,7 +71,17 @@ struct MapCacheType {
 
 #define MapBorder 2
 
-int MapSetupExpress(MapType* I);
+/**
+ * Set up the express table (EHead/EList): the list of neighbors for each
+ * grid cell.
+ *
+ * @param interruptible If true, abort when the interrupt flag is set. Callers
+ * which can't report a failure must pass false, otherwise an interrupt would
+ * make them silently see "no neighbors".
+ * @return False if interrupted. EList is then empty and EHead all zero, so
+ * neighbor iteration yields nothing.
+ */
+int MapSetupExpress(MapType* I, bool interruptible = true);
 int MapSetupExpressPerp(MapType* I, const float* vert, float front,
     int nVertHint, int negative_start, const int* spanner);
 
