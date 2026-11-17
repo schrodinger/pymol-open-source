@@ -6,8 +6,6 @@
 #include "Map.h"
 #include "PyMOLGlobals.h"
 
-using namespace pymol;
-
 namespace
 {
 // two close points and one far away
@@ -20,6 +18,17 @@ const float* const s_coords = &s_xyz[0][0];
 constexpr int s_ncoords = 3;
 constexpr float s_range = 2.f;
 
+/**
+ * The C++ tests run inside the running PyMOL process (cmd._cmd.test2), use
+ * its globals. Creating and freeing another global instance here would
+ * corrupt the state of the running one.
+ */
+PyMOLGlobals* runningGlobals()
+{
+  REQUIRE(SingletonPyMOLGlobals);
+  return SingletonPyMOLGlobals;
+}
+
 std::set<int> neighbors(MapType& map, const float* v)
 {
   std::set<int> found;
@@ -29,21 +38,25 @@ std::set<int> neighbors(MapType& map, const float* v)
   return found;
 }
 
+/**
+ * Set the interrupt flag, restore the previous value on scope exit.
+ */
 struct InterruptGuard {
   PyMOLGlobals* G;
+  int previous;
   explicit InterruptGuard(PyMOLGlobals* G_)
       : G(G_)
+      , previous(G_->Interrupt)
   {
     G->Interrupt = true;
   }
-  ~InterruptGuard() { G->Interrupt = false; }
+  ~InterruptGuard() { G->Interrupt = previous; }
 };
 } // namespace
 
 TEST_CASE("MapEIter finds neighbors", "[Map]")
 {
-  PyMOLInstance pymol;
-  auto G = pymol.G();
+  auto G = runningGlobals();
   MapType map(G, s_range, s_coords, s_ncoords);
   REQUIRE(neighbors(map, s_coords) == std::set<int>{0, 1});
   REQUIRE(neighbors(map, s_coords + 6) == std::set<int>{2});
@@ -52,8 +65,7 @@ TEST_CASE("MapEIter finds neighbors", "[Map]")
 // https://github.com/schrodinger/pymol-open-source/issues/533
 TEST_CASE("MapEIter ignores interrupt flag", "[Map]")
 {
-  PyMOLInstance pymol;
-  auto G = pymol.G();
+  auto G = runningGlobals();
   MapType map(G, s_range, s_coords, s_ncoords);
   InterruptGuard interrupt(G);
   REQUIRE(neighbors(map, s_coords) == std::set<int>{0, 1});
@@ -63,8 +75,7 @@ TEST_CASE("MapEIter ignores interrupt flag", "[Map]")
 // https://github.com/schrodinger/pymol-open-source/issues/533
 TEST_CASE("MapSetupExpress interrupted leaves no neighbors", "[Map]")
 {
-  PyMOLInstance pymol;
-  auto G = pymol.G();
+  auto G = runningGlobals();
   MapType map(G, s_range, s_coords, s_ncoords);
 
   {
@@ -85,8 +96,7 @@ TEST_CASE("MapSetupExpress interrupted leaves no neighbors", "[Map]")
 
 TEST_CASE("MapSetupExpress non-interruptible", "[Map]")
 {
-  PyMOLInstance pymol;
-  auto G = pymol.G();
+  auto G = runningGlobals();
   MapType map(G, s_range, s_coords, s_ncoords);
 
   {
