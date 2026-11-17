@@ -251,6 +251,18 @@ static int check_and_add(int* cache, int spacing, int t0, int t1)
 
 #define CLAMP_VALUE(v) ((v > 1.f) ? 1.f : (v < 0.f) ? 0.f : v)
 
+/**
+ * Like vec.data(), but returns nullptr for an empty vector.
+ *
+ * Several vectors (e.g. VA, RC) are optional and their pointer doubles as a
+ * "present" flag. std::vector::clear() keeps the allocation, so data() can
+ * stay non-null after clear().
+ */
+template <typename T> static T* GetNullsafePointer(std::vector<T>& vec)
+{
+  return vec.empty() ? nullptr : vec.data();
+}
+
 static int AtomInfoIsMasked(ObjectMolecule* obj, int atm)
 {
   AtomInfoType* ait;
@@ -263,15 +275,15 @@ static int AtomInfoIsMasked(ObjectMolecule* obj, int atm)
 static int RepSurfaceCGOGenerate(RepSurface* I, RenderInfo* info)
 {
   PyMOLGlobals* G = I->G;
-  float* v = I->V.data();
-  float* vn = I->VN.data();
-  float* vc = I->VC.data();
-  float* va = I->VA.data();
-  int* t = I->T.data();
-  int* s = I->S.data();
+  float* v = GetNullsafePointer(I->V);
+  float* vn = GetNullsafePointer(I->VN);
+  float* vc = GetNullsafePointer(I->VC);
+  float* va = GetNullsafePointer(I->VA);
+  int* t = GetNullsafePointer(I->T);
+  int* s = GetNullsafePointer(I->S);
   int c = I->N;
-  int* vi = I->Vis.data();
-  int* at = I->AT.data();
+  int* vi = GetNullsafePointer(I->Vis);
+  int* at = GetNullsafePointer(I->AT);
   int ok = true;
   float alpha;
   int t_mode;
@@ -1574,15 +1586,15 @@ void RepSurface::render(RenderInfo* info)
   auto* I = this;
   CRay* ray = info->ray;
   auto pick = info->pick;
-  float* v = I->V.data();
-  float* vn = I->VN.data();
-  float* vc = I->VC.data();
-  float* va = I->VA.data();
-  int* rc = I->RC.data();
-  int* t = I->T.data();
-  int* s = I->S.data();
+  float* v = GetNullsafePointer(I->V);
+  float* vn = GetNullsafePointer(I->VN);
+  float* vc = GetNullsafePointer(I->VC);
+  float* va = GetNullsafePointer(I->VA);
+  int* rc = GetNullsafePointer(I->RC);
+  int* t = GetNullsafePointer(I->T);
+  int* s = GetNullsafePointer(I->S);
   int c = I->N;
-  int* vi = I->Vis.data();
+  int* vi = GetNullsafePointer(I->Vis);
   int ok = true;
   float ambient_occlusion_scale = 0.f;
   int ambient_occlusion_mode = SettingGet_i(G, cs->Setting.get(),

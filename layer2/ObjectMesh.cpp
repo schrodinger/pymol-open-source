@@ -758,7 +758,7 @@ static CGO* ObjectMeshCGOGenerate(ObjectMesh* I, ObjectMeshState* ms,
   if (!(n && v && (I->visRep & cRepMeshBit))) {
     return 0;
   }
-  auto vc = ms->VC.data();
+  auto vc = ms->VC.empty() ? nullptr : ms->VC.data();
 
   if (!vc) {
     ok &= CGOColorv(shaderCGO, ColorGet(I->G, ms->OneColor));
@@ -934,8 +934,8 @@ static bool ObjectMeshRenderRay(ObjectMeshState* ms, ObjectMesh* I,
   float cc[3];
   float colA[3], colB[3];
   ColorGetEncoded(G, ms->OneColor, cc);
-  auto vc = ms->VC.data();
-  auto rc = ms->RC.data();
+  auto vc = ms->VC.empty() ? nullptr : ms->VC.data();
+  auto rc = ms->RC.empty() ? nullptr : ms->RC.data();
 
   ray->transparentf(transparency);
 
@@ -1010,7 +1010,7 @@ static void ObjectMeshRenderImmediate(
   if (info && !info->line_lighting) {
     glDisable(GL_LIGHTING);
   }
-  auto vc = ms->VC.data();
+  auto vc = ms->VC.empty() ? nullptr : ms->VC.data();
 
   if (!vc)
     glColor3fv(ColorGet(I->G, ms->OneColor));
