@@ -519,6 +519,11 @@ def _quit(code=0, _self=cmd):
     _self.interrupt()
     try:
         _self.lock(_self)
+        # The interrupt was only meant to abort work running in another
+        # thread, which is finished now that we hold the lock. Clear it, in
+        # case quitting gets refused (no_quit), so it doesn't stick around
+        # and abort subsequent commands.
+        _cmd.interrupt(_self._COb, 0)
         try: # flush and close log if possible to avoid threading exception
             if pymol._log_file is not None:
                 try:

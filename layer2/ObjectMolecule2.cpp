@@ -3771,7 +3771,9 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
         new MapType(G, (max_cutoff + MAX_VDW) * (offset_begin ? -1 : 1), //
             cs->Coord, cs->NIndex));
     p_return_val_if_fail(map, false); // memory error
-    MapSetupExpress(map.get()); // Don't let MapEIter call this in omp parallel
+    // Don't let MapEIter call this in omp parallel. Not interruptible, an
+    // interrupted setup would make every thread set up the map concurrently.
+    MapSetupExpress(map.get(), false);
 
     /// Return false on error
     auto const find_bonds_for_atom = [&](unsigned i, float const* v1,
