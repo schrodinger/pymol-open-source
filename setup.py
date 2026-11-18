@@ -199,7 +199,7 @@ class options:
     use_msgpackc = "guess"
     testing = False
     openvr = False
-    use_openmp = "no" if MAC else "yes"
+    use_openmp = not MAC
     use_vtkm = "no"
     vmd_plugins = True
 
@@ -611,7 +611,7 @@ ext_objects = []
 data_files = []
 ext_modules = []
 
-if options.use_openmp == "yes":
+if options.use_openmp:
     def_macros += [("PYMOL_OPENMP", None)]
     if WIN and not is_mingw:  # MSVC
         ext_comp_args.append("/openmp")
