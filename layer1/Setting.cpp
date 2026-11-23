@@ -3088,13 +3088,16 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     // 4.5.0 - Build *.20.100.*
     // Driver update breaks lighting
     set_b(I, cSetting_precomputed_lighting, 1);
-
-#ifndef _PYMOL_ACTIVEX
-    if (auto count = std::thread::hardware_concurrency() > 1) {
-      set_i(I, cSetting_max_threads, count);
-    }
     /* END PROPRIETARY CODE SEGMENT */
 #endif
+
+#ifndef _PYMOL_ACTIVEX
+    // Use all cores for ray tracing by default. The GUI launcher also does
+    // this in Python (adapt_to_hardware), but library mode (pymol2, or
+    // `import pymol` without launching) never calls it (see #89).
+    if (const auto count = std::thread::hardware_concurrency(); count > 1) {
+      set_i(I, cSetting_max_threads, count);
+    }
 #endif
 
 #ifndef _PYMOL_FREETYPE

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import os
+
 from pymol import testing, invocation
 
 class TestPyMOL2(testing.PyMOLTestCase):
@@ -14,6 +16,16 @@ class TestPyMOL2(testing.PyMOLTestCase):
             p1.cmd.do("viewport 300, 400")
             self.assertEqual(p3.cmd.get_viewport(), (100, 200))  # singleton
             self.assertEqual(p1.cmd.get_viewport(), (300, 400))
+
+    @testing.requires_version('3.2')
+    def testMaxThreads(self):
+        # library mode does not run adapt_to_hardware, so the C++ settings
+        # initialisation must pick the core count (#89)
+        import pymol2
+        ncpu = os.cpu_count() or 1
+        with pymol2.PyMOL() as p1:
+            max_threads = p1.cmd.get_setting_int('max_threads')
+        self.assertEqual(max_threads, ncpu if ncpu > 1 else 1)
 
     @testing.requires_version('1.8.5')
     def testMultiInstance(self):
