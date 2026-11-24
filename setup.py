@@ -200,7 +200,7 @@ class options:
     testing = False
     openvr = False
     use_openmp = not MAC
-    use_vtkm = "no"
+    use_viskores = "no"
     vmd_plugins = True
 
 
@@ -232,10 +232,12 @@ parser.add_argument(
 )
 parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
 parser.add_argument(
-    "--use-vtkm",
-    choices=("2.0", "2.1", "2.2", "2.3", "no"),
-    help="Use VTK-m for isosurface generation",
+    "--use-viskores",
+    metavar="VERSION",
+    help="Viskores version for isosurface generation (e.g. 1.2), or 'no'",
 )
+# VTK-m continues upstream as Viskores; keep the old flag only to explain that
+parser.add_argument("--use-vtkm", help=argparse.SUPPRESS)
 parser.add_argument(
     "--use-msgpackc",
     choices=("c++11", "c", "guess", "no"),
@@ -251,6 +253,12 @@ parser.add_argument(
     help="Disable VMD molfile plugins (libnetcdf dependency)",
 )
 options, sys.argv[1:] = parser.parse_known_args(namespace=options)
+
+if options.use_vtkm not in (None, "no"):
+    parser.error(
+        "--use-vtkm was removed: VTK-m continues as Viskores."
+        " Use --use-viskores=1.2 instead."
+    )
 
 
 def get_prefix_path() -> list[str]:
@@ -759,27 +767,29 @@ if not (MAC or WIN):
         "glut",
     ]
 
-if options.use_vtkm != "no":
+if options.use_viskores != "no":
     for prefix in prefix_path:
-        vtkm_inc_dir = os.path.join(prefix, "include", f"vtkm-{options.use_vtkm}")
-        if os.path.exists(vtkm_inc_dir):
+        viskores_inc_dir = os.path.join(
+            prefix, "include", f"viskores-{options.use_viskores}"
+        )
+        if os.path.exists(viskores_inc_dir):
             break
     else:
         raise LookupError(
-            "VTK-m headers not found." f' PREFIX_PATH={":".join(prefix_path)}'
+            "Viskores headers not found." f' PREFIX_PATH={":".join(prefix_path)}'
         )
     def_macros += [
-        ("_PYMOL_VTKM", None),
+        ("_PYMOL_VISKORES", None),
     ]
     inc_dirs += [
-        vtkm_inc_dir,
-        vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
-        vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
+        viskores_inc_dir,
+        viskores_inc_dir + "/viskores/thirdparty/diy/viskoresdiy/include",
+        viskores_inc_dir + "/viskores/thirdparty/lcl/viskoreslcl",
     ]
     libs += [
-        f"vtkm_cont-{options.use_vtkm}",
-        f"vtkm_filter_contour-{options.use_vtkm}",
-        f"vtkm_filter_core-{options.use_vtkm}",
+        "viskores_cont",
+        "viskores_filter_contour",
+        "viskores_filter_core",
     ]
 
 if options.vmd_plugins:

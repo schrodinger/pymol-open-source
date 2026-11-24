@@ -1702,6 +1702,10 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
     // numpy support (cmd.get_coords, cmd.get_volume_field)
     PySet_Add(caps, PConvToPyObject("numpy"));
 #endif
+#ifdef _PYMOL_VISKORES
+    // Viskores isosurface generation (isosurface_algorithm=0)
+    PySet_Add(caps, PConvToPyObject("viskores"));
+#endif
     // object and atom level properties
     PySet_Add(caps, PConvToPyObject("properties"));
 #ifndef NO_MMLIBS

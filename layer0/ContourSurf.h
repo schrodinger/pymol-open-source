@@ -1,6 +1,6 @@
 /**
  * @file
- * Isosurface with VTKm
+ * Isosurface with Viskores
  *
  * (c) 2020 Schrodinger, Inc.
  */

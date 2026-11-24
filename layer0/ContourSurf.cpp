@@ -1,6 +1,6 @@
 /**
  * @file
- * Isosurface with VTKm
+ * Isosurface with Viskores
  *
  * (c) 2020 Schrodinger, Inc.
  */
@@ -70,7 +70,7 @@ static cIsosurfaceSide get_adjusted_side(float level, cIsosurfaceSide side)
                                                        : cIsosurfaceSide::front;
 }
 
-#ifdef _PYMOL_VTKM
+#ifdef _PYMOL_VISKORES
 #ifdef _WIN32
 // error C2039: '_copysign': is not a member of 'std'
 // https://docs.microsoft.com/en-us/troubleshoot/cpp/c2653-c2039-error-reference-function
@@ -80,9 +80,10 @@ using ::copysign;
 }
 #endif
 
-#include <vtkm/Version.h>
-#include <vtkm/cont/DataSetBuilderUniform.h>
-#include <vtkm/filter/Contour/Contour.h>
+#include <viskores/Version.h>
+#include <viskores/cont/DataSetBuilderUniform.h>
+#include <viskores/cont/Initialize.h>
+#include <viskores/filter/contour/Contour.h>
 
 #include <cassert>
 #include <set>
@@ -102,26 +103,26 @@ public:
   const T* operator[](size_t pos) const { return m_data.data() + Dim * pos; }
 
   template <typename VecU, typename Storage>
-  void operator()(const vtkm::cont::ArrayHandle<VecU, Storage>&)
+  void operator()(const viskores::cont::ArrayHandle<VecU, Storage>&)
   {
     assert(false);
   }
 
   template <typename U, typename Storage>
   void operator()(
-      const vtkm::cont::ArrayHandle<vtkm::Vec<U, Dim>, Storage>& array)
+      const viskores::cont::ArrayHandle<viskores::Vec<U, Dim>, Storage>& array)
   {
-    using VecType = vtkm::VecTraits<typename vtkm::Vec<U, Dim>>;
+    using VecType = viskores::VecTraits<typename viskores::Vec<U, Dim>>;
 
     auto const& portal = array.ReadPortal();
     auto const numIndices = portal.GetNumberOfValues();
 
     m_data.reserve(numIndices * Dim);
 
-    for (vtkm::Id index = 0; index < numIndices; ++index) {
+    for (viskores::Id index = 0; index < numIndices; ++index) {
       const auto& vec = portal.Get(index);
       assert(VecType::GetNumberOfComponents(vec) == Dim);
-      for (vtkm::IdComponent c = 0; c < Dim; ++c) {
+      for (viskores::IdComponent c = 0; c < Dim; ++c) {
         m_data.emplace_back(VecType::GetComponent(vec, c));
       }
     }
@@ -134,7 +135,7 @@ public:
  */
 class CopySurfaceFunctor
 {
-  using CellSetType = vtkm::cont::CellSetSingleType<>;
+  using CellSetType = viskores::cont::CellSetSingleType<>;
   using NormalData = CopyFieldFunctor<float>;
 
   const CellSetType& m_cellset;
@@ -154,10 +155,10 @@ class CopySurfaceFunctor
   template <typename PointsPortal>
   void add_vertex(PointsPortal const& pointsPortal, size_t pointIndex)
   {
-    using VecType = vtkm::VecTraits<typename PointsPortal::ValueType>;
+    using VecType = viskores::VecTraits<typename PointsPortal::ValueType>;
     const auto& point = pointsPortal.Get(pointIndex);
     assert(VecType::GetNumberOfComponents(point) == 3);
-    for (vtkm::IdComponent c = 0; c < 3; ++c) {
+    for (viskores::IdComponent c = 0; c < 3; ++c) {
       *m_out.check(m_out_size++) = VecType::GetComponent(point, c);
     }
   }
@@ -252,7 +253,7 @@ public:
   }
 
   template <typename VecT, typename Storage>
-  void operator()(const vtkm::cont::ArrayHandle<VecT, Storage>& array)
+  void operator()(const viskores::cont::ArrayHandle<VecT, Storage>& array)
   {
     static_assert(VecT::NUM_COMPONENTS == 3, "");
     static_assert(
@@ -261,15 +262,15 @@ public:
     auto const& pointsPortal = array.ReadPortal();
     auto const& connPortal =
         m_cellset
-            .GetConnectivityArray(
-                vtkm::TopologyElementTagCell(), vtkm::TopologyElementTagPoint())
+            .GetConnectivityArray(viskores::TopologyElementTagCell(),
+                viskores::TopologyElementTagPoint())
             .ReadPortal();
 
     auto const nTri = m_cellset.GetNumberOfCells();
     auto const out_size_expected = nTri * floats_per_tri;
     m_out.reserve(out_size_expected);
 
-    for (vtkm::Id i = 0; i < nTri; ++i) {
+    for (viskores::Id i = 0; i < nTri; ++i) {
       assert(m_cellset.GetNumberOfPointsInCell(i) == vertices_per_tri);
 
       switch (m_mode) {
@@ -293,9 +294,10 @@ public:
 };
 
 /**
- * VTK-m implementation of ContourSurfVolume
+ * Viskores implementation of ContourSurfVolume
  */
-static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
+static int ContourSurfVolumeViskores(PyMOLGlobals* G, Isofield* field,
+    float level,
     pymol::vla<int>& num,           //
     pymol::vla<float>& vert,        //
     const int* range,               //
@@ -303,6 +305,10 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
     const CarveHelper* carvehelper, //
     cIsosurfaceSide side)
 {
+  // Without this, Viskores warns on stderr at first use
+  [[maybe_unused]] static const auto viskoresInit =
+      viskores::cont::Initialize();
+
   int range_store[6] = {0, 0, 0};
   if (!range) {
     copy3(field->dimensions, range_store + 3);
@@ -313,14 +319,14 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
   const CField& points = *field->points; // CFieldTyped<float>(n_dim=4)
 
   std::string const pointFieldName = "pointdata";
-  auto const pointDimensions =
-      vtkm::Id3(range[3] - range[0], range[4] - range[1], range[5] - range[2]);
+  auto const pointDimensions = viskores::Id3(
+      range[3] - range[0], range[4] - range[1], range[5] - range[2]);
   auto const n_points =
       pointDimensions[0] * pointDimensions[1] * pointDimensions[2];
 
   // field as flat array in [z][y][x] order with shape pointDimensions
-  std::vector<vtkm::Float32> pointdata;
-  std::vector<vtkm::Vec3f> coorddata;
+  std::vector<viskores::Float32> pointdata;
+  std::vector<viskores::Vec3f> coorddata;
   pointdata.reserve(n_points);
   coorddata.reserve(n_points);
 
@@ -336,27 +342,27 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
     }
   }
 
-  vtkm::cont::CellSetStructured<3> cellSet;
+  viskores::cont::CellSetStructured<3> cellSet;
   cellSet.SetPointDimensions(pointDimensions);
 
-  vtkm::cont::DataSet dataSet;
+  viskores::cont::DataSet dataSet;
   dataSet.SetCellSet(cellSet);
 
-  vtkm::cont::CoordinateSystem coordinateSystem(
-    "coordinates", vtkm::cont::make_ArrayHandleMove(std::move(coorddata)));
+  viskores::cont::CoordinateSystem coordinateSystem("coordinates",
+      viskores::cont::make_ArrayHandleMove(std::move(coorddata)));
 
-    dataSet.AddCoordinateSystem(coordinateSystem);
+  dataSet.AddCoordinateSystem(coordinateSystem);
 
-    dataSet.AddField(vtkm::cont::make_Field(pointFieldName,
-        vtkm::cont::Field::Association::Points, pointdata, vtkm::CopyFlag::Off));
+  dataSet.AddField(viskores::cont::make_Field(pointFieldName,
+      viskores::cont::Field::Association::Points, pointdata,
+      viskores::CopyFlag::Off));
 
-  vtkm::filter::contour::Contour filter;
+  viskores::filter::contour::Contour filter;
   filter.SetIsoValue(level);
   filter.SetActiveField(pointFieldName);
   filter.SetGenerateNormals(mode == cIsosurfaceMode::triangles_grad_normals ||
                             mode == cIsosurfaceMode::triangles_tri_normals);
-  filter.SetComputeFastNormalsForStructured(
-      mode == cIsosurfaceMode::triangles_tri_normals);
+  filter.SetComputeFastNormals(mode == cIsosurfaceMode::triangles_tri_normals);
   auto outputData = filter.Execute(dataSet);
 
   auto normalscopy = CopyFieldFunctor<float>();
@@ -364,16 +370,17 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
   if (filter.GetGenerateNormals()) {
     outputData.GetPointField(filter.GetNormalArrayName())
         .GetData()
-        .CastAndCallForTypes<vtkm::TypeListAll, VTKM_DEFAULT_STORAGE_LIST>(normalscopy);
+        .CastAndCallForTypes<viskores::TypeListAll,
+            VISKORES_DEFAULT_STORAGE_LIST>(normalscopy);
   }
 
   auto const& vertices = outputData.GetCoordinateSystem();
   auto const& cellsetsingletype =
-      outputData.GetCellSet().AsCellSet<vtkm::cont::CellSetSingleType<>>();
+      outputData.GetCellSet().AsCellSet<viskores::cont::CellSetSingleType<>>();
 
   side = get_adjusted_side(level, side);
 
-  vtkm::cont::CastAndCall(
+  viskores::cont::CastAndCall(
       vertices.GetData(), CopySurfaceFunctor{cellsetsingletype, normalscopy,
                               vert, side, carvehelper, mode});
 
@@ -495,8 +502,8 @@ static int ContourSurfVolumeMcBasic(PyMOLGlobals* G, Isofield* field,
 }
 
 /**
- * Generate an isosurface with VTK-m. If VTK-m is not available, fall back to
- * the legacy Marching Tetrahedra implementation.
+ * Generate an isosurface with Viskores. If Viskores is not available, fall back
+ * to the legacy Marching Tetrahedra implementation.
  *
  * @see TetsurfVolume
  */
@@ -513,14 +520,14 @@ int ContourSurfVolume(PyMOLGlobals* G, Isofield* field, float level,
   int n_tri = 0;
 
   switch (type) {
-  case cIsosurfaceAlgorithm::MARCHING_CUBES_VTKM:
-#ifdef _PYMOL_VTKM
-    n_tri = ContourSurfVolumeVtkm(
+  case cIsosurfaceAlgorithm::MARCHING_CUBES_VISKORES:
+#ifdef _PYMOL_VISKORES
+    n_tri = ContourSurfVolumeViskores(
         G, field, level, num, vert, range, mode, carvehelper, side);
     break;
 #elif !defined(_WEBGL)
     PRINTFB(G, FB_Isosurface, FB_Warnings)
-    " %s: VTKm not available, falling back to internal implementation\n",
+    " %s: Viskores not available, falling back to internal implementation\n",
         __func__ ENDFB(G);
 #endif
   case cIsosurfaceAlgorithm::MARCHING_CUBES_BASIC:
