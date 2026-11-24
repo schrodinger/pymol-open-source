@@ -109,20 +109,23 @@ if True:
     }
 
     class MimicTkImporter:
-        def load_module(self, fullname):
-            # Loader method (deprecated but simple)
-            m = mapping[fullname]
-            if isinstance(m, str):
-                import importlib
-                m = importlib.import_module(m)
-            sys.modules[fullname] = m
-            return m
-
         def find_spec(self, fullname, path, target=None):
-            # Python 3 Finder method (MetaPathFinder)
+            # MetaPathFinder method
             if fullname in mapping:
                 from importlib.machinery import ModuleSpec
                 return ModuleSpec(fullname, self)
             return None
+
+        def create_module(self, spec):
+            # Loader method: the mapped object becomes the module
+            m = mapping[spec.name]
+            if isinstance(m, str):
+                import importlib
+                m = importlib.import_module(m)
+            return m
+
+        def exec_module(self, module):
+            # Loader method: nothing to execute
+            pass
 
     sys.meta_path.insert(0, MimicTkImporter())
