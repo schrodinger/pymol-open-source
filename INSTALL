@@ -30,6 +30,8 @@ REQUIREMENTS
     - libnetcdf (optional, disable with --vmd-plugins=no)
     - nlohmann-json 3.10+ (optional, for glTF 2.0 and GLB export,
         enable with --json=true)
+    - Viskores 1.2+, formerly VTK-m (optional, for isosurface_algorithm=0,
+        enable with --use-viskores=1.2)
 
 SETUP OPTIONS
 
