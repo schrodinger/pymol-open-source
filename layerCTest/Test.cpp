@@ -8,7 +8,7 @@
 #include <fstream>
 #include <iostream>
 #define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include "Test.h"
 #include "TestCmdTest2.h"
 
